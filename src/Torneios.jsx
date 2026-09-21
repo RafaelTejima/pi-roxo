@@ -14,7 +14,7 @@ async function loadTournaments() {
     headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
   })
 
-  if (!response.ok) throw new Error('Não foi possível carregar os torneios.')
+  if (!response.ok) throw new Error('Os torneios criados serão mostrados aqui!.')
   return response.json()
 }
 
