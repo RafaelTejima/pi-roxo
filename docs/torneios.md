@@ -1,5 +1,6 @@
 # página de tornios disponiveis
 Esta é a página de torneios que estarao disponiveis para ingressar, ela virá dos torneios criados da página `criação de torneios`.
+Essa página deve ser feita no `Torneios.jsx`
 
 - ## instruções
     - essa página deve ter 4 cards um do lado do outro com os torneios disponiveis para ingressar
