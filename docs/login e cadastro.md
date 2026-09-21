@@ -18,6 +18,7 @@ O site precisa ter uma página que contenha duas áreas:
 - Em baixo do botão de cadastro **precisa** ter um texto que redirecione para a área de login. Esse texto deve ser clicável e ter o formato **"Já tem uma conta? Faça login"**
 
 # Tela de login
+O formulário de login será linkado com a tabela usuários do banco de dados, que pode ser facilmente localizado nos arquivos `.env` e `supabase.js`. 
 
 - O fundo precisa ser um carousel com no máximo 4 imagens.
     - Essas imagens precisam mudar a cada 5 segundos em loop
