@@ -1,27 +1,56 @@
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import Home from './Home';
+import Regras from './Regras';
+import Torneios from './Torneios';
+import Faq from './Faq';
+import Entrar from './Entrar';
+import Cadastrar from './Cadastrar';
+
 function App() {
+  const location = useLocation();
+
   return (
     <div>
       {/* Cabeçalho Fixo com Efeito Glass */}
       <header className="cabecalho">
         <div className="logo">
-          CS:GO <span className="roxo">TOURNAMENTS</span>
+          <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+            CS:GO <span className="roxo">TOURNAMENTS</span>
+          </Link>
         </div>
         <nav className="links">
-          <a href="./index.html" className="ativo">Início</a>
-          <a href="./torneios.html">Torneios</a>
-          <a href="./regras.html">Regras</a>
-          <a href="./faq.html">FAQ</a>
+          <Link to="/" className={location.pathname === '/' ? 'ativo' : ''}>
+            Início
+          </Link>
+          <Link to="/torneios" className={location.pathname === '/torneios' ? 'ativo' : ''}>
+            Torneios
+          </Link>
+          <Link to="/regras" className={location.pathname === '/regras' ? 'ativo' : ''}>
+            Regras
+          </Link>
+          <Link to="/faq" className={location.pathname === '/faq' ? 'ativo' : ''}>
+            FAQ
+          </Link>
         </nav>
         <div className="user-area">
-          <a href="./login.html" className="botao-login">Entrar</a>
-          <a href="./cadastro.html" className="botao-cadastrar">Cadastrar</a>
+          <Link to="/login" className="botao-login">
+            Entrar
+          </Link>
+          <Link to="/cadastro" className="botao-cadastrar">
+            Cadastrar
+          </Link>
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
-      <main style={{ minHeight: 'calc(100vh - 160px)', paddingTop: '100px', textAlign: 'center' }}>
-        <h1>Projeto Roxo</h1>
-      </main>
+      {/* Conteúdo Principal com Rotas */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/regras" element={<Regras />} />
+        <Route path="/torneios" element={<Torneios />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/login" element={<Entrar />} />
+        <Route path="/cadastro" element={<Cadastrar />} />
+      </Routes>
 
       {/* Rodapé Simples */}
       <footer className="rodape">
