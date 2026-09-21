@@ -1,5 +1,5 @@
 # Página de Criação de Torneio
-Esta é a página de criação de torneios.
+Esta é a página de criação de torneios, ela deve ser responsiva e conectada com a pagina de `torneios`, utilizando o supabase para armazenar os torneios criados.
 
 ## Instruções
 - **Crie um navbar**
