@@ -1,5 +1,5 @@
 # Arquitetura
-Este projeto é feito em React + Vite, usando o Vite na versão 5.
+Este projeto é feito em React + Vite, usando o Vite na versão 6.
 
 ## Tecnologias
 - **Componentização:**
