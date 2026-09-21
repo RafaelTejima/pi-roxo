@@ -47,7 +47,6 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/regras" element={<Regras />} />
         <Route path="/torneios" element={<Torneios />} />
-          <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastrar />} />
