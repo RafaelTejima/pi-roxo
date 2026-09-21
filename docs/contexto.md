@@ -17,5 +17,5 @@ Use estritamente as tecnologias citadas abaixo:
 Não use nem instale nada neste projeto.
 
 ### Regras
-- Todo o conteúdo de cada página deve ser inserido dentro do App.tsx, dentro de `div`
+- Todo o conteúdo de cada página deve ter um `jsx` próprio.
 - Todo CSS global será escrito dentro do index.css, localizado na pasta src. 
