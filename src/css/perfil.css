@@ -1,0 +1,69 @@
+#perfil-page {
+    min-height: 100vh;
+    padding: 150px 32px 80px;
+    background: radial-gradient(circle at 80% 0%, rgba(114, 62, 195, 0.22), transparent 34%), linear-gradient(135deg, #080412, #030108 65%);
+}
+
+#perfil-page .perfil-container { max-width: 1180px; margin: 0 auto; }
+#perfil-page .perfil-cabecalho { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 38px; }
+#perfil-page .perfil-kicker { color: var(--roxo-vivo); font-size: 11px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; }
+#perfil-page h1 { margin: 8px 0 8px; font-size: clamp(32px, 5vw, 52px); letter-spacing: -1px; }
+#perfil-page .perfil-cabecalho p { color: var(--texto-secundario); }
+#perfil-page .perfil-link-voltar { color: #fff; border-bottom: 1px solid var(--roxo-claro); padding-bottom: 5px; text-decoration: none; font-size: 14px; font-weight: 700; }
+#perfil-page .perfil-grid { display: grid; grid-template-columns: 285px minmax(0, 1fr); gap: 24px; align-items: start; }
+#perfil-page .perfil-resumo, #perfil-page .perfil-secao { border: 1px solid rgba(157, 78, 221, 0.2); background: rgba(15, 9, 28, 0.82); box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24); }
+#perfil-page .perfil-resumo { padding: 32px 24px; text-align: center; position: sticky; top: 122px; }
+#perfil-page .perfil-avatar-wrap { width: 142px; height: 142px; margin: 0 auto 20px; position: relative; }
+#perfil-page .perfil-avatar-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--roxo-claro); padding: 4px; }
+#perfil-page .perfil-status-dot { position: absolute; right: 4px; bottom: 9px; width: 17px; height: 17px; background: #49d17d; border: 3px solid #100a1c; border-radius: 50%; }
+#perfil-page .perfil-resumo h2 { font-size: 23px; }
+#perfil-page .perfil-cargo { color: var(--texto-secundario); font-size: 13px; margin: 5px 0 28px; }
+#perfil-page .perfil-dados { border-top: 1px solid rgba(255,255,255,.09); text-align: left; padding-top: 18px; }
+#perfil-page .perfil-dados div, #perfil-page .perfil-detalhes-grid div { display: flex; flex-direction: column; gap: 5px; }
+#perfil-page .perfil-dados div { margin-bottom: 18px; }
+#perfil-page .perfil-dados span, #perfil-page .perfil-detalhes-grid span, #perfil-page .perfil-conta span, #perfil-page .perfil-amigo-info span { color: var(--texto-terciario); font-size: 12px; }
+#perfil-page .perfil-dados strong { font-size: 13px; }
+#perfil-page .perfil-online { color: #5ce390; }
+#perfil-page .perfil-botao { display: block; width: 100%; padding: 12px; border-radius: 4px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; text-decoration: none; }
+#perfil-page .perfil-botao-principal { color: #fff; background: linear-gradient(135deg, var(--roxo-principal), var(--roxo-vivo)); border: 0; }
+#perfil-page .perfil-botao-perigo { margin-top: 10px; color: #e9a6b3; background: transparent; border: 1px solid rgba(233, 166, 179, .25); }
+#perfil-page .perfil-conteudo { display: grid; gap: 24px; }
+#perfil-page .perfil-secao { padding: 28px; }
+#perfil-page .perfil-secao-titulo { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 24px; }
+#perfil-page .perfil-secao h2 { margin-top: 6px; font-size: 21px; }
+#perfil-page .perfil-secao h2 small { color: var(--roxo-vivo); font-size: 12px; font-weight: 800; vertical-align: middle; }
+#perfil-page .perfil-texto-botao, #perfil-page .perfil-conta button, #perfil-page .perfil-amigo-acoes button { color: var(--roxo-vivo); background: transparent; border: 0; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; }
+#perfil-page .perfil-detalhes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px 40px; }
+#perfil-page .perfil-detalhes-grid strong { font-size: 14px; }
+#perfil-page .perfil-contas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#perfil-page .perfil-conta { display: flex; align-items: center; gap: 12px; padding: 15px; border: 1px solid rgba(255,255,255,.08); }
+#perfil-page .perfil-conta > div { display: grid; gap: 3px; flex: 1; }
+#perfil-page .perfil-conta-icone { width: 35px; height: 35px; display: grid; place-items: center; color: #fff; font-weight: 900; border-radius: 50%; }
+#perfil-page .perfil-conta-discord { background: #5865f2; }
+#perfil-page .perfil-conta-steam { background: #1b2838; }
+#perfil-page .perfil-amigos { display: grid; gap: 10px; }
+#perfil-page .perfil-amigo { display: flex; align-items: center; gap: 13px; padding: 11px; border: 1px solid rgba(255,255,255,.07); }
+#perfil-page .perfil-amigo-bloqueado { opacity: .55; }
+#perfil-page .perfil-amigo img { width: 48px; height: 48px; object-fit: cover; border-radius: 50%; }
+#perfil-page .perfil-amigo-info { display: grid; gap: 3px; flex: 1; }
+#perfil-page .perfil-amigo-info strong { font-size: 14px; }
+#perfil-page .perfil-amigo-info em { color: var(--texto-terciario); font-size: 11px; font-style: normal; }
+#perfil-page .perfil-amigo-info em.online { color: #5ce390; }
+#perfil-page .perfil-amigo-acoes { display: flex; gap: 15px; }
+#perfil-page .perfil-amigo-acoes button:last-child { color: var(--texto-terciario); }
+#perfil-page .perfil-vazio { color: var(--texto-secundario); font-size: 14px; }
+
+@media (max-width: 760px) {
+    #perfil-page { padding: 140px 18px 60px; }
+    #perfil-page .perfil-cabecalho { align-items: start; flex-direction: column; }
+    #perfil-page .perfil-grid { grid-template-columns: 1fr; }
+    #perfil-page .perfil-resumo { position: static; }
+    #perfil-page .perfil-contas, #perfil-page .perfil-detalhes-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    #perfil-page .perfil-secao { padding: 20px 16px; }
+    #perfil-page .perfil-secao-titulo { align-items: start; flex-direction: column; }
+    #perfil-page .perfil-amigo { align-items: start; flex-wrap: wrap; }
+    #perfil-page .perfil-amigo-acoes { width: 100%; padding-left: 61px; }
+}
