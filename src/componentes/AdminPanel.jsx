@@ -31,7 +31,7 @@ function formatarValor(valor) {
 }
 
 // ----- Componente de seção de tabela -----
-function SecaoTabela({ tabela }) {
+function SecaoTabela({ tabela, usuarioLogado }) {
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -185,7 +185,7 @@ function SecaoTabela({ tabela }) {
                       {colunas.map((col) => (
                         <th key={col}>{col}</th>
                       ))}
-                      <th className="admin-col-acoes">Acoes</th>
+                      <th className="admin-col-acoes">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -197,14 +197,32 @@ function SecaoTabela({ tabela }) {
                           {colunas.map((col) => (
                             <td key={col}>
                               {estaEditando && col !== 'id' ? (
-                                <input
-                                  className="admin-input-edicao"
-                                  value={camposEdicao[col] ?? ''}
-                                  onChange={(e) =>
-                                    setCamposEdicao((prev) => ({ ...prev, [col]: e.target.value }))
-                                  }
-                                  aria-label={`Editar campo ${col}`}
-                                />
+                                col === 'admin' ? (
+                                  <label className="admin-switch">
+                                    <input
+                                      type="checkbox"
+                                      checked={camposEdicao[col] === true || camposEdicao[col] === 'true'}
+                                      onChange={(e) => {
+                                        if (tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id && !e.target.checked) {
+                                          alert('Voce nao pode remover seu proprio acesso de administrador.');
+                                          return;
+                                        }
+                                        setCamposEdicao((prev) => ({ ...prev, [col]: e.target.checked }));
+                                      }}
+                                      disabled={tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id}
+                                    />
+                                    <span className="admin-slider"></span>
+                                  </label>
+                                ) : (
+                                  <input
+                                    className="admin-input-edicao"
+                                    value={camposEdicao[col] ?? ''}
+                                    onChange={(e) =>
+                                      setCamposEdicao((prev) => ({ ...prev, [col]: e.target.value }))
+                                    }
+                                    aria-label={`Editar campo ${col}`}
+                                  />
+                                )
                               ) : (
                                 formatarValor(linha[col])
                               )}
@@ -375,6 +393,7 @@ export default function AdminPanel() {
           <SecaoTabela
             key={tabela.nome}
             tabela={tabela}
+            usuarioLogado={usuarioLogado}
           />
         ))}
       </div>
