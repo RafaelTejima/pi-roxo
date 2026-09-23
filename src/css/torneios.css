@@ -147,6 +147,28 @@
   text-transform: uppercase;
 }
 
+/* Status: Em Breve */
+.tournament-status--soon {
+  color: #f0a500;
+  background: rgba(240, 165, 0, 0.12);
+  border-color: rgba(240, 165, 0, 0.3);
+}
+
+/* Status: Em Andamento */
+.tournament-status--live {
+  color: #e05252;
+  background: rgba(224, 82, 82, 0.12);
+  border-color: rgba(224, 82, 82, 0.3);
+}
+
+/* Status: Encerrado */
+.tournament-status--finished {
+  color: #5c5c6b;
+  background: rgba(92, 92, 107, 0.1);
+  border-color: rgba(92, 92, 107, 0.25);
+}
+
+
 .tournament-card-content h2 {
   font-size: 1.35rem;
   font-weight: 700;
