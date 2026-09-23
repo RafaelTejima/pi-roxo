@@ -1,8 +1,32 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './menu.css';
 
 export default function Menu({ children }) {
   const location = useLocation();
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  useEffect(() => {
+    const checarUsuario = () => {
+      try {
+        const salvo = localStorage.getItem('usuarioLogado');
+        setUsuarioLogado(salvo ? JSON.parse(salvo) : null);
+      } catch (error) {
+        console.error('Erro ao fazer parse do usuarioLogado:', error);
+        setUsuarioLogado(null);
+      }
+    };
+
+    checarUsuario();
+
+    window.addEventListener('storage', checarUsuario);
+    return () => window.removeEventListener('storage', checarUsuario);
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioLogado');
+    setUsuarioLogado(null);
+  };
 
   return (
     <div>
@@ -28,12 +52,30 @@ export default function Menu({ children }) {
           </Link>
         </nav>
         <div className="user-area">
-          <Link to="/login" className="botao-login">
-            Entrar
-          </Link>
-          <Link to="/cadastro" className="botao-cadastrar">
-            Cadastrar
-          </Link>
+          {usuarioLogado ? (
+            <div className="usuario-info">
+              <span className="usuario-nome" title={usuarioLogado.email || usuarioLogado.nome}>
+                👤 {usuarioLogado.nome || usuarioLogado.email || 'Usuário'}
+              </span>
+              {usuarioLogado.is_admin && (
+                <Link to="/admin" className="botao-admin">
+                  Painel Admin
+                </Link>
+              )}
+              <button onClick={handleLogout} className="botao-logout">
+                Sair
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link to="/login" className="botao-login">
+                Entrar
+              </Link>
+              <Link to="/cadastro" className="botao-cadastrar">
+                Cadastrar
+              </Link>
+            </>
+          )}
         </div>
       </header>
 

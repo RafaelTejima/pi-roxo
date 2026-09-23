@@ -74,6 +74,64 @@
     gap: 15px;
 }
 
+.usuario-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.usuario-nome {
+    font-weight: 600;
+    font-size: 14px;
+    color: #e9d5ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(157, 78, 221, 0.12);
+    padding: 7px 16px;
+    border-radius: 100px;
+    border: 1px solid rgba(157, 78, 221, 0.3);
+}
+
+.botao-admin {
+    background: rgba(114, 62, 195, 0.25);
+    color: #e9d5ff;
+    border: 1px solid rgba(157, 78, 221, 0.5);
+    padding: 8px 18px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transicao-suave);
+}
+
+.botao-admin:hover {
+    background: rgba(157, 78, 221, 0.4);
+    border-color: var(--roxo-claro);
+    transform: translateY(-1px);
+}
+
+.botao-logout {
+    background-color: transparent;
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    padding: 8px 18px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all var(--transicao-suave);
+}
+
+.botao-logout:hover {
+    background-color: rgba(255, 107, 107, 0.15);
+    border-color: #ff6b6b;
+    color: #ff8787;
+    transform: translateY(-1px);
+}
+
 .botao-login {
     background-color: transparent;
     color: white;
