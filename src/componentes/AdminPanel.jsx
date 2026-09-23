@@ -5,14 +5,13 @@ import '../css/admin.css';
 
 // Tabelas conhecidas do projeto, com nome amigável e colunas relevantes
 const TABELAS_CONHECIDAS = [
-  { nome: 'usuarios',    label: 'Usuarios',    icone: 'U', descricao: 'Contas cadastradas na plataforma' },
-  { nome: 'times',       label: 'Times',       icone: 'T', descricao: 'Times registrados pelos usuarios' },
+  { nome: 'usuarios',    label: 'Usuários',    icone: 'U', descricao: 'Contas cadastradas na plataforma' },
+  { nome: 'times',       label: 'Times',       icone: 'T', descricao: 'Times registrados pelos usuários' },
   { nome: 'torneios',    label: 'Torneios',    icone: 'C', descricao: 'Campeonatos criados na plataforma' },
-  { nome: 'tournaments', label: 'Tournaments', icone: 'C', descricao: 'Campeonatos (tabela EN)' },
   { nome: 'mapas',       label: 'Mapas',       icone: 'M', descricao: 'Mapas de CS2 disponiveis' },
   { nome: 'partidas',    label: 'Partidas',    icone: 'P', descricao: 'Partidas e confrontos do bracket' },
-  { nome: 'inscricoes',  label: 'Inscricoes',  icone: 'I', descricao: 'Inscricoes de times em torneios' },
-  { nome: 'amigos',      label: 'Amigos',      icone: 'A', descricao: 'Relacoes de amizade entre usuarios' },
+  { nome: 'inscricoes',  label: 'Inscrições',  icone: 'I', descricao: 'Inscrições de times em torneios' },
+  { nome: 'amigos',      label: 'Amigos',      icone: 'A', descricao: 'Relações de amizade entre usuários' },
 ];
 
 // Colunas que nunca devem ser exibidas por segurança
@@ -293,15 +292,15 @@ export default function AdminPanel() {
         const usuario = JSON.parse(salvo);
         setUsuarioLogado(usuario);
 
-        // Busca o registro atualizado do banco para checar is_admin
+        // Busca o registro atualizado do banco para checar admin
         if (usuario && usuario.id) {
           const { data } = await supabase
             .from('usuarios')
-            .select('is_admin, nome, email')
+            .select('admin, nome, email')
             .eq('id', usuario.id)
             .single();
 
-          if (data && data.is_admin === true) {
+          if (data && data.admin === true) {
             setIsAdmin(true);
           }
         }
