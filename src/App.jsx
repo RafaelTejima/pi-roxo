@@ -7,6 +7,7 @@ import Entrar from './componentes/Entrar';
 import Cadastrar from './componentes/Cadastrar';
 import EsqueciSenha from './componentes/EsqueciSenha';
 import AdminPanel from './componentes/AdminPanel';
+import Perfil from './componentes/Perfil';
 
 function App() {
   const location = useLocation();
@@ -33,6 +34,9 @@ function App() {
           <Link to="/faq" className={location.pathname === '/faq' ? 'ativo' : ''}>
             FAQ
           </Link>
+          <Link to="/perfil" className={location.pathname === '/perfil' ? 'ativo' : ''}>
+            Perfil
+          </Link>
         </nav>
         <div className="user-area">
           <Link to="/login" className="botao-login">
@@ -56,6 +60,7 @@ function App() {
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/admin-panel" element={<AdminPanel />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
 
       {/* Rodapé Simples */}
