@@ -1,0 +1,141 @@
+/* ================= Cabeçalho ================= */
+.cabecalho {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: rgba(8, 4, 16, 0.75);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid rgba(157, 78, 221, 0.15);
+    transition: background var(--transicao-suave), border-color var(--transicao-suave);
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 1.5px;
+}
+
+.roxo {
+    background: linear-gradient(120deg, var(--roxo-claro), var(--roxo-vivo));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.links {
+    display: flex;
+    gap: 35px;
+}
+
+.links a {
+    position: relative;
+    color: #b8b8b8;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    padding-bottom: 4px;
+    transition: color 0.3s ease;
+}
+
+.links a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--roxo-principal), var(--roxo-vivo));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.links a:hover,
+.links a.ativo {
+    color: #e9d5ff;
+    text-shadow: 0 0 12px rgba(157, 78, 221, 0.45);
+}
+
+.links a:hover::after,
+.links a.ativo::after {
+    width: 100%;
+}
+
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.botao-login {
+    background-color: transparent;
+    color: white;
+    border: 1px solid rgba(157, 78, 221, 0.6);
+    padding: 9px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transicao-suave);
+}
+
+.botao-login:hover {
+    border-color: var(--roxo-claro);
+    background-color: rgba(157, 78, 221, 0.15);
+    box-shadow: 0 0 18px rgba(157, 78, 221, 0.35);
+    transform: translateY(-1px);
+}
+
+.botao-cadastrar {
+    background: linear-gradient(135deg, var(--roxo-principal), var(--roxo-vivo));
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transicao-suave);
+    box-shadow: 0 4px 18px rgba(114, 62, 195, 0.45);
+}
+
+.botao-cadastrar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(157, 78, 221, 0.65);
+}
+
+/* ================= Rodapé ================= */
+.rodape {
+    text-align: center;
+    padding: 32px;
+    background: #020004;
+    color: #666;
+    font-size: 13px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ================= Responsividade do Cabeçalho ================= */
+@media (max-width: 860px) {
+    .cabecalho {
+        padding: 16px 24px;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: center;
+    }
+
+    .links {
+        order: 3;
+        gap: 22px;
+    }
+}
