@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 
 export default function Cadastrar() {
-  const [nome, setNome] = useState('');
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -23,10 +22,9 @@ export default function Cadastrar() {
       .from('usuarios')
       .insert([
         {
-          nome: nome,
+          nome: nomeUsuario,
           email: email,
           senha: senha
-          // Nota: nome_usuario não está no schema, portanto não é enviado.
         }
       ]);
 

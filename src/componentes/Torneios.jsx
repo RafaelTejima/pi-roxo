@@ -28,9 +28,10 @@ function formatPrize(value) {
 }
 
 function TournamentCard({ tournament, index }) {
+  const cardId = tournament.id ?? index
   return (
     <article className="tournament-card">
-      <Link className="tournament-card-link" to={`/torneios/${tournament.id || index}`} aria-label={`Ver detalhes de ${tournament.name}`}>
+      <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.name}`}>
         <div className="tournament-card-visual" aria-hidden="true"><span>ROXO</span><strong>CS2</strong></div>
         <div className="tournament-card-content">
           <span className="tournament-status">INSCRIÇÕES ABERTAS</span>
@@ -52,7 +53,7 @@ function TournamentCard({ tournament, index }) {
 
 function TournamentDetails({ tournaments, loading, error }) {
   const { id } = useParams()
-  const tournament = tournaments.find((item, index) => String(item.id || index) === id)
+  const tournament = tournaments.find((item, index) => String(item.id ?? index) === id)
 
   if (loading) return <main className="tournament-page-state"><p>Carregando detalhes...</p></main>
   if (error) return <main className="tournament-page-state error"><p>{error}</p><Link to="/torneios">Voltar para torneios</Link></main>
@@ -78,13 +79,13 @@ export default function Torneios() {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const isDetailsPage = window.location.pathname !== '/torneios'
+  const { id } = useParams()
 
   useEffect(() => {
     loadTournaments().then(setTournaments).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false))
   }, [])
 
-  if (isDetailsPage) return <TournamentDetails tournaments={tournaments} loading={loading} error={error} />
+  if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={error} />
 
   return (
     <main className="tournaments-page">
@@ -95,7 +96,7 @@ export default function Torneios() {
       {loading && <div className="tournament-page-state"><p>Carregando torneios...</p></div>}
       {error && <div className="tournament-page-state error"><p>{error}</p></div>}
       {!loading && !error && tournaments.length === 0 && <div className="tournament-page-state"><h2>Nenhum torneio disponível</h2><p>Os próximos campeonatos aparecerão aqui assim que forem criados.</p></div>}
-      {!loading && !error && tournaments.length > 0 && <div className="tournaments-grid">{tournaments.map((tournament, index) => <TournamentCard key={tournament.id || index} tournament={tournament} index={index} />)}</div>}
+      {!loading && !error && tournaments.length > 0 && <div className="tournaments-grid">{tournaments.map((tournament, index) => <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />)}</div>}
     </main>
   )
 }

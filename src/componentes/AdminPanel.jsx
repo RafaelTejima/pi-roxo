@@ -32,7 +32,7 @@ function formatarValor(valor) {
 }
 
 // ----- Componente de seção de tabela -----
-function SecaoTabela({ tabela, usuarioLogado }) {
+function SecaoTabela({ tabela }) {
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -282,27 +282,31 @@ export default function AdminPanel() {
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [verificando, setVerificando] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tabelasAtivas, setTabelasAtivas] = useState(TABELAS_CONHECIDAS);
+  const [tabelasAtivas] = useState(TABELAS_CONHECIDAS);
 
   useEffect(() => {
     async function verificarAdmin() {
       const salvo = localStorage.getItem('usuarioLogado');
       if (!salvo) { setVerificando(false); return; }
 
-      const usuario = JSON.parse(salvo);
-      setUsuarioLogado(usuario);
+      try {
+        const usuario = JSON.parse(salvo);
+        setUsuarioLogado(usuario);
 
-      // Busca o registro atualizado do banco para checar is_admin
-      if (usuario.id) {
-        const { data } = await supabase
-          .from('usuarios')
-          .select('is_admin, nome, email')
-          .eq('id', usuario.id)
-          .single();
+        // Busca o registro atualizado do banco para checar is_admin
+        if (usuario && usuario.id) {
+          const { data } = await supabase
+            .from('usuarios')
+            .select('is_admin, nome, email')
+            .eq('id', usuario.id)
+            .single();
 
-        if (data && data.is_admin === true) {
-          setIsAdmin(true);
+          if (data && data.is_admin === true) {
+            setIsAdmin(true);
+          }
         }
+      } catch (err) {
+        console.error('Erro ao verificar permissões de admin:', err);
       }
       setVerificando(false);
     }
@@ -372,7 +376,6 @@ export default function AdminPanel() {
           <SecaoTabela
             key={tabela.nome}
             tabela={tabela}
-            usuarioLogado={usuarioLogado}
           />
         ))}
       </div>

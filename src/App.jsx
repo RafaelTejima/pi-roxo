@@ -5,6 +5,8 @@ import Torneios from './componentes/Torneios';
 import Faq from './componentes/Faq';
 import Entrar from './componentes/Entrar';
 import Cadastrar from './componentes/Cadastrar';
+import EsqueciSenha from './componentes/EsqueciSenha';
+import AdminPanel from './componentes/AdminPanel';
 
 function App() {
   const location = useLocation();
@@ -22,7 +24,7 @@ function App() {
           <Link to="/" className={location.pathname === '/' ? 'ativo' : ''}>
             Início
           </Link>
-          <Link to="/torneios" className={location.pathname === '/torneios' ? 'ativo' : ''}>
+          <Link to="/torneios" className={location.pathname.startsWith('/torneios') ? 'ativo' : ''}>
             Torneios
           </Link>
           <Link to="/regras" className={location.pathname === '/regras' ? 'ativo' : ''}>
@@ -47,9 +49,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/regras" element={<Regras />} />
         <Route path="/torneios" element={<Torneios />} />
+        <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastrar />} />
+        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin-panel" element={<AdminPanel />} />
       </Routes>
 
       {/* Rodapé Simples */}

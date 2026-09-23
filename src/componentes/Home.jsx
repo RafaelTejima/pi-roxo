@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import armaazul from '../../../pi_uc3/arquivosAntigos/imagens/armaazul.png';
-import tiroem2 from '../../../pi_uc3/arquivosAntigos/imagens/tiroem2.jpg';
-import dandotiro from '../../../pi_uc3/arquivosAntigos/imagens/dandotiro.jpg';
+import armaazul from '../../imagens/armaazul.png';
+import tiroem2 from '../../imagens/tiroem2.jpg';
+import dandotiro from '../../imagens/dandotiro.jpg';
 
 export default function Home() {
   return (
@@ -9,9 +9,9 @@ export default function Home() {
       {/* Seção Principal (Hero com Carrossel Automático) */}
       <main className="hero">
         <div className="carousel">
-          <img src={armaazul} alt="CS:GO Imagem 1" />
-          <img src={tiroem2} alt="CS:GO Imagem 2" />
-          <img src={dandotiro} alt="CS:GO Imagem 3" />
+          <img src={armaazul} alt="CS:GO Banner 1" />
+          <img src={tiroem2} alt="CS:GO Banner 2" />
+          <img src={dandotiro} alt="CS:GO Banner 3" />
         </div>
 
         <div className="overlay"></div>
