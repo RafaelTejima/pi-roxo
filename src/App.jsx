@@ -3,6 +3,7 @@ import Menu from './componentes/Menu';
 import Home from './componentes/Home';
 import Regras from './componentes/Regras';
 import Torneios from './componentes/Torneios';
+import CriarTorneio from './componentes/CriarTorneio';
 import Faq from './componentes/Faq';
 import Entrar from './componentes/Entrar';
 import Cadastrar from './componentes/Cadastrar';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/regras" element={<Regras />} />
         <Route path="/torneios" element={<Torneios />} />
+        <Route path="/torneios/criar" element={<CriarTorneio />} />
         <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Entrar />} />

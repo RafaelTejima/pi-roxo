@@ -1,0 +1,262 @@
+/* ============================================================
+   CRIAR-TORNEIO.CSS — Estilos da Página de Criação de Torneio
+   Plataforma CS:GO Tournaments / CS2 Bracket
+   ============================================================ */
+
+#pagina-criar-torneio {
+  max-width: 720px;
+  margin: 160px auto 110px;
+  padding: 0 20px;
+}
+
+/* --- Cabeçalho --- */
+#pagina-criar-torneio .criar-torneio-heading {
+  text-align: center;
+  margin-bottom: 45px;
+}
+
+#pagina-criar-torneio .criar-torneio-overline {
+  display: inline-block;
+  background: rgba(157, 78, 221, 0.15);
+  border: 1px solid rgba(157, 78, 221, 0.6);
+  color: #e9d5ff;
+  padding: 7px 18px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+#pagina-criar-torneio .criar-torneio-heading h1 {
+  font-size: clamp(2rem, 3.5vw, 40px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  background: linear-gradient(180deg, #ffffff 40%, #d8b4fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#pagina-criar-torneio .criar-torneio-heading h1 span {
+  background: linear-gradient(120deg, var(--roxo-claro, #9d4edd), var(--roxo-vivo, #b565f2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#pagina-criar-torneio .criar-torneio-heading p {
+  color: var(--texto-secundario, #a8a8a8);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* --- Formulário --- */
+#pagina-criar-torneio .criar-torneio-form {
+  background: rgba(18, 13, 30, 0.65);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+#pagina-criar-torneio .campo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#pagina-criar-torneio .campo-form label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #e9d5ff;
+  text-transform: uppercase;
+}
+
+#pagina-criar-torneio .campo-form input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: white;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.25s ease;
+}
+
+#pagina-criar-torneio .campo-form input:focus {
+  outline: none;
+  border-color: var(--roxo-vivo, #b565f2);
+}
+
+/* --- Dropdown de Regras --- */
+#pagina-criar-torneio .regras-dropdown {
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+#pagina-criar-torneio .regras-dropdown summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #e9d5ff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+
+#pagina-criar-torneio .regras-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+#pagina-criar-torneio .regras-conteudo {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#pagina-criar-torneio .regras-input-linha {
+  display: flex;
+  gap: 10px;
+}
+
+#pagina-criar-torneio .regras-input-linha input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: white;
+  font-family: inherit;
+}
+
+#pagina-criar-torneio .regras-input-linha button {
+  background: var(--roxo-principal, #723EC3);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+#pagina-criar-torneio .regras-input-linha button:hover {
+  background: var(--roxo-claro, #9d4edd);
+}
+
+#pagina-criar-torneio .regras-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#pagina-criar-torneio .regras-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: rgba(157, 78, 221, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+#pagina-criar-torneio .regras-lista li button {
+  background: transparent;
+  border: none;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* --- Mensagens de feedback --- */
+#pagina-criar-torneio .criar-torneio-mensagem {
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+#pagina-criar-torneio .criar-torneio-mensagem.erro {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #fca5a5;
+}
+
+#pagina-criar-torneio .criar-torneio-mensagem.sucesso {
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #86efac;
+}
+
+/* --- Ações do formulário --- */
+#pagina-criar-torneio .criar-torneio-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+#pagina-criar-torneio .botao-cancelar {
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  color: #e9d5ff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+#pagina-criar-torneio .botao-enviar {
+  padding: 12px 26px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+#pagina-criar-torneio .botao-enviar:hover {
+  transform: translateY(-2px);
+}
+
+#pagina-criar-torneio .botao-enviar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Responsivo --- */
+@media (max-width: 640px) {
+  #pagina-criar-torneio .criar-torneio-form {
+    padding: 24px 18px;
+  }
+
+  #pagina-criar-torneio .criar-torneio-acoes {
+    flex-direction: column-reverse;
+  }
+
+  #pagina-criar-torneio .botao-cancelar,
+  #pagina-criar-torneio .botao-enviar {
+    justify-content: center;
+    text-align: center;
+  }
+}

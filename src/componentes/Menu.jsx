@@ -57,6 +57,9 @@ export default function Menu({ children }) {
               <span className="usuario-nome" title={usuarioLogado.email || usuarioLogado.nome}>
                 👤 {usuarioLogado.nome || usuarioLogado.email || 'Usuário'}
               </span>
+              <Link to="/torneios/criar" className="botao-admin">
+                Criar Torneio
+              </Link>
               {usuarioLogado.admin && (
                 <Link to="/admin" className="botao-admin">
                   Painel Admin

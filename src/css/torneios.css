@@ -58,6 +58,24 @@
   margin: 0 auto;
 }
 
+/* --- Botão de Criar Torneio --- */
+.tournaments-criar-btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 26px;
+  border-radius: 10px;
+  background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.25s ease;
+}
+
+.tournaments-criar-btn:hover {
+  transform: translateY(-2px);
+}
+
 /* --- Grade de Torneios (Grid Layout) --- */
 .tournaments-grid {
   display: grid;

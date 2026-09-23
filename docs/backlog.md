@@ -1,26 +1,16 @@
-## Perfil de usuario
-- Tela visual criada em `/perfil`, com avatar, dados da conta, contas Discord/Steam, lista de amigos e logout com confirmacao.
-- Os dados ainda sao demonstrativos; a conexao com Supabase e a autenticacao real ficam para a etapa de API.
-# Backlog e Histórico de Funcionalidades
+﻿# Backlog
 
-## [2026-09-23] Unificação do Cabeçalho e Rodapé (Menu Global)
-- **Componente:** `Menu.jsx` em `src/componentes/Menu.jsx`
-- **Estilos:** `menu.css` em `src/componentes/menu.css`
-- **Descrição:** Cabeçalho e rodapé unificados em um componente exclusivo `<Menu />` que envolve as rotas no `App.jsx`, fornecendo navegação dinâmica (com rotas ativas) e layout global padronizado em todas as telas da aplicação.
+Este arquivo eh escrito e mantido apenas por IAs para registrar features ja implementadas no projeto.
 
-## [2026-09-23] Renderização Condicional de Autenticação no Cabeçalho
-- **Componente:** `Menu.jsx` em `src/componentes/Menu.jsx`
-- **Estilos:** `menu.css` em `src/componentes/menu.css`
-- **Descrição:** Adicionada verificação reativa do `localStorage` (`usuarioLogado`) via `useState` e `useEffect`. Se o usuário estiver autenticado, exibe as informações/avatar do usuário, atalho para o painel de administração (se for admin) e botão de Logout que limpa a sessão; caso contrário, exibe os botões habituais de "Entrar" e "Cadastrar".
-
-## [2026-09-23] Sistema de Bracket de Torneios CS2
-- **Arquivo principal:** `Torneios.jsx` em `src/componentes/Torneios.jsx`
-- **Estilos:** `bracket.css` em `src/css/bracket.css`
-- **Descrição:** Implementado sistema de chaveamento (Single Elimination, 8 equipes) exibido na tela de detalhes do torneio (`/torneios/:id`). Os dados são 100% simulados em estado React (sem banco de dados), usando os times FURIA, MIBR, Imperial, paIN, RED Canids, Bestia, Fluxo e ODDIK com cruzamento oficial por seeding (1x8, 4x5, 2x7, 3x6). Funcionalidades implementadas:
-  - **Resolução Manual:** clicar no nome de um time o declara vencedor da partida.
-  - **Botão "Resolver":** resolve uma partida individual com placar aleatório válido CS2 MR12 (vencedor: 13, perdedor: 0–11).
-  - **Botão "Processar Torneio":** resolve em cascata todas as partidas pendentes até coroar o campeão.
-  - **Botão "Reiniciar Bracket":** reseta o estado para o chaveamento inicial.
-  - Progressão automática: vencedor avança com `floor(posicao/2)` para o slot correto (Time 1 ou Time 2) da próxima rodada.
-  - Animação de destaque ao resolver partidas e painel do campeão ao final.
-  - Conectores SVG entre fases (Quartas → Semis → Final).
+## Pagina de Criacao de Torneio
+- **Componente:** `src/componentes/CriarTorneio.jsx` (rota `/torneios/criar`)
+- **CSS:** `src/css/criar-torneio.css` (escopado por `#pagina-criar-torneio`)
+- Formulario com campos: nome do torneio, data/hora (`datetime-local`), valor do premio e regras.
+- Regras sao adicionadas em uma lista via `<details>`/dropdown antes do envio; o formulario bloqueia o envio (`setErro`) se a lista de regras estiver vazia.
+- No envio, insere um registro na tabela `tournaments` do Supabase (`name`, `tournament_date`, `prize`, `rules`, `status: 'open'`, `teams_count: 0`) usando o client em `src/supabase.js`.
+- Apos sucesso, redireciona para `/torneios`.
+- **Conexao com a pagina de Torneios:**
+  - Botao "Criar Torneio" adicionado no cabecalho da listagem (`src/componentes/Torneios.jsx`, classe `.tournaments-criar-btn`) linkando para `/torneios/criar`.
+  - Link "Criar Torneio" tambem adicionado no `Menu.jsx` (visivel apenas para usuario logado, ao lado do botao de Painel Admin).
+  - A rota `/torneios/criar` foi registrada em `App.jsx` **antes** de `/torneios/:id` para nao ser capturada pela rota dinamica de detalhes.
+- O navbar proprio pedido em `docs/pagina_criacao_torneio.md` nao foi recriado porque o projeto ja usa um `Menu` global (via `App.jsx`) compartilhado entre todas as paginas, seguindo o padrao ja usado por `Torneios.jsx`, `Regras.jsx`, etc.

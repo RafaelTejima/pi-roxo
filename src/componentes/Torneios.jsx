@@ -525,6 +525,7 @@ export default function Torneios() {
           <h1>Escolha seu próximo <span>desafio.</span></h1>
         </div>
         <p>Encontre um campeonato, monte sua equipe e dispute o topo do ranking.</p>
+        <Link to="/torneios/criar" className="tournaments-criar-btn">Criar Torneio</Link>
       </section>
 
       {loading && (
