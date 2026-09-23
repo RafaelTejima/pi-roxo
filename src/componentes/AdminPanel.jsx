@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from './supabase.js';
-import './admin.css';
+import { supabase } from '../supabase.js';
+import '../css/admin.css';
 
 // Tabelas conhecidas do projeto, com nome amigável e colunas relevantes
 const TABELAS_CONHECIDAS = [

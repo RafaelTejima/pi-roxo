@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import armaazul from '../../pi_uc3/arquivosAntigos/imagens/armaazul.png';
-import tiroem2 from '../../pi_uc3/arquivosAntigos/imagens/tiroem2.jpg';
-import dandotiro from '../../pi_uc3/arquivosAntigos/imagens/dandotiro.jpg';
+import armaazul from '../../../pi_uc3/arquivosAntigos/imagens/armaazul.png';
+import tiroem2 from '../../../pi_uc3/arquivosAntigos/imagens/tiroem2.jpg';
+import dandotiro from '../../../pi_uc3/arquivosAntigos/imagens/dandotiro.jpg';
 
 export default function Home() {
   return (

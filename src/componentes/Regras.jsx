@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './regras.css';
+import '../css/regras.css';
 
 const regrasList = [
   {
