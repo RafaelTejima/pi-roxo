@@ -5,8 +5,8 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 20px 60px;
     background: rgba(8, 4, 16, 0.75);
@@ -59,7 +59,9 @@
 
 .links {
     display: flex;
-    gap: 35px;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
 }
 
 .links a {
@@ -67,7 +69,7 @@
     color: #b8b8b8;
     text-decoration: none;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 1.1rem;
     letter-spacing: 0.3px;
     padding-bottom: 4px;
     transition: color 0.3s ease;
@@ -100,6 +102,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
+    justify-self: end;
 }
 
 .usuario-info {
@@ -198,6 +201,11 @@
 .item-dropdown:hover {
   background-color: rgba(255, 255, 255, 0.08);
   color: #fff;
+}
+
+.item-dropdown:focus-visible {
+  outline: 2px solid var(--roxo-vivo, #b565f2);
+  outline-offset: -2px;
 }
 
 .item-sair {
@@ -312,5 +320,9 @@
     .links {
         order: 3;
         gap: 22px;
+        max-width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
     }
 }

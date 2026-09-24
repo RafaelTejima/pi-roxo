@@ -137,7 +137,7 @@ function SecaoTabela({ tabela, usuarioLogado }) {
           {!loading && !erro && (
             <span className="admin-badge admin-badge--count">{dados.length} registros</span>
           )}
-          <span className="admin-chevron" aria-hidden="true">{aberta ? '−' : '+'}</span>
+          <span className={`admin-chevron ${aberta ? 'aberto' : ''}`} aria-hidden="true">▼</span>
         </div>
       </button>
 

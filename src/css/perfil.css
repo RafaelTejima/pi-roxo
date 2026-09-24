@@ -295,7 +295,21 @@
 
 #perfil-page .perfil-amigo-acoes {
     display: flex;
-    gap: 15px;
+    gap: 8px;
+}
+
+#perfil-page .perfil-amigo-acoes button {
+    padding: 8px 14px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+#perfil-page .perfil-amigo-acoes button:hover {
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 #perfil-page .perfil-amigo-acoes button:last-child {

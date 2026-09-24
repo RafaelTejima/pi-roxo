@@ -39,6 +39,7 @@
 .selecao-mapas-controles label { display: flex; flex-direction: column; gap: 8px; }
 .selecao-mapas-controles label > span { color: var(--mapa-texto-fraco); font-size: 10px; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
 .selecao-mapas-controles input, .selecao-mapas-controles select { background: rgba(4, 3, 7, 0.65); border: 1px solid var(--mapa-linha); color: #fff; font: inherit; font-size: 13px; min-height: 44px; outline: none; padding: 0 13px; width: 100%; }
+.selecao-mapas-controles select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a66bea' viewBox='0 0 16 16'><path d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; background-size: 12px; padding-right: 36px; cursor: pointer; }
 .selecao-mapas-controles input:focus, .selecao-mapas-controles select:focus { border-color: var(--mapa-roxo-claro); box-shadow: 0 0 0 2px rgba(114, 62, 195, 0.2); }
 .selecao-mapas-controles select option { background: #17111f; }
 .selecao-mapas-limpar, .selecao-mapas-botao-secundario { background: transparent; border: 1px solid rgba(166, 107, 234, 0.5); color: #d9c5f2; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.09em; min-height: 44px; padding: 0 17px; text-transform: uppercase; transition: all 0.25s ease; }

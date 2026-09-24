@@ -155,12 +155,17 @@
 }
 
 .admin-chevron {
-    font-size: 22px;
+    font-size: 14px;
     color: var(--roxo-claro);
     line-height: 1;
     min-width: 20px;
     text-align: center;
-    transition: transform var(--transicao-suave);
+    display: inline-block;
+    transition: transform 0.25s ease;
+}
+
+.admin-chevron.aberto {
+    transform: rotate(180deg);
 }
 
 /* ---- Corpo da seção ---- */

@@ -181,25 +181,31 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+#pagina-criar-torneio .regras-lista li button:hover {
+  color: #ff7777;
 }
 
 /* --- Mensagens de feedback --- */
 #pagina-criar-torneio .criar-torneio-mensagem {
   font-size: 14px;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 #pagina-criar-torneio .criar-torneio-mensagem.erro {
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  color: #fca5a5;
+  background: rgba(255, 85, 85, 0.1);
+  border: 1px solid #ff5555;
+  color: #ff7777;
 }
 
 #pagina-criar-torneio .criar-torneio-mensagem.sucesso {
-  background: rgba(74, 222, 128, 0.12);
-  border: 1px solid rgba(74, 222, 128, 0.4);
-  color: #86efac;
+  background: rgba(46, 213, 115, 0.1);
+  border: 1px solid #2ed573;
+  color: #2ed573;
 }
 
 /* --- Ações do formulário --- */

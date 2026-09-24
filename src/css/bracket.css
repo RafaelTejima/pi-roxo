@@ -281,9 +281,9 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   cursor: pointer;
-  border: 1px solid rgba(157, 78, 221, 0.45);
-  background: rgba(114, 62, 195, 0.15);
-  color: var(--roxo-claro, #9d4edd);
+  border: 1px solid var(--roxo-claro, #b565f2);
+  background: rgba(114, 62, 195, 0.4);
+  color: #fff;
   transition: all 0.25s ease;
   font-family: inherit;
   white-space: nowrap;

@@ -200,6 +200,7 @@ button:focus-visible {
     line-height: 1.7;
     max-width: 620px;
     margin: 0 auto 42px;
+    text-wrap: balance;
 }
 
 .hero-botoes {
@@ -374,6 +375,11 @@ button:focus-visible {
     border-radius: 16px;
     border: 1px solid rgba(157, 78, 221, 0.3);
     transition: transform var(--transicao-suave), border-color var(--transicao-suave);
+}
+
+.card-info .icone-card {
+    background: rgba(255, 212, 59, 0.08);
+    border: 1px solid rgba(255, 212, 59, 0.25);
 }
 
 .icone-card .icone-svg {
@@ -609,14 +615,15 @@ button:focus-visible {
 
 .auth-redirect a {
     color: var(--roxo-claro);
-    text-decoration: none;
+    text-underline-offset: 3px;
+    text-decoration: underline rgba(157, 78, 221, 0.5);
     font-weight: 600;
-    transition: color var(--transicao-suave);
+    transition: color var(--transicao-suave), text-decoration-color var(--transicao-suave);
 }
 
 .auth-redirect a:hover {
     color: #ffffff;
-    text-decoration: underline;
+    text-decoration-color: var(--roxo-vivo, #b565f2);
 }
 
 @media (max-width: 480px) {

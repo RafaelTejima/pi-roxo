@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import '../css/torneios.css'
 import '../css/bracket.css'
+import terroristModelImg from '../../imagens/png-transparent-csgo-terrorist-model.png'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -543,6 +544,15 @@ export default function Torneios() {
           ))}
         </div>
       )}
+
+      <div className="torneios-personagem-wrap" aria-hidden="true">
+        <img 
+          src={terroristModelImg} 
+          alt="Agente CS" 
+          className="torneios-personagem-img" 
+        />
+      </div>
     </main>
+
   )
 }

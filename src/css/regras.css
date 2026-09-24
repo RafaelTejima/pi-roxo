@@ -124,7 +124,7 @@
 }
 
 .accordion-item.ativo .accordion-body {
-    max-height: 220px;
+    max-height: 500px;
     padding: 20px 25px 25px 25px;
     border-top: 1px solid rgba(157, 78, 221, 0.12);
 }

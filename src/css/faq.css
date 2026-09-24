@@ -160,7 +160,7 @@
 }
 
 .accordion-item.ativo .accordion-body {
-    max-height: 220px;
+    max-height: 500px;
     padding: 20px 25px 25px 25px;
     border-top: 1px solid rgba(157, 78, 221, 0.12);
 }
@@ -186,6 +186,10 @@
 }
 
 @media (max-width: 480px) {
+    .categoria-faq {
+        margin-bottom: 32px;
+    }
+
     .secao-titulo h1 {
         font-size: 28px;
         letter-spacing: 0;
