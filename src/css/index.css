@@ -38,7 +38,27 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
+/* ================= Ícones SVG & Font Awesome ================= */
+.icone-svg, .icone-grafico, .icone-ferramentas {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 
+.icone-fogo {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Para garantir o hover que existia no ícone de usuário */
+.icone-usuario {
+  transition: transform 0.2s ease;
+}
+.icone-usuario:hover {
+  transform: scale(1.1);
+}
 
 /* ================= Hero & Carrossel ================= */
 .hero {
@@ -145,7 +165,9 @@ button:focus-visible {
 }
 
 .badge-temporada {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: rgba(157, 78, 221, 0.15);
     border: 1px solid rgba(157, 78, 221, 0.6);
     color: #e9d5ff;
@@ -348,9 +370,19 @@ button:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     border-radius: 16px;
     border: 1px solid rgba(157, 78, 221, 0.3);
     transition: transform var(--transicao-suave), border-color var(--transicao-suave);
+}
+
+.icone-card .icone-svg {
+    width: 2rem;
+    height: 2rem;
+}
+
+.icone-card .icone-grafico {
+    font-size: 2rem;
 }
 
 .card-info:hover .icone-card {
