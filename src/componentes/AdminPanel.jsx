@@ -15,7 +15,7 @@ const TABELAS_CONHECIDAS = [
 ];
 
 // Colunas que nunca devem ser exibidas por segurança
-const COLUNAS_OCULTAS = ['senha', 'password', 'hash', 'token', 'secret'];
+const COLUNAS_OCULTAS = ['password', 'hash', 'token', 'secret'];
 
 function ocultarColuna(col) {
   return COLUNAS_OCULTAS.some((c) => col.toLowerCase().includes(c));
@@ -314,7 +314,7 @@ export default function AdminPanel() {
         if (usuario && usuario.id) {
           const { data } = await supabase
             .from('usuarios')
-            .select('admin, nome, email')
+            .select('admin, nome, email, senha')
             .eq('id', usuario.id)
             .single();
 
@@ -383,7 +383,7 @@ export default function AdminPanel() {
           </p>
         </div>
         <div className="admin-topo-usuario">
-          <span className="admin-usuario-nome">{usuarioLogado.nome || usuarioLogado.email}</span>
+          <span className="admin-usuario-nome">{usuarioLogado.nome || usuarioLogado.email || usuarioLogado.senha}</span>
           <Link to="/" className="admin-btn-voltar-nav">Voltar ao site</Link>
         </div>
       </div>
