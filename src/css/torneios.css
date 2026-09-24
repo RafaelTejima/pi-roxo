@@ -9,8 +9,9 @@
   margin: 160px auto 110px;
   padding: 0 20px;
   position: relative;
-  overflow-x: hidden;
+  overflow: visible;
 }
+
 
 /* --- Cabeçalho / Título da Página de Torneios --- */
 .tournaments-heading {
@@ -83,7 +84,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
+  position: relative;
+  z-index: 2;
 }
+
 
 /* --- Card de Torneio --- */
 .tournament-card {
@@ -434,34 +438,50 @@
   z-index: 2;
 }
 
-/* --- Agente de CS (Personagem no Canto Inferior Esquerdo) --- */
+/* --- Agente de CS (Posicionado na Lateral Esquerda conforme mockup) --- */
 .torneios-personagem-wrap {
   position: absolute;
-  bottom: 0;
-  left: 12px;
+  top: 180px;
+  left: -400px;
   right: auto;
+  bottom: auto;
   z-index: 1;
   pointer-events: none;
-  width: clamp(260px, 26vw, 380px);
-  opacity: 0.9;
-  filter: drop-shadow(4px 10px 24px rgba(0, 0, 0, 0.7));
+  width: clamp(380px, 32vw, 480px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  opacity: 0.95;
+  filter: drop-shadow(0 14px 35px rgba(0, 0, 0, 0.85));
   transition: all 0.3s ease;
 }
 
 .torneios-personagem-img {
   width: 100%;
   height: auto;
-  display: block;
   object-fit: contain;
-  vertical-align: bottom;
+  display: block;
 }
 
 /* --- Responsividade --- */
-@media (max-width: 1024px) {
+@media (max-width: 1550px) {
   .torneios-personagem-wrap {
-    width: 200px;
-    left: 4px;
-    opacity: 0.4;
+    left: -200px;
+    width: 320px;
+  }
+}
+
+@media (max-width: 1380px) {
+  .torneios-personagem-wrap {
+    left: -140px;
+    width: 270px;
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 1100px) {
+  .torneios-personagem-wrap {
+    display: none;
   }
 }
 
@@ -484,10 +504,10 @@
   .tournaments-heading h1 {
     font-size: 34px;
   }
-
-  .torneios-personagem-wrap {
-    display: none;
-  }
 }
+
+
+
+
 
 

@@ -1,9 +1,20 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import armaazul from '../../imagens/armaazul.png';
 import tiroem2 from '../../imagens/tiroem2.jpg';
 import dandotiro from '../../imagens/dandotiro.jpg';
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  const handleCriarEquipe = () => {
+    const usuarioLogado = localStorage.getItem('usuarioLogado');
+    if (usuarioLogado) {
+      navigate('/perfil');
+    } else {
+      navigate('/cadastro');
+    }
+  };
+
   return (
     <>
       {/* Seção Principal (Hero com Carrossel Automático) */}
@@ -41,12 +52,13 @@ export default function Home() {
             <Link to="/torneios" className="botao-principal">
               VER TORNEIOS ATIVOS
             </Link>
-            <Link to="/cadastro" className="botao-secundario">
+            <button type="button" onClick={handleCriarEquipe} className="botao-secundario">
               CRIAR SUA EQUIPE
-            </Link>
+            </button>
           </div>
         </div>
       </main>
+
 
       {/* Estatísticas Rápidas da Plataforma */}
       <section className="stats-bar">
