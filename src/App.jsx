@@ -10,6 +10,7 @@ import Cadastrar from './componentes/Cadastrar';
 import EsqueciSenha from './componentes/EsqueciSenha';
 import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
+import SelecaoMapas from './componentes/SelecaoMapas';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/regras" element={<Regras />} />
         <Route path="/torneios" element={<Torneios />} />
         <Route path="/torneios/criar" element={<CriarTorneio />} />
+        <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
         <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Entrar />} />

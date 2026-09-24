@@ -2,6 +2,14 @@
 
 Este arquivo eh escrito e mantido apenas por IAs para registrar features ja implementadas no projeto.
 
+## Pagina de Selecao de Mapas
+- **Componente:** `src/componentes/SelecaoMapas.jsx` (rota `/torneios/:id/mapa`)
+- **CSS:** `src/css/selecao-mapas.css` (escopado por `#selecao-mapas`)
+- Tela responsiva com grid de mapas usando placeholders `placehold.co`, selecao unica e destaque visual roxo.
+- Pesquisa por nome, filtro por categoria, limpeza dos filtros e contagem de resultados implementados com React.
+- Painel de detalhes atualizado conforme o mapa selecionado, com categoria, formato, rodadas e descricao.
+- Confirmacao do mapa exibida em modal; link para a tela adicionado aos detalhes do torneio.
+
 ## Pagina de Criacao de Torneio
 - **Componente:** `src/componentes/CriarTorneio.jsx` (rota `/torneios/criar`)
 - **CSS:** `src/css/criar-torneio.css` (escopado por `#pagina-criar-torneio`)
