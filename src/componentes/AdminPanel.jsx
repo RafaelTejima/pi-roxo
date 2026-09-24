@@ -11,7 +11,6 @@ const TABELAS_CONHECIDAS = [
   { nome: 'mapas',       label: 'Mapas',       icone: 'M', descricao: 'Mapas de CS2 disponiveis' },
   { nome: 'partidas',    label: 'Partidas',    icone: 'P', descricao: 'Partidas e confrontos do bracket' },
   { nome: 'inscricoes',  label: 'Inscrições',  icone: 'I', descricao: 'Inscrições de times em torneios' },
-  { nome: 'amigos',      label: 'Amigos',      icone: 'A', descricao: 'Relações de amizade entre usuários' },
 ];
 
 // Colunas que nunca devem ser exibidas por segurança
@@ -197,19 +196,19 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                           {colunas.map((col) => (
                             <td key={col}>
                               {estaEditando && col !== 'id' ? (
-                                col === 'admin' ? (
+                                col === 'admin' || col.toLowerCase().includes('status') ? (
                                   <label className="admin-switch">
                                     <input
                                       type="checkbox"
                                       checked={camposEdicao[col] === true || camposEdicao[col] === 'true'}
                                       onChange={(e) => {
-                                        if (tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id && !e.target.checked) {
+                                        if (col === 'admin' && tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id && !e.target.checked) {
                                           alert('Voce nao pode remover seu proprio acesso de administrador.');
                                           return;
                                         }
                                         setCamposEdicao((prev) => ({ ...prev, [col]: e.target.checked }));
                                       }}
-                                      disabled={tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id}
+                                      disabled={col === 'admin' && tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id}
                                     />
                                     <span className="admin-slider"></span>
                                   </label>
