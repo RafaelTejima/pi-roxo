@@ -367,9 +367,18 @@
     transition: border-color 0.2s;
 }
 
-.admin-input-edicao:focus {
-    outline: none;
+input:checked + .admin-input-edicao{
+    background-color: var(--roxo-claro);
     border-color: var(--roxo-vivo);
+} 
+
+input:checked + .admin-input-edicao:before{
+    transform: translateX(16px);
+}
+
+input:checked + .admin-input-edicao{
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ---- Badges ---- */
