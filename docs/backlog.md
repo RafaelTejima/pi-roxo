@@ -22,3 +22,12 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
   - Link "Criar Torneio" tambem adicionado no `Menu.jsx` (visivel apenas para usuario logado, ao lado do botao de Painel Admin).
   - A rota `/torneios/criar` foi registrada em `App.jsx` **antes** de `/torneios/:id` para nao ser capturada pela rota dinamica de detalhes.
 - O navbar proprio pedido em `docs/pagina_criacao_torneio.md` nao foi recriado porque o projeto ja usa um `Menu` global (via `App.jsx`) compartilhado entre todas as paginas, seguindo o padrao ja usado por `Torneios.jsx`, `Regras.jsx`, etc.
+
+## Pagina de Criacao de Equipe
+- **Componente:** `src/componentes/CriarEquipe.jsx` (rota `/equipes/criar`)
+- **CSS:** `src/css/criar-equipe.css` (escopado por `#pagina-criar-equipe`)
+- Formulario responsivo com nome, sigla, descricao, torneio aberto e busca de jogadores por nome ou e-mail.
+- Usuario autenticado pelo `localStorage` `usuarioLogado` entra automaticamente como capitao; usuarios nao autenticados sao direcionados para `/login`.
+- Torneios abertos sao buscados na tabela `tournaments`; jogadores sao buscados na tabela `usuarios`.
+- No envio, insere a equipe em `teams`, seus membros em `team_members` e a inscricao em `tournament_teams` usando `src/supabase.js`.
+- Possui validacao de campos obrigatorios, sigla, quantidade minima de jogadores, duplicidade de jogadores e estados de carregamento, erro e sucesso.
