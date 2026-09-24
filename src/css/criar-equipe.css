@@ -1,0 +1,55 @@
+#pagina-criar-equipe {
+  max-width: 760px;
+  margin: 155px auto 100px;
+  padding: 0 20px;
+}
+
+#pagina-criar-equipe .criar-equipe-heading { margin-bottom: 40px; text-align: center; }
+#pagina-criar-equipe .criar-equipe-overline { margin-bottom: 14px; color: #b565f2; font-size: 11px; font-weight: 800; letter-spacing: 2px; }
+#pagina-criar-equipe .criar-equipe-heading h1 { margin-bottom: 14px; color: #fff; font-size: clamp(2.2rem, 5vw, 52px); line-height: 1.05; }
+#pagina-criar-equipe .criar-equipe-heading h1 span { color: #a266df; }
+#pagina-criar-equipe .criar-equipe-heading > p:last-child { color: #aaa1b5; font-size: 15px; }
+#pagina-criar-equipe .criar-equipe-form { display: flex; flex-direction: column; gap: 22px; padding: 34px; border: 1px solid rgba(157, 78, 221, .24); border-radius: 18px; background: rgba(18, 13, 30, .72); box-shadow: 0 16px 45px rgba(0, 0, 0, .35); }
+#pagina-criar-equipe .criar-equipe-secao { display: flex; flex-direction: column; gap: 17px; padding-bottom: 25px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+#pagina-criar-equipe .criar-equipe-secao:last-of-type { padding-bottom: 2px; border-bottom: 0; }
+#pagina-criar-equipe .criar-equipe-secao-titulo { display: flex; align-items: flex-start; gap: 13px; }
+#pagina-criar-equipe .criar-equipe-secao-titulo > span { color: #b565f2; font-size: 12px; font-weight: 800; }
+#pagina-criar-equipe .criar-equipe-secao-titulo h2 { margin: 0 0 4px; color: #f4eafd; font-size: 19px; }
+#pagina-criar-equipe .criar-equipe-secao-titulo p { color: #8e8498; font-size: 12px; }
+#pagina-criar-equipe .criar-equipe-form label { display: flex; flex-direction: column; gap: 8px; color: #cfc5d8; font-size: 12px; font-weight: 700; }
+#pagina-criar-equipe .campo-opcional { color: #83788d; font-size: 10px; font-weight: 400; }
+#pagina-criar-equipe .criar-equipe-campos { display: grid; grid-template-columns: 1fr 160px; gap: 16px; }
+#pagina-criar-equipe input, #pagina-criar-equipe textarea, #pagina-criar-equipe select { width: 100%; padding: 13px 14px; color: #fff; border: 1px solid rgba(157, 78, 221, .3); border-radius: 8px; outline: 0; background: rgba(255, 255, 255, .04); font: inherit; font-size: 13px; }
+#pagina-criar-equipe input:focus, #pagina-criar-equipe textarea:focus, #pagina-criar-equipe select:focus { border-color: #b565f2; box-shadow: 0 0 0 3px rgba(114, 62, 195, .18); }
+#pagina-criar-equipe textarea { min-height: 90px; resize: vertical; }
+#pagina-criar-equipe select option { color: #fff; background: #1b1228; }
+#pagina-criar-equipe .jogador-capitao { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; border: 1px solid rgba(61, 214, 140, .28); border-radius: 8px; background: rgba(61, 214, 140, .07); color: #e9f8ee; font-size: 13px; }
+#pagina-criar-equipe .jogador-capitao span { color: #5fe19a; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+#pagina-criar-equipe .buscar-jogador { display: flex; gap: 10px; }
+#pagina-criar-equipe .buscar-jogador button, #pagina-criar-equipe .criar-equipe-enviar { padding: 12px 18px; border: 0; border-radius: 8px; color: #fff; background: #723ec3; cursor: pointer; font-weight: 700; white-space: nowrap; }
+#pagina-criar-equipe .buscar-jogador button:hover, #pagina-criar-equipe .criar-equipe-enviar:hover:not(:disabled) { background: #8c52d6; }
+#pagina-criar-equipe .resultados-jogadores { display: flex; flex-direction: column; gap: 7px; }
+#pagina-criar-equipe .resultados-jogadores button { display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; color: #fff; border: 1px solid rgba(157, 78, 221, .3); border-radius: 7px; background: rgba(114, 62, 195, .12); cursor: pointer; text-align: left; }
+#pagina-criar-equipe .resultados-jogadores button:hover { border-color: #b565f2; }
+#pagina-criar-equipe .resultados-jogadores span, #pagina-criar-equipe .jogador-item small { color: #9f93aa; font-size: 11px; font-weight: 400; }
+#pagina-criar-equipe .lista-jogadores { display: flex; flex-direction: column; gap: 8px; }
+#pagina-criar-equipe .jogador-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 13px; border-radius: 7px; background: rgba(255, 255, 255, .04); color: #ede7f2; font-size: 13px; }
+#pagina-criar-equipe .jogador-item span { display: flex; flex-direction: column; gap: 3px; }
+#pagina-criar-equipe .jogador-item button { border: 0; color: #f4a4b3; background: none; cursor: pointer; font-size: 11px; }
+#pagina-criar-equipe .criar-equipe-aviso { color: #8e8498; font-size: 12px; }
+#pagina-criar-equipe .criar-equipe-mensagem { padding: 11px 14px; border-radius: 7px; font-size: 13px; }
+#pagina-criar-equipe .criar-equipe-mensagem.erro { color: #f6b1bd; border: 1px solid rgba(248, 113, 113, .4); background: rgba(248, 113, 113, .1); }
+#pagina-criar-equipe .criar-equipe-mensagem.sucesso { color: #94efb0; border: 1px solid rgba(74, 222, 128, .4); background: rgba(74, 222, 128, .1); }
+#pagina-criar-equipe .criar-equipe-acoes { display: flex; justify-content: flex-end; gap: 13px; padding-top: 2px; }
+#pagina-criar-equipe .criar-equipe-cancelar { display: flex; align-items: center; padding: 12px 19px; color: #d9c3ec; border: 1px solid rgba(157, 78, 221, .3); border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; }
+#pagina-criar-equipe .criar-equipe-enviar:disabled { cursor: wait; opacity: .65; }
+
+@media (max-width: 620px) {
+  #pagina-criar-equipe { margin-top: 125px; }
+  #pagina-criar-equipe .criar-equipe-form { padding: 24px 18px; }
+  #pagina-criar-equipe .criar-equipe-campos { grid-template-columns: 1fr; }
+  #pagina-criar-equipe .buscar-jogador { flex-direction: column; }
+  #pagina-criar-equipe .buscar-jogador button, #pagina-criar-equipe .criar-equipe-enviar { width: 100%; }
+  #pagina-criar-equipe .criar-equipe-acoes { flex-direction: column-reverse; }
+  #pagina-criar-equipe .criar-equipe-cancelar { justify-content: center; }
+}
