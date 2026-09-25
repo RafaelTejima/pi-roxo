@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation, useNavigate } from 'react-router-dom'
+import { supabase } from '../supabase'
 import '../css/selecao-mapas.css'
 
 const mapas = [
@@ -72,10 +73,42 @@ const categorias = ['Todos', ...new Set(mapas.map((mapa) => mapa.categoria))]
 
 export default function SelecaoMapas() {
   const { id: torneioId } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+
   const [pesquisa, setPesquisa] = useState('')
   const [categoria, setCategoria] = useState('Todos')
   const [mapaSelecionado, setMapaSelecionado] = useState(null)
   const [confirmado, setConfirmado] = useState(false)
+
+  async function handleFinalizar() {
+    const dadosState = location.state?.dadosTorneio
+    const dadosLocal = localStorage.getItem('dadosTorneioEmCriacao')
+    const dadosTorneio = dadosState || (dadosLocal ? JSON.parse(dadosLocal) : null)
+
+    if (dadosTorneio && supabase) {
+      const mapaNome = mapaSelecionado ? mapaSelecionado.nome : 'Mirage'
+      const regrasComMapa = `${dadosTorneio.rules || ''}\n- Mapa oficial: ${mapaNome}`
+
+      try {
+        await supabase.from('tournaments').insert({
+          name: dadosTorneio.name,
+          tournament_date: dadosTorneio.tournament_date,
+          prize: Number(dadosTorneio.prize),
+          rules: regrasComMapa,
+          status: 'open',
+          teams_count: 0,
+        })
+      } catch (err) {
+        console.error(err)
+      }
+
+      localStorage.removeItem('dadosTorneioEmCriacao')
+    }
+
+    setConfirmado(false)
+    navigate('/torneios')
+  }
 
   const mapasFiltrados = useMemo(() => {
     const termo = pesquisa.trim().toLowerCase()
@@ -94,6 +127,7 @@ export default function SelecaoMapas() {
   function selecionarMapa(mapa) {
     setMapaSelecionado(mapa)
   }
+
 
   return (
     <main id="selecao-mapas">
@@ -203,7 +237,7 @@ export default function SelecaoMapas() {
             <h2 id="titulo-confirmacao">{mapaSelecionado.nome} confirmado</h2>
             <p>O mapa foi selecionado para a configuração desta partida do torneio.</p>
             <div className="selecao-mapas-modal-acoes">
-              <button className="selecao-mapas-botao-principal" type="button" onClick={() => setConfirmado(false)}>Continuar</button>
+              <button className="selecao-mapas-botao-principal" type="button" onClick={handleFinalizar}>Continuar</button>
               <Link className="selecao-mapas-link-modal" to={torneioId ? `/torneios/${torneioId}` : '/torneios'}>Ver torneio</Link>
             </div>
           </section>

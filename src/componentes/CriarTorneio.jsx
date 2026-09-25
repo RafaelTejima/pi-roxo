@@ -31,7 +31,7 @@ export default function CriarTorneio() {
     setRegras((prev) => prev.filter((_, i) => i !== index))
   }
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault()
     setErro('')
     setSucesso('')
@@ -42,31 +42,26 @@ export default function CriarTorneio() {
     }
 
     if (regras.length === 0) {
-      setErro('Adicione ao menos uma regra antes de enviar o torneio.')
+      setErro('Adicione ao menos uma regra antes de continuar.')
       return
     }
 
-    setEnviando(true)
-
-    const { error } = await supabase.from('tournaments').insert({
+    const formData = {
       name: nome.trim(),
       tournament_date: dataHora,
       prize: Number(premio),
       rules: regras.map((regra) => `- ${regra}`).join('\n'),
       status: 'open',
       teams_count: 0,
-    })
-
-    setEnviando(false)
-
-    if (error) {
-      setErro('Não foi possível criar o torneio. Tente novamente.')
-      return
     }
 
-    setSucesso('Torneio criado com sucesso!')
-    setTimeout(() => navigate('/torneios'), 1200)
+    // Armazena temporariamente no localStorage para sincronia de etapas
+    localStorage.setItem('dadosTorneioEmCriacao', JSON.stringify(formData))
+
+    // Navega para a seleção de mapas passando os dados do torneio no state
+    navigate('/selecao-mapas', { state: { dadosTorneio: formData } })
   }
+
 
   return (
     <main id="pagina-criar-torneio">
@@ -159,10 +154,11 @@ export default function CriarTorneio() {
 
         <div className="criar-torneio-acoes">
           <Link to="/torneios" className="botao-cancelar">Cancelar</Link>
-          <button type="submit" className="botao-enviar" disabled={enviando}>
-            {enviando ? 'Enviando...' : 'Criar torneio'}
+          <button type="submit" className="botao-enviar">
+            Continuar
           </button>
         </div>
+
       </form>
     </main>
   )
