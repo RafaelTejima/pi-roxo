@@ -1,0 +1,406 @@
+#pagina-suporte {
+  position: relative;
+  isolation: isolate;
+  min-height: 70vh;
+  padding: 142px 24px 110px;
+  overflow: hidden;
+  color: #f5f1fa;
+  background:
+    radial-gradient(ellipse at 78% 8%, rgba(114, 62, 195, 0.17), transparent 38%),
+    linear-gradient(135deg, #09070e 0%, #100b18 53%, #09070e 100%);
+}
+
+#pagina-suporte::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  width: min(48vw, 680px);
+  height: 400px;
+  background-image: linear-gradient(rgba(194, 160, 244, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(194, 160, 244, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  content: "";
+  mask-image: linear-gradient(to left, black, transparent);
+  pointer-events: none;
+}
+
+#pagina-suporte .suporte-conteudo {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+#pagina-suporte .suporte-cabecalho {
+  max-width: 760px;
+  margin-bottom: 42px;
+}
+
+#pagina-suporte .suporte-etiqueta,
+#pagina-suporte .suporte-passo {
+  color: #b89cdb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+#pagina-suporte .suporte-etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 17px;
+}
+
+#pagina-suporte .suporte-etiqueta span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a983e2;
+  box-shadow: 0 0 14px rgba(169, 131, 226, 0.7);
+}
+
+#pagina-suporte .suporte-cabecalho h1 {
+  margin-bottom: 12px;
+  color: #fff;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 800;
+  line-height: 1.04;
+}
+
+#pagina-suporte .suporte-introducao {
+  max-width: 610px;
+  color: #b9b1c4;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+#pagina-suporte .suporte-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(250px, 0.75fr);
+  align-items: start;
+  gap: 56px;
+}
+
+#pagina-suporte .suporte-formulario {
+  min-width: 0;
+  padding: 34px;
+  border: 1px solid rgba(199, 177, 226, 0.16);
+  border-radius: 6px;
+  background: rgba(19, 15, 26, 0.78);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+#pagina-suporte .suporte-formulario-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+#pagina-suporte .suporte-formulario-topo h2,
+#pagina-suporte .suporte-lateral h2 {
+  margin-top: 8px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+#pagina-suporte .suporte-obrigatorios,
+#pagina-suporte .suporte-opcional {
+  color: #958ca0;
+  font-size: 12px;
+}
+
+#pagina-suporte .suporte-obrigatorios {
+  padding-top: 3px;
+}
+
+#pagina-suporte .suporte-obrigatorios::first-letter,
+#pagina-suporte .suporte-campo label span {
+  color: #bf9bf0;
+}
+
+#pagina-suporte .suporte-campos-duplos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+#pagina-suporte .suporte-campo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+#pagina-suporte .suporte-campo label {
+  color: #e9e3f0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#pagina-suporte .suporte-campo input,
+#pagina-suporte .suporte-campo select,
+#pagina-suporte .suporte-campo textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid #393141;
+  border-radius: 4px;
+  outline: none;
+  background: #100d15;
+  color: #f6f2fa;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+#pagina-suporte .suporte-campo textarea {
+  min-height: 142px;
+  resize: vertical;
+}
+
+#pagina-suporte .suporte-campo input::placeholder,
+#pagina-suporte .suporte-campo textarea::placeholder {
+  color: #77707f;
+}
+
+#pagina-suporte .suporte-campo input:focus,
+#pagina-suporte .suporte-campo select:focus,
+#pagina-suporte .suporte-campo textarea:focus {
+  border-color: #a477df;
+  box-shadow: 0 0 0 3px rgba(114, 62, 195, 0.2);
+}
+
+#pagina-suporte .suporte-campo select:invalid {
+  color: #938b9c;
+}
+
+#pagina-suporte .suporte-ajuda-campo {
+  color: #8f8798;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+#pagina-suporte .suporte-divisor {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 10px 0 24px;
+}
+
+#pagina-suporte .suporte-linha {
+  height: 1px;
+  flex: 1;
+  background: #302838;
+}
+
+#pagina-suporte .suporte-aviso-denuncia {
+  margin: -5px 0 20px;
+  padding: 12px 14px;
+  border-left: 2px solid #a477df;
+  background: rgba(114, 62, 195, 0.12);
+  color: #d5c7e5;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#pagina-suporte .suporte-enviar-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+#pagina-suporte .suporte-enviar-area p {
+  max-width: 185px;
+  color: #948b9e;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+#pagina-suporte .suporte-botao-enviar {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  padding: 0 19px;
+  border: 1px solid #8b5dca;
+  border-radius: 3px;
+  background: #723ec3;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+#pagina-suporte .suporte-botao-enviar:hover {
+  transform: translateY(-1px);
+  background: #8050ca;
+}
+
+#pagina-suporte .suporte-botao-enviar span:last-child {
+  font-size: 17px;
+}
+
+#pagina-suporte .suporte-mensagem {
+  margin-top: 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(146, 204, 166, 0.35);
+  background: rgba(71, 132, 91, 0.12);
+  color: #b8e2c5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#pagina-suporte .suporte-lateral {
+  padding-top: 12px;
+}
+
+#pagina-suporte .suporte-lateral-bloco {
+  padding: 18px 0 25px;
+}
+
+#pagina-suporte .suporte-lateral h2 {
+  margin-bottom: 12px;
+  font-size: 21px;
+}
+
+#pagina-suporte .suporte-lateral-bloco p {
+  margin-bottom: 15px;
+  color: #aaa1b5;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+#pagina-suporte .suporte-lateral-bloco a {
+  color: #c6a8ef;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration-color: rgba(198, 168, 239, 0.45);
+  text-underline-offset: 4px;
+}
+
+#pagina-suporte .suporte-lateral-divisor {
+  height: 1px;
+  background: linear-gradient(90deg, #604288, rgba(96, 66, 136, 0.12));
+}
+
+#pagina-suporte .suporte-denuncia-bloco h3 {
+  margin: 10px 0;
+  color: #f3edf9;
+  font-size: 17px;
+}
+
+#pagina-suporte .suporte-link-faq {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 0;
+  border-top: 1px solid #302838;
+  color: #e5d8f5;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+#pagina-suporte .suporte-link-faq span:last-child {
+  color: #bd9be9;
+  font-size: 16px;
+}
+
+#pagina-suporte a:focus-visible,
+#pagina-suporte button:focus-visible,
+#pagina-suporte input:focus-visible,
+#pagina-suporte select:focus-visible,
+#pagina-suporte textarea:focus-visible {
+  outline: 2px solid #bd9be9;
+  outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  #pagina-suporte {
+    padding: 128px 20px 80px;
+  }
+
+  #pagina-suporte .suporte-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  #pagina-suporte .suporte-lateral {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+    padding: 0 8px;
+  }
+
+  #pagina-suporte .suporte-lateral-divisor {
+    display: none;
+  }
+
+  #pagina-suporte .suporte-link-faq {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  #pagina-suporte {
+    padding: 112px 15px 60px;
+  }
+
+  #pagina-suporte .suporte-cabecalho {
+    margin-bottom: 28px;
+  }
+
+  #pagina-suporte .suporte-cabecalho h1 {
+    font-size: 38px;
+  }
+
+  #pagina-suporte .suporte-introducao {
+    font-size: 14px;
+  }
+
+  #pagina-suporte .suporte-formulario {
+    padding: 22px 17px;
+  }
+
+  #pagina-suporte .suporte-campos-duplos {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  #pagina-suporte .suporte-obrigatorios {
+    max-width: 76px;
+    text-align: right;
+  }
+
+  #pagina-suporte .suporte-divisor {
+    gap: 9px;
+  }
+
+  #pagina-suporte .suporte-passo {
+    font-size: 10px;
+  }
+
+  #pagina-suporte .suporte-lateral {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #pagina-suporte .suporte-enviar-area {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #pagina-suporte .suporte-enviar-area p {
+    max-width: none;
+    text-align: left;
+  }
+}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 
 export default function Cadastrar() {
+  const [nome, setNome] = useState('');
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -17,14 +18,22 @@ export default function Cadastrar() {
       return;
     }
 
+    const regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{9,}$/;
+    if (!regexSenha.test(senha)) {
+      alert("A senha precisa ter mais de 8 caracteres, números, letra maiúscula e um caractere especial!");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase
       .from('usuarios')
       .insert([
         {
-          nome: nomeUsuario,
+          nome: nome,
+          nome_usuario: nomeUsuario,
           email: email,
-          senha: senha
+          senha: senha,
+          admin: email.includes('@admin')
         }
       ]);
 
@@ -51,6 +60,16 @@ export default function Cadastrar() {
       <div className="auth-card">
         <h2>Cadastrar</h2>
         <form className="auth-form" onSubmit={handleCadastrar}>
+          <div className="input-group">
+            <label>Nome completo</label>
+            <input
+              type="text"
+              placeholder="Digite seu nome completo"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+            />
+          </div>
           <div className="input-group">
             <label>Nome de usuário</label>
             <input

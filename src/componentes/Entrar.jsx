@@ -12,11 +12,11 @@ export default function Entrar() {
     e.preventDefault();
     setLoading(true);
 
-    // Busca por email ou nome
+    // Busca por email ou nome_usuario
     const { data, error } = await supabase
       .from('usuarios')
       .select('*')
-      .or(`email.eq."${identificador}",nome.eq."${identificador}"`)
+      .or(`email.eq."${identificador}",nome_usuario.eq."${identificador}"`)
       .eq('senha', senha)
       .single();
 

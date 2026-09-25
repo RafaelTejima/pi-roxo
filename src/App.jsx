@@ -6,6 +6,7 @@ import Torneios from './componentes/Torneios';
 import CriarTorneio from './componentes/CriarTorneio';
 import CriarEquipe from './componentes/CriarEquipe';
 import Faq from './componentes/Faq';
+import Suporte from './componentes/Suporte';
 import Entrar from './componentes/Entrar';
 import Cadastrar from './componentes/Cadastrar';
 import EsqueciSenha from './componentes/EsqueciSenha';
@@ -13,7 +14,7 @@ import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
 import SelecaoMapas from './componentes/SelecaoMapas';
-
+import ListaAmigos from './componentes/ListaAmigos';
 function App() {
   return (
     <Menu>
@@ -29,6 +30,7 @@ function App() {
         <Route path="/selecao-mapas" element={<SelecaoMapas />} />
         <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
+        <Route path="/suporte" element={<Suporte />} />
         <Route path="/login" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastrar />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
@@ -36,6 +38,7 @@ function App() {
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/perfil" element={<Perfil />} />
       </Routes>
+      <ListaAmigos />
     </Menu>
   );
 }

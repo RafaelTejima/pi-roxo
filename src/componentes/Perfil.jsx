@@ -1,37 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase.js';
 import '../css/perfil.css';
-
-const amigosIniciais = [
-  { id: 1, nome: 'Lucas Silva', equipe: 'Vortex Gaming', status: 'online', imagem: 'https://placehold.co/96x96/291547/ffffff?text=LS' },
-  { id: 2, nome: 'Ana Costa', equipe: 'Nexus Five', status: 'online', imagem: 'https://placehold.co/96x96/42206b/ffffff?text=AC' },
-  { id: 3, nome: 'Rafael Lima', equipe: 'Sem equipe', status: 'offline', imagem: 'https://placehold.co/96x96/17121f/ffffff?text=RL' },
-];
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const [amigos, setAmigos] = useState(amigosIniciais);
-  const [bloqueados, setBloqueados] = useState([]);
+  const [usuario, setUsuario] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  function alternarBloqueio(amigoId) {
-    setBloqueados((atuais) => atuais.includes(amigoId)
-      ? atuais.filter((id) => id !== amigoId)
-      : [...atuais, amigoId]);
-  }
+  useEffect(() => {
+    async function carregarPerfil() {
+      const salvo = localStorage.getItem('usuarioLogado');
+      if (!salvo) {
+        navigate('/login');
+        return;
+      }
+      
+      const userLocal = JSON.parse(salvo);
+      if (!userLocal.id) {
+        navigate('/login');
+        return;
+      }
 
-  function removerAmigo(amigoId) {
-    setAmigos((atuais) => atuais.filter((amigo) => amigo.id !== amigoId));
-  }
+      // Busca dados atualizados do banco (omite email, senha, etc)
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('nome, nome_usuario, time_usuario, bio, imagem, registro')
+        .eq('id', userLocal.id)
+        .single();
 
-  function adicionarAmigo() {
-    window.alert('A busca de amigos será conectada à API na próxima etapa.');
-  }
+      if (data) {
+        setUsuario(data);
+      }
+      setLoading(false);
+    }
+    carregarPerfil();
+  }, [navigate]);
 
   function sair() {
     if (window.confirm('Deseja realmente sair da sua conta?')) {
+      localStorage.removeItem('usuarioLogado');
       navigate('/');
+      // Dispara um evento para atualizar o Menu
+      window.dispatchEvent(new Event('storage'));
     }
   }
+
+  if (loading) {
+    return (
+      <main id="perfil-page" className="perfil-page">
+        <div className="perfil-container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <h2 style={{ color: 'var(--roxo-claro)' }}>Carregando perfil...</h2>
+        </div>
+      </main>
+    );
+  }
+
+  if (!usuario) return null;
+
+  const dataRegistro = new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
   return (
     <main id="perfil-page" className="perfil-page">
@@ -40,7 +68,7 @@ export default function Perfil() {
           <div>
             <span className="perfil-kicker">Conta de jogador</span>
             <h1>Meu perfil</h1>
-            <p>Gerencie suas informações, conexões e equipe.</p>
+            <p>Visualize suas informações públicas e sua equipe.</p>
           </div>
           <Link to="/torneios" className="perfil-link-voltar">Ver torneios</Link>
         </div>
@@ -48,61 +76,38 @@ export default function Perfil() {
         <section className="perfil-grid">
           <aside className="perfil-resumo">
             <div className="perfil-avatar-wrap">
-              <img src="https://placehold.co/180x180/35176b/ffffff?text=JP" alt="Avatar de João Pedro" />
+              <img src={avatarUrl} alt={`Avatar de ${usuario.nome || usuario.nome_usuario}`} />
               <span className="perfil-status-dot" aria-label="Online"></span>
             </div>
-            <h2>João Pedro</h2>
-            <p className="perfil-cargo">Capitão da equipe</p>
+            <h2>{usuario.nome || usuario.nome_usuario || 'Jogador'}</h2>
+            <p className="perfil-cargo">{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Sem usuário'}</p>
             <div className="perfil-dados">
-              <div><span>Time afiliado</span><strong>Vortex Gaming</strong></div>
+              <div><span>Time afiliado</span><strong>{usuario.time_usuario || 'Nenhum'}</strong></div>
               <div><span>Status</span><strong className="perfil-online">Online agora</strong></div>
-              <div><span>Membro desde</span><strong>Março de 2026</strong></div>
+              <div><span>Membro desde</span><strong style={{textTransform: 'capitalize'}}>{dataRegistro}</strong></div>
             </div>
-            <a className="perfil-botao perfil-botao-principal" href="#detalhes-conta">Editar perfil</a>
             <button className="perfil-botao perfil-botao-perigo" type="button" onClick={sair}>Sair da conta</button>
           </aside>
 
           <div className="perfil-conteudo">
             <section className="perfil-secao" id="detalhes-conta">
               <div className="perfil-secao-titulo">
-                <div><span className="perfil-kicker">Informações</span><h2>Detalhes da conta</h2></div>
-                <button className="perfil-texto-botao" type="button" onClick={() => window.alert('Edição de dados será conectada à API na próxima etapa.')}>Editar dados</button>
+                <div><span className="perfil-kicker">Informações Públicas</span><h2>Detalhes da conta</h2></div>
               </div>
               <div className="perfil-detalhes-grid">
-                <div><span>Nome completo</span><strong>João Pedro Almeida</strong></div>
-                <div><span>Nome de usuário</span><strong>@joaopedro</strong></div>
-                <div><span>E-mail</span><strong>joao.pedro@email.com</strong></div>
-                <div><span>Localização</span><strong>São Paulo, Brasil</strong></div>
+                <div><span>Nome de exibição</span><strong>{usuario.nome || 'Não informado'}</strong></div>
+                <div><span>Username</span><strong>{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Não informado'}</strong></div>
               </div>
             </section>
-
-            <section className="perfil-secao">
+            
+            <section className="perfil-secao" style={{ marginTop: '24px' }}>
               <div className="perfil-secao-titulo">
-                <div><span className="perfil-kicker">Conexões</span><h2>Contas vinculadas</h2></div>
+                <div><span className="perfil-kicker">Sobre</span><h2>Biografia</h2></div>
               </div>
-              <div className="perfil-contas">
-                <div className="perfil-conta"><span className="perfil-conta-icone perfil-conta-discord">D</span><div><strong>Discord</strong><span>joaopedro#4210</span></div><button type="button" onClick={() => window.alert('O vínculo com o Discord será configurado na próxima etapa.')}>Gerenciar</button></div>
-                <div className="perfil-conta"><span className="perfil-conta-icone perfil-conta-steam">S</span><div><strong>Steam</strong><span>JoaoPedroCS</span></div><button type="button" onClick={() => window.alert('O vínculo com a Steam será configurado na próxima etapa.')}>Gerenciar</button></div>
-              </div>
-            </section>
-
-            <section className="perfil-secao">
-              <div className="perfil-secao-titulo">
-                <div><span className="perfil-kicker">Comunidade</span><h2>Lista de amigos <small>{amigos.length}</small></h2></div>
-                <button className="perfil-texto-botao" type="button" onClick={adicionarAmigo}>+ Adicionar amigo</button>
-              </div>
-              <div className="perfil-amigos">
-                {amigos.map((amigo) => {
-                  const bloqueado = bloqueados.includes(amigo.id);
-                  return (
-                    <article className={`perfil-amigo ${bloqueado ? 'perfil-amigo-bloqueado' : ''}`} key={amigo.id}>
-                      <img src={amigo.imagem} alt={`Avatar de ${amigo.nome}`} />
-                      <div className="perfil-amigo-info"><strong>{amigo.nome}</strong><span>{amigo.equipe}</span><em className={amigo.status}>{bloqueado ? 'Bloqueado' : amigo.status === 'online' ? 'Online' : 'Offline'}</em></div>
-                      <div className="perfil-amigo-acoes"><button type="button" onClick={() => removerAmigo(amigo.id)}>Remover</button><button type="button" onClick={() => alternarBloqueio(amigo.id)}>{bloqueado ? 'Desbloquear' : 'Bloquear'}</button></div>
-                    </article>
-                  );
-                })}
-                {amigos.length === 0 && <p className="perfil-vazio">Você ainda não possui amigos adicionados.</p>}
+              <div>
+                <p style={{ color: 'var(--texto-secundario)', lineHeight: '1.6' }}>
+                  {usuario.bio || 'Este jogador ainda não escreveu nenhuma biografia.'}
+                </p>
               </div>
             </section>
           </div>
