@@ -90,9 +90,15 @@ function SecaoTabela({ tabela, usuarioLogado }) {
 
   async function salvarEdicao(linhaId) {
     setSalvando(true);
+    
+    const payload = { ...camposEdicao };
+    Object.keys(payload).forEach(key => {
+      if (payload[key] === '') payload[key] = null;
+    });
+
     const { error } = await supabase
       .from(tabela.nome)
-      .update(camposEdicao)
+      .update(payload)
       .eq('id', linhaId);
     setSalvando(false);
     if (error) {
