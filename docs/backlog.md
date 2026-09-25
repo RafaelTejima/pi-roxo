@@ -1,4 +1,4 @@
-﻿# Backlog
+# Backlog
 
 Este arquivo eh escrito e mantido apenas por IAs para registrar features ja implementadas no projeto.
 
@@ -31,3 +31,11 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Torneios abertos sao buscados na tabela `tournaments`; jogadores sao buscados na tabela `usuarios`.
 - No envio, insere a equipe em `teams`, seus membros em `team_members` e a inscricao em `tournament_teams` usando `src/supabase.js`.
 - Possui validacao de campos obrigatorios, sigla, quantidade minima de jogadores, duplicidade de jogadores e estados de carregamento, erro e sucesso.
+
+## Lista de Amigos
+- **Componente:** `src/componentes/ListaAmigos.jsx`
+- **CSS:** `src/css/lista-amigos.css` (escopado por `#widget-amigos`)
+- Um painel (widget) flutuante fixado no canto inferior direito, disponível em todas as rotas da aplicação através do `App.jsx`.
+- Inclui um botão toggle que exibe a quantidade de amigos online.
+- Funcionalidade com dados mockados (não conectada ao banco de dados por enquanto), exibindo jogadores online/offline, status de jogo e placeholder para convite.
+- Interface escura com tema roxo (#723EC3) em destaque, utilizando animações CSS simples e placeholders visuais do `placehold.co` para avatares, de acordo com as restrições do projeto.

@@ -108,6 +108,11 @@ function SecaoTabela({ tabela, usuarioLogado }) {
   // ---- Deletar ----
   async function confirmarDelete(linha) {
     if (!linha.id) { alert('Este registro não possui ID, não é possível deletar.'); return; }
+    if (tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id) {
+      alert('Você não pode deletar a sua própria conta de administrador.');
+      setConfirmandoDelete(null);
+      return;
+    }
     const { error } = await supabase.from(tabela.nome).delete().eq('id', linha.id);
     if (error) {
       alert('Erro ao deletar: ' + error.message);
@@ -273,6 +278,7 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                                 <button
                                   className="admin-btn admin-btn--deletar"
                                   onClick={() => setConfirmandoDelete(linhaId)}
+                                  disabled={tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id}
                                 >
                                   Deletar
                                 </button>
