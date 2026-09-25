@@ -1,10 +1,22 @@
+import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import armaazul from '../../imagens/armaazul.png';
 import tiroem2 from '../../imagens/tiroem2.jpg';
 import dandotiro from '../../imagens/dandotiro.jpg';
+import videoplayback from '../../imagens/videoplayback.mp4';
 
 export default function Home() {
   const navigate = useNavigate();
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch((err) => {
+        console.warn('Autoplay do vídeo prevenido pelo navegador:', err);
+      });
+    }
+  }, []);
 
   const handleCriarEquipe = () => {
     const usuarioLogado = localStorage.getItem('usuarioLogado');
@@ -17,13 +29,30 @@ export default function Home() {
 
   return (
     <>
-      {/* Seção Principal (Hero com Carrossel Automático) */}
+      {/* Seção Principal (Hero com Vídeo de Fundo em Looping) */}
       <main className="hero">
+        {/* Vídeo de fundo em looping (Modo Teste Temporário) */}
+        <video 
+          ref={videoRef}
+          className="hero-video" 
+          src={videoplayback}
+          autoPlay 
+          loop 
+          muted 
+          defaultMuted
+          playsInline
+        >
+          <source src={videoplayback} type="video/mp4" />
+        </video>
+
+        {/* Carrossel de imagens anterior preservado intacto no código */}
+        {/* 
         <div className="carousel">
           <img src={armaazul} alt="CS:GO Banner 1" />
           <img src={tiroem2} alt="CS:GO Banner 2" />
           <img src={dandotiro} alt="CS:GO Banner 3" />
         </div>
+        */}
 
         <div className="overlay"></div>
 
