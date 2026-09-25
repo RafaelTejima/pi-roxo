@@ -45,18 +45,26 @@ export default function Menu({ children }) {
             ))}
           </Link>
         </div>
-        <nav className="links">
-          <Link to="/" className={location.pathname === '/' ? 'ativo' : ''}>
-            Início
+        <nav className="val-nav">
+          <div className="nav-line-container">
+            <div className="nav-line"></div>
+          </div>
+          <Link to="/" className={`nav-link ${location.pathname === '/' ? 'ativo' : ''}`}>
+            INÍCIO
+            <span className="diamond"></span>
           </Link>
-          <Link to="/torneios" className={location.pathname.startsWith('/torneios') ? 'ativo' : ''}>
-            Torneios
+          <Link to="/regras" className={`nav-link ${location.pathname === '/regras' ? 'ativo' : ''}`}>
+            REGRAS
+            <span className="diamond"></span>
           </Link>
-          <Link to="/regras" className={location.pathname === '/regras' ? 'ativo' : ''}>
-            Regras
+          <Link to="/torneios" className={`nav-link play-btn ${location.pathname.startsWith('/torneios') ? 'ativo' : ''}`}>
+            <div className="play-bg"></div>
+            <span className="play-text">TORNEIOS</span>
+            <span className="diamond"></span>
           </Link>
-          <Link to="/faq" className={location.pathname === '/faq' ? 'ativo' : ''}>
+          <Link to="/faq" className={`nav-link ${location.pathname === '/faq' ? 'ativo' : ''}`}>
             FAQ
+            <span className="diamond"></span>
           </Link>
         </nav>
         <div className="user-area">
