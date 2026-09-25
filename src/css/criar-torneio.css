@@ -96,6 +96,55 @@
   border-color: var(--roxo-vivo, #b565f2);
 }
 
+/* --- Data e hora (data + hora + minuto) --- */
+#pagina-criar-torneio .campo-form-datahora {
+  display: flex;
+  gap: 10px;
+}
+
+#pagina-criar-torneio .campo-form-datahora input {
+  flex: 2;
+  color-scheme: dark;
+}
+
+#pagina-criar-torneio .campo-form-datahora input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+#pagina-criar-torneio .campo-form-datahora select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 10px;
+  padding: 12px 10px;
+  color: white;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s ease;
+}
+
+#pagina-criar-torneio .campo-form-datahora select:focus {
+  outline: none;
+  border-color: var(--roxo-vivo, #b565f2);
+}
+
+#pagina-criar-torneio .campo-form-datahora select option {
+  background: #1a1225;
+  color: white;
+}
+
+@media (max-width: 480px) {
+  #pagina-criar-torneio .campo-form-datahora {
+    flex-wrap: wrap;
+  }
+
+  #pagina-criar-torneio .campo-form-datahora input {
+    flex-basis: 100%;
+  }
+}
+
 /* --- Dropdown de Regras --- */
 #pagina-criar-torneio .regras-dropdown {
   border: 1px solid rgba(157, 78, 221, 0.25);

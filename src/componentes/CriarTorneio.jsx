@@ -7,11 +7,17 @@ import '../css/criar-torneio.css'
 // COMPONENTE PRINCIPAL: PAGINA DE CRIACAO DE TORNEIO
 // ============================================================
 
+// Opções fixas de horário para manter o formato 24h independente do navegador
+const HORAS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MINUTOS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
+
 export default function CriarTorneio() {
   const navigate = useNavigate()
 
   const [nome, setNome] = useState('')
-  const [dataHora, setDataHora] = useState('')
+  const [data, setData] = useState('')
+  const [hora, setHora] = useState('')
+  const [minuto, setMinuto] = useState('')
   const [premio, setPremio] = useState('')
   const [regras, setRegras] = useState([])
   const [novaRegra, setNovaRegra] = useState('')
@@ -36,7 +42,7 @@ export default function CriarTorneio() {
     setErro('')
     setSucesso('')
 
-    if (!nome.trim() || !dataHora || !premio) {
+    if (!nome.trim() || !data || !hora || !minuto || !premio) {
       setErro('Preencha todos os campos do torneio.')
       return
     }
@@ -45,6 +51,9 @@ export default function CriarTorneio() {
       setErro('Adicione ao menos uma regra antes de continuar.')
       return
     }
+
+    // Formato 24h garantido, sem depender do idioma do navegador
+    const dataHora = `${data}T${hora}:${minuto}`
 
     const formData = {
       name: nome.trim(),
@@ -85,12 +94,38 @@ export default function CriarTorneio() {
 
         <div className="campo-form">
           <label htmlFor="data-torneio">Horário e data do torneio</label>
-          <input
-            id="data-torneio"
-            type="datetime-local"
-            value={dataHora}
-            onChange={(e) => setDataHora(e.target.value)}
-          />
+          <div className="campo-form-datahora">
+            <input
+              id="data-torneio"
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              onFocus={() => setTipoInputData('date')}
+              onClick={(e) => e.currentTarget.showPicker?.()}
+            />
+            <select
+              id="hora-torneio"
+              aria-label="Hora"
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+            >
+              <option value="">Hora</option>
+              {HORAS.map((h) => (
+                <option key={h} value={h}>{h}h</option>
+              ))}
+            </select>
+            <select
+              id="minuto-torneio"
+              aria-label="Minuto"
+              value={minuto}
+              onChange={(e) => setMinuto(e.target.value)}
+            >
+              <option value="">Min</option>
+              {MINUTOS.map((m) => (
+                <option key={m} value={m}>{m}min</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="campo-form">
