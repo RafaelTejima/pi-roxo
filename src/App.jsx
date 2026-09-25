@@ -13,7 +13,7 @@ import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
 import SelecaoMapas from './componentes/SelecaoMapas';
-
+import ListaAmigos from './componentes/ListaAmigos';
 function App() {
   return (
     <Menu>
@@ -36,6 +36,7 @@ function App() {
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/perfil" element={<Perfil />} />
       </Routes>
+      <ListaAmigos />
     </Menu>
   );
 }
