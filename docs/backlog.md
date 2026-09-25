@@ -53,3 +53,10 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Adicionado acesso pelo ultimo botao da categoria Suporte na FAQ e pelo rodape global.
 - O formulario ainda nao persiste chamados no Supabase nem aceita upload de arquivos; schema, permissoes e armazenamento continuam pendentes conforme `docs/pagina_suporte.md`.
 >>>>>>> Stashed changes
+
+## Pagina de Perfil do Usuario
+- **Componente:** `src/componentes/Perfil.jsx` (rota `/perfil`)
+- **CSS:** `src/css/perfil.css` (escopado por `#perfil-page`)
+- **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
+- **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
+- **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos). Como esses campos ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
