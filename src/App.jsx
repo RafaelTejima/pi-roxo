@@ -11,6 +11,7 @@ import Cadastrar from './componentes/Cadastrar';
 import EsqueciSenha from './componentes/EsqueciSenha';
 import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
+import Equipes from './componentes/Equipes';
 import SelecaoMapas from './componentes/SelecaoMapas';
 import ListaAmigos from './componentes/ListaAmigos';
 function App() {
@@ -18,8 +19,10 @@ function App() {
     <Menu>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/equipes" element={<Equipes />} />
         <Route path="/regras" element={<Regras />} />
         <Route path="/torneios" element={<Torneios />} />
+
         <Route path="/torneios/criar" element={<CriarTorneio />} />
         <Route path="/equipes/criar" element={<CriarEquipe />} />
         <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />

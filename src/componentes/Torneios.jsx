@@ -524,7 +524,6 @@ export default function Torneios() {
     <main className="tournaments-page">
       <section className="tournaments-heading">
         <div>
-          <p className="tournaments-overline">COMPETICAO AO VIVO</p>
           <h1>Escolha seu próximo <span>desafio.</span></h1>
         </div>
         <p>Encontre um campeonato, monte sua equipe e dispute o topo do ranking.</p>

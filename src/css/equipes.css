@@ -1,0 +1,165 @@
+/* ============================================================
+   EQUIPES.CSS — Estilos da Página de Equipes
+   ============================================================ */
+
+#pagina-equipes {
+  max-width: 1200px;
+  margin: 160px auto 110px;
+  padding: 0 20px;
+  position: relative;
+}
+
+.equipes-heading {
+  text-align: center;
+  margin-bottom: 55px;
+}
+
+.equipes-heading h1 {
+  font-size: clamp(2.2rem, 3.5vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #ffffff 40%, #d8b4fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.equipes-heading h1 span {
+  background: linear-gradient(120deg, var(--roxo-claro, #9d4edd), var(--roxo-vivo, #b565f2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.equipes-heading p {
+  color: var(--texto-secundario, #a8a8a8);
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.equipes-criar-btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 28px;
+  border-radius: 100px;
+  background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 24px rgba(181, 101, 242, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.equipes-criar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px rgba(181, 101, 242, 0.65);
+}
+
+.equipes-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  text-align: center;
+  background: rgba(18, 13, 30, 0.65);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.equipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.equipe-card {
+  background: rgba(18, 12, 35, 0.7);
+  border: 1px solid rgba(114, 62, 195, 0.25);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.equipe-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--roxo-vivo, #b565f2);
+  box-shadow: 0 12px 28px rgba(114, 62, 195, 0.2);
+}
+
+.equipe-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(157, 78, 221, 0.15);
+}
+
+.equipe-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--roxo-principal, #723ec3), var(--roxo-vivo, #b565f2));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(114, 62, 195, 0.4);
+}
+
+.equipe-info-top h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.equipe-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--roxo-claro, #9d4edd);
+  letter-spacing: 1px;
+}
+
+.equipe-card-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.equipe-meta-item small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #837a94;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.equipe-meta-item strong {
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.equipes-vazio {
+  padding: 40px 20px;
+}
+
+.equipes-vazio p {
+  color: #94a3b8;
+  font-size: 1rem;
+}
