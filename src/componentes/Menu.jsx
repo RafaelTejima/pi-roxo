@@ -72,7 +72,7 @@ export default function Menu({ children }) {
             className={({ isActive }) => `nav-link nav-link-torneios ${isActive || location.pathname.startsWith('/torneios') ? 'ativo nav-item-ativo' : ''}`}
           >
             <div className="play-bg"></div>
-            <span className="play-text">TORNEIOS</span>
+            <span className="play-text">COMPETIR</span>
             <span className="diamond indicador-losango" aria-hidden="true"></span>
           </NavLink>
           <NavLink
