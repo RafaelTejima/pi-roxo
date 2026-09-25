@@ -61,6 +61,7 @@ button:focus-visible {
 }
 
 /* ================= Hero & Carrossel ================= */
+/* ================= Hero & Carrossel ================= */
 .hero {
     position: relative;
     height: 100vh;
@@ -70,6 +71,19 @@ button:focus-visible {
     align-items: center;
     text-align: center;
     overflow: hidden;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Overlay escuro no centro e suave na base */
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(3, 1, 8, 0.45) 0%, rgba(3, 1, 8, 0.25) 50%, rgba(3, 1, 8, 0.65) 100%),
+                linear-gradient(to bottom, rgba(3, 1, 8, 0.1) 0%, rgba(3, 1, 8, 0.5) 85%, #030108 100%);
+    z-index: 1;
+    pointer-events: none;
 }
 
 .carousel {
@@ -78,7 +92,7 @@ button:focus-visible {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2;
+    z-index: 0;
 }
 
 .carousel img {
@@ -91,7 +105,7 @@ button:focus-visible {
     object-position: center;
     opacity: 0;
     transform: scale(1.05);
-    filter: saturate(1.05) contrast(1.05);
+    filter: saturate(1.1) contrast(1.05) brightness(0.95);
     animation: fadeZoom 15s infinite;
 }
 
@@ -140,16 +154,17 @@ button:focus-visible {
     left: 0;
     width: 100%;
     height: 100%;
-    background:
-        radial-gradient(circle at 50% 30%, rgba(114, 62, 195, 0.25) 0%, transparent 55%),
-        linear-gradient(to bottom, rgba(3, 1, 8, 0.55) 0%, rgba(3, 1, 8, 0.97) 100%);
-    z-index: -1;
+    background: radial-gradient(circle at 50% 30%, rgba(114, 62, 195, 0.15) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .hero-content {
     max-width: 850px;
     padding: 0 20px;
     animation: slideUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 2;
 }
 
 @keyframes slideUp {
@@ -164,44 +179,30 @@ button:focus-visible {
     }
 }
 
-.badge-temporada {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(157, 78, 221, 0.15);
-    border: 1px solid rgba(157, 78, 221, 0.6);
-    color: #e9d5ff;
-    padding: 7px 18px;
-    border-radius: 50px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    margin-bottom: 22px;
-    text-transform: uppercase;
-    box-shadow: 0 0 20px rgba(114, 62, 195, 0.25);
-}
-
+.hero-content h1,
 .titulo {
     font-size: 68px;
     font-weight: 800;
     margin-bottom: 18px;
     letter-spacing: 1px;
     line-height: 1.05;
-    background: linear-gradient(180deg, #ffffff 40%, #d8b4fe 100%);
+    background: linear-gradient(180deg, #FFFFFF 40%, #D8B4FE 100%);
     -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     background-clip: text;
-    color: transparent;
-    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 25px rgba(114, 62, 195, 0.45));
 }
 
 .subtitulo {
-    color: #c7c7c7;
+    color: #f1f5f9;
     font-size: 18px;
     line-height: 1.7;
     max-width: 620px;
     margin: 0 auto 42px;
     text-wrap: balance;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.85);
 }
+
 
 .hero-botoes {
     display: flex;
@@ -220,34 +221,90 @@ button:focus-visible {
     font-size: 14px;
     letter-spacing: 0.5px;
     cursor: pointer;
-    transition: all var(--transicao-suave);
-    box-shadow: 0 0 28px rgba(157, 78, 221, 0.45);
+    box-shadow: 0 0 24px rgba(181, 101, 242, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .botao-principal:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 40px rgba(157, 78, 221, 0.75);
+    transform: translateY(-2px);
+    box-shadow: 0 0 32px rgba(181, 101, 242, 0.65);
 }
 
 .botao-secundario {
-    background: rgba(255, 255, 255, 0.04);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(181, 101, 242, 0.4);
+    backdrop-filter: blur(6px);
+    color: #f1f5f9;
     padding: 17px 38px;
     border-radius: 100px;
     font-weight: 700;
     font-size: 14px;
     letter-spacing: 0.5px;
     cursor: pointer;
-    backdrop-filter: blur(6px);
-    transition: all var(--transicao-suave);
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .botao-secundario:hover {
-    border-color: var(--roxo-claro);
-    background: rgba(157, 78, 221, 0.1);
-    transform: translateY(-3px);
+    background: rgba(181, 101, 242, 0.15);
+    border-color: var(--roxo-vivo, #b565f2);
+    transform: translateY(-2px);
 }
+
+.hero-status-ticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+.ponto-pulsante {
+  width: 8px;
+  height: 8px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #22c55e;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+.hero-scroll-indicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  opacity: 0.6;
+  animation: bounceScroll 1.8s infinite ease-in-out;
+}
+
+.scroll-seta {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid #cbd5e1;
+  border-right: 2px solid #cbd5e1;
+  transform: rotate(45deg);
+}
+
+@keyframes bounceScroll {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 8px); }
+}
+
 
 /* ================= Barra de Estatísticas ================= */
 .stats-bar {
