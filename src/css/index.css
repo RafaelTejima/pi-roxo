@@ -71,8 +71,7 @@ button:focus-visible {
     align-items: center;
     text-align: center;
     overflow: hidden;
-    background-size: cover;
-    background-position: center;
+    background: #030108;
 }
 
 /* Overlay escuro no centro e suave na base */
@@ -80,10 +79,25 @@ button:focus-visible {
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, rgba(3, 1, 8, 0.45) 0%, rgba(3, 1, 8, 0.25) 50%, rgba(3, 1, 8, 0.65) 100%),
-                linear-gradient(to bottom, rgba(3, 1, 8, 0.1) 0%, rgba(3, 1, 8, 0.5) 85%, #030108 100%);
+    background: radial-gradient(circle at center, rgba(3, 1, 8, 0.4) 0%, rgba(3, 1, 8, 0.2) 50%, rgba(3, 1, 8, 0.6) 100%),
+                linear-gradient(to bottom, rgba(3, 1, 8, 0.1) 0%, rgba(3, 1, 8, 0.45) 85%, #030108 100%);
     z-index: 1;
     pointer-events: none;
+}
+
+/* Vídeo de fundo da Hero section (Modo Teste Temporário) */
+.hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+    display: block;
+    pointer-events: none;
+    filter: brightness(0.7) contrast(1.05);
 }
 
 .carousel {
@@ -435,8 +449,26 @@ button:focus-visible {
 }
 
 .card-info .icone-card {
-    background: rgba(255, 212, 59, 0.08);
-    border: 1px solid rgba(255, 212, 59, 0.25);
+    background: rgba(114, 62, 195, 0.15);
+    border: 1px solid rgba(181, 101, 242, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform var(--transicao-suave, 0.35s ease),
+                border-color var(--transicao-suave, 0.35s ease),
+                background-color var(--transicao-suave, 0.35s ease),
+                box-shadow var(--transicao-suave, 0.35s ease);
+}
+
+.card-info .icone-card .icone-svg path,
+.card-info .icone-card path {
+    fill: #ffffff !important;
+    transition: fill 0.3s ease, filter 0.3s ease;
+}
+
+.card-info .icone-card .icone-grafico,
+.card-info .icone-card i {
+    color: #ffffff !important;
+    transition: color 0.3s ease, filter 0.3s ease;
 }
 
 .icone-card .icone-svg {
@@ -450,7 +482,15 @@ button:focus-visible {
 
 .card-info:hover .icone-card {
     transform: scale(1.08) rotate(-4deg);
-    border-color: var(--roxo-claro);
+    background: rgba(157, 78, 221, 0.25);
+    border-color: rgba(181, 101, 242, 0.6);
+    box-shadow: 0 0 20px rgba(181, 101, 242, 0.4), 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.card-info:hover .icone-card .icone-svg path,
+.card-info:hover .icone-card path,
+.card-info:hover .icone-card i {
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
 }
 
 .card-info h2 {

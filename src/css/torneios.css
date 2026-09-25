@@ -442,12 +442,12 @@
 .torneios-personagem-wrap {
   position: absolute;
   top: 180px;
-  left: -400px;
+  left: -420px;
   right: auto;
   bottom: auto;
   z-index: 1;
   pointer-events: none;
-  width: clamp(380px, 32vw, 480px);
+  width: clamp(430px, 35vw, 540px);
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -466,15 +466,15 @@
 /* --- Responsividade --- */
 @media (max-width: 1550px) {
   .torneios-personagem-wrap {
-    left: -200px;
-    width: 320px;
+    left: -220px;
+    width: 360px;
   }
 }
 
 @media (max-width: 1380px) {
   .torneios-personagem-wrap {
-    left: -140px;
-    width: 270px;
+    left: -150px;
+    width: 300px;
     opacity: 0.7;
   }
 }
