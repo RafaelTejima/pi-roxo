@@ -80,32 +80,45 @@ export default function SelecaoMapas() {
   const [categoria, setCategoria] = useState('Todos')
   const [mapaSelecionado, setMapaSelecionado] = useState(null)
   const [confirmado, setConfirmado] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
 
   async function handleFinalizar() {
     const dadosState = location.state?.dadosTorneio
     const dadosLocal = localStorage.getItem('dadosTorneioEmCriacao')
     const dadosTorneio = dadosState || (dadosLocal ? JSON.parse(dadosLocal) : null)
 
-    if (dadosTorneio && supabase) {
-      const mapaNome = mapaSelecionado ? mapaSelecionado.nome : 'Mirage'
-      const regrasComMapa = `${dadosTorneio.rules || ''}\n- Mapa oficial: ${mapaNome}`
-
-      try {
-        await supabase.from('tournaments').insert({
-          name: dadosTorneio.name,
-          tournament_date: dadosTorneio.tournament_date,
-          prize: Number(dadosTorneio.prize),
-          rules: regrasComMapa,
-          status: 'open',
-          teams_count: 0,
-        })
-      } catch (err) {
-        console.error(err)
-      }
-
-      localStorage.removeItem('dadosTorneioEmCriacao')
+    if (!dadosTorneio) {
+      setErro('Dados do torneio nao encontrados. Volte e preencha o formulario novamente.')
+      return
     }
 
+    setErro('')
+    setEnviando(true)
+
+    const mapaNome = mapaSelecionado ? mapaSelecionado.nome : 'Mirage'
+    const descricaoComMapa = `${dadosTorneio.descricao || ''}\n- Mapa oficial: ${mapaNome}`
+
+    const { error } = await supabase.from('torneios').insert({
+      nome: dadosTorneio.nome,
+      descricao: descricaoComMapa,
+      jogo: dadosTorneio.jogo,
+      formato: dadosTorneio.formato,
+      data_inicio: dadosTorneio.data_inicio,
+      status: dadosTorneio.status,
+      id_criador: dadosTorneio.id_criador,
+      dinheiro: dadosTorneio.dinheiro,
+    })
+
+    setEnviando(false)
+
+    if (error) {
+      console.error(error)
+      setErro('Nao foi possivel salvar o torneio no banco de dados. Tente novamente.')
+      return
+    }
+
+    localStorage.removeItem('dadosTorneioEmCriacao')
     setConfirmado(false)
     navigate('/torneios')
   }
@@ -236,8 +249,11 @@ export default function SelecaoMapas() {
             <p className="selecao-mapas-kicker">MAPA DEFINIDO PARA A PARTIDA</p>
             <h2 id="titulo-confirmacao">{mapaSelecionado.nome} confirmado</h2>
             <p>O mapa foi selecionado para a configuração desta partida do torneio.</p>
+            {erro && <p className="selecao-mapas-mensagem-erro">{erro}</p>}
             <div className="selecao-mapas-modal-acoes">
-              <button className="selecao-mapas-botao-principal" type="button" onClick={handleFinalizar}>Continuar</button>
+              <button className="selecao-mapas-botao-principal" type="button" onClick={handleFinalizar} disabled={enviando}>
+                {enviando ? 'Salvando...' : 'Continuar'}
+              </button>
               <Link className="selecao-mapas-link-modal" to={torneioId ? `/torneios/${torneioId}` : '/torneios'}>Ver torneio</Link>
             </div>
           </section>

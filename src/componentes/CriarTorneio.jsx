@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
 import '../css/criar-torneio.css'
 
 // ============================================================
@@ -11,8 +10,16 @@ import '../css/criar-torneio.css'
 const HORAS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const MINUTOS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
+// Campos fixos exigidos pela tabela `torneios` que ainda nao tem selecao propria na tela
+const JOGO_PADRAO = 'CS2'
+const FORMATO_PADRAO = 'Eliminação Simples'
+
 export default function CriarTorneio() {
   const navigate = useNavigate()
+  const [usuario] = useState(() => {
+    const usuarioSalvo = localStorage.getItem('usuarioLogado')
+    return usuarioSalvo ? JSON.parse(usuarioSalvo) : null
+  })
 
   const [nome, setNome] = useState('')
   const [data, setData] = useState('')
@@ -42,6 +49,11 @@ export default function CriarTorneio() {
     setErro('')
     setSucesso('')
 
+    if (!usuario) {
+      setErro('Voce precisa estar logado para criar um torneio.')
+      return
+    }
+
     if (!nome.trim() || !data || !hora || !minuto || !premio) {
       setErro('Preencha todos os campos do torneio.')
       return
@@ -56,12 +68,14 @@ export default function CriarTorneio() {
     const dataHora = `${data}T${hora}:${minuto}`
 
     const formData = {
-      name: nome.trim(),
-      tournament_date: dataHora,
-      prize: Number(premio),
-      rules: regras.map((regra) => `- ${regra}`).join('\n'),
-      status: 'open',
-      teams_count: 0,
+      nome: nome.trim(),
+      descricao: regras.map((regra) => `- ${regra}`).join('\n'),
+      jogo: JOGO_PADRAO,
+      formato: FORMATO_PADRAO,
+      data_inicio: dataHora,
+      status: true,
+      id_criador: usuario.id,
+      dinheiro: Math.round(Number(premio)),
     }
 
     // Armazena temporariamente no localStorage para sincronia de etapas
@@ -100,7 +114,6 @@ export default function CriarTorneio() {
               type="date"
               value={data}
               onChange={(e) => setData(e.target.value)}
-              onFocus={() => setTipoInputData('date')}
               onClick={(e) => e.currentTarget.showPicker?.()}
             />
             <select
@@ -134,7 +147,7 @@ export default function CriarTorneio() {
             id="premio-torneio"
             type="number"
             min="0"
-            step="0.01"
+            step="1"
             value={premio}
             onChange={(e) => setPremio(e.target.value)}
             placeholder="Ex: 5000"

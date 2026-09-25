@@ -1,69 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { supabase } from '../supabase'
 import '../css/torneios.css'
 import '../css/bracket.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-
-// ============================================================
-// TORNEIOS FICTICIOS (fallback quando nao ha API)
-// ============================================================
-
-const TORNEIOS_FICTICIOS = [
-  {
-    id: 'demo-1',
-    name: 'ROXO Major 2026',
-    tournament_date: '2026-10-15T18:00:00',
-    prize: 50000,
-    teams_count: 8,
-    status: 'open',
-    rules: 'Formato Single Elimination com 8 equipes. Partidas em formato MR12 (primeiro a 13 rounds vence o mapa). Series em melhor de 1 (BO1) nas quartas e semis, e melhor de 3 (BO3) na grande final. Proibido uso de cheats ou exploits. A organizacao se reserva o direito de desclassificar equipes por comportamento antidesportivo.',
-  },
-  {
-    id: 'demo-2',
-    name: 'Invitational Series — Outono',
-    tournament_date: '2026-11-02T15:00:00',
-    prize: 25000,
-    teams_count: 4,
-    status: 'open',
-    rules: 'Torneio fechado por convite com 4 equipes selecionadas pelo staff da ROXO. Formato de rodada unica (bracket de 4). Todas as partidas em BO3. Check-in obrigatorio 30 minutos antes do inicio.',
-  },
-  {
-    id: 'demo-3',
-    name: 'Copa ROXO — Fase de Grupos',
-    tournament_date: '2026-12-05T20:00:00',
-    prize: 10000,
-    teams_count: 16,
-    status: 'soon',
-    rules: 'Fase de grupos com 4 grupos de 4 times, seguida de playoffs. Classificam-se os dois primeiros de cada grupo. Formato suíço nas fases iniciais e eliminação simples nos playoffs.',
-  },
-  {
-    id: 'demo-4',
-    name: 'ROXO Open — Qualificatória',
-    tournament_date: '2026-09-28T14:00:00',
-    prize: 5000,
-    teams_count: 32,
-    status: 'open',
-    rules: 'Torneio aberto para qualquer equipe registrada na plataforma. Inscrições encerram 24h antes do inicio. Formato de eliminação simples com 32 equipes. Partidas BO1 ate a final, que sera BO3.',
-  },
-]
-
 async function loadTournaments() {
-  if (!supabaseUrl || !supabaseKey) {
-    // Sem API configurada: retorna dados ficticios
-    return TORNEIOS_FICTICIOS
-  }
+  const { data, error } = await supabase
+    .from('torneios')
+    .select('*')
+    .order('data_inicio', { ascending: true })
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/tournaments?select=*&order=tournament_date.asc`, {
-    headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-  })
-
-  if (!response.ok) return TORNEIOS_FICTICIOS
-  const data = await response.json()
-  // Se o banco retornar vazio, usa ficticios para nao deixar a tela em branco
-  return data && data.length > 0 ? data : TORNEIOS_FICTICIOS
+  if (error) throw error
+  return data || []
 }
 
 function formatDate(value) {
@@ -391,22 +340,22 @@ function TournamentDetails({ tournaments, loading, error }) {
       <div className="details-hero">
         <div className="tournament-card-visual" aria-hidden="true"><span>ROXO</span><strong>CS2</strong></div>
         <div>
-          <span className="tournament-status">INSCRICOES ABERTAS</span>
-          <h1>{tournament.name}</h1>
-          <p>{formatDate(tournament.tournament_date)}</p>
+          <span className="tournament-status">{tournament.status ? 'INSCRICOES ABERTAS' : 'ENCERRADO'}</span>
+          <h1>{tournament.nome}</h1>
+          <p>{formatDate(tournament.data_inicio)}</p>
         </div>
       </div>
 
       {/* Estatísticas */}
       <div className="details-grid">
-        <div><small>VALOR DO PREMIO</small><strong>{formatPrize(tournament.prize)}</strong></div>
-        <div><small>TIMES INSCRITOS</small><strong>{tournament.teams_count || tournament.registered_teams || 0}</strong></div>
+        <div><small>VALOR DO PREMIO</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
+        <div><small>FORMATO</small><strong>{tournament.formato}</strong></div>
       </div>
 
-      {/* Regras */}
+      {/* Descricao */}
       <section className="details-rules">
-        <h2>Regras do torneio</h2>
-        <p>{tournament.rules || 'Nenhuma regra informada.'}</p>
+        <h2>Descricao do torneio</h2>
+        <p>{tournament.descricao || 'Nenhuma descricao informada.'}</p>
       </section>
 
       <Link className="tournaments-criar-btn" to={`/torneios/${id}/mapa`}>Selecionar mapa da partida -&gt;</Link>
@@ -468,35 +417,31 @@ function TournamentDetails({ tournaments, loading, error }) {
 function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
 
-  // Mapeia status para label e cor
-  const statusInfo = {
-    open:     { label: 'INSCRICOES ABERTAS', classe: 'tournament-status' },
-    soon:     { label: 'EM BREVE',           classe: 'tournament-status tournament-status--soon' },
-    ongoing:  { label: 'EM ANDAMENTO',       classe: 'tournament-status tournament-status--live' },
-    finished: { label: 'ENCERRADO',          classe: 'tournament-status tournament-status--finished' },
-  }
-  const info = statusInfo[tournament.status] || statusInfo.open
+  // Mapeia status (boolean) para label e cor
+  const info = tournament.status
+    ? { label: 'INSCRICOES ABERTAS', classe: 'tournament-status' }
+    : { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
 
   return (
     <article className="tournament-card">
-      <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.name}`}>
+      <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
           <span>ROXO</span>
           <strong>CS2</strong>
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
-          <h2>{tournament.name}</h2>
-          <p className="tournament-date">{formatDate(tournament.tournament_date)}</p>
+          <h2>{tournament.nome}</h2>
+          <p className="tournament-date">{formatDate(tournament.data_inicio)}</p>
           <div className="tournament-meta">
-            <span><small>PREMIO</small>{formatPrize(tournament.prize)}</span>
-            <span><small>TIMES</small>{tournament.teams_count || tournament.registered_teams || 0} inscritos</span>
+            <span><small>PREMIO</small>{formatPrize(tournament.dinheiro)}</span>
+            <span><small>FORMATO</small>{tournament.formato}</span>
           </div>
         </div>
       </Link>
       <details className="tournament-rules">
-        <summary>Ver regras <span>+</span></summary>
-        <p>{tournament.rules || 'As regras deste torneio ainda nao foram informadas.'}</p>
+        <summary>Ver descricao <span>+</span></summary>
+        <p>{tournament.descricao || 'A descricao deste torneio ainda nao foi informada.'}</p>
       </details>
     </article>
   )
@@ -509,16 +454,20 @@ function TournamentCard({ tournament, index }) {
 export default function Torneios() {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState('')
   const { id } = useParams()
 
   useEffect(() => {
     loadTournaments()
-      .then(setTournaments)
-      .catch(() => setTournaments(TORNEIOS_FICTICIOS))
+      .then((data) => {
+        setTournaments(data)
+        setErro('')
+      })
+      .catch(() => setErro('Nao foi possivel carregar os torneios. Tente novamente mais tarde.'))
       .finally(() => setLoading(false))
   }, [])
 
-  if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={''} />
+  if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={erro} />
 
   return (
     <main className="tournaments-page">
@@ -536,7 +485,19 @@ export default function Torneios() {
         </div>
       )}
 
-      {!loading && tournaments.length > 0 && (
+      {!loading && erro && (
+        <div className="tournament-page-state error">
+          <p>{erro}</p>
+        </div>
+      )}
+
+      {!loading && !erro && tournaments.length === 0 && (
+        <div className="tournament-page-state">
+          <p>Nenhum torneio disponivel no momento.</p>
+        </div>
+      )}
+
+      {!loading && !erro && tournaments.length > 0 && (
         <div className="tournaments-grid">
           {tournaments.map((tournament, index) => (
             <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />

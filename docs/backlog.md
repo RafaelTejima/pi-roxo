@@ -16,13 +16,26 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Formulario com campos: nome do torneio, data/hora e valor do premio e regras.
 - Campo de data/hora substituiu o `input type="datetime-local"` unico por um input `date` + dois `select` (hora 00-23, minuto em passos de 5) para garantir formato 24h independente do idioma/locale do navegador. Os tres valores sao combinados em `${data}T${hora}:${minuto}` no `handleSubmit`, mantendo o mesmo formato usado antes.
 - Regras sao adicionadas em uma lista via `<details>`/dropdown antes do envio; o formulario bloqueia o envio (`setErro`) se a lista de regras estiver vazia.
-- No envio, insere um registro na tabela `tournaments` do Supabase (`name`, `tournament_date`, `prize`, `rules`, `status: 'open'`, `teams_count: 0`) usando o client em `src/supabase.js`.
-- Apos sucesso, redireciona para `/torneios`.
+- **Tabela real (Supabase):** `public.torneios` — colunas `id`, `nome`, `descricao`, `jogo`, `formato`, `data_inicio` (timestamp sem timezone), `status` (boolean, `true` = aberto), `id_criador` (bigint, FK para o usuario logado), `registro` (timestamptz default now(), preenchido pelo banco), `dinheiro` (bigint, sem casas decimais). Nao existe mais a tabela/coluna antiga `tournaments`/`rules`/`prize`/`teams_count`.
+- Mapeamento do formulario para a tabela: `nome` <- nome digitado; `descricao` <- lista de regras unida com `\n`; `jogo` e `formato` sao constantes fixas (`'CS2'` e `'Elimina\u00e7\u00e3o Simples'`, ainda sem campo proprio na UI); `data_inicio` <- `${data}T${hora}:${minuto}`; `status` <- sempre `true` na criacao; `id_criador` <- `usuario.id` do `usuarioLogado` no `localStorage`; `dinheiro` <- `Math.round(Number(premio))` (input de premio usa `step="1"`, sem centavos, pois a coluna e bigint).
+- A pagina agora exige usuario logado (le `usuarioLogado` do `localStorage`, igual ao padrao do `CriarEquipe.jsx`) e bloqueia o envio com `setErro` se nao houver usuario, pois `id_criador` e obrigatorio.
+- O envio nao insere direto no banco: monta o objeto e guarda em `localStorage` (`dadosTorneioEmCriacao`) e navega para `/selecao-mapas`; o insert real acontece em `SelecaoMapas.jsx` apos a escolha do mapa (ver secao "Pagina de Torneios").
 - **Conexao com a pagina de Torneios:**
   - Botao "Criar Torneio" adicionado no cabecalho da listagem (`src/componentes/Torneios.jsx`, classe `.tournaments-criar-btn`) linkando para `/torneios/criar`.
   - Link "Criar Torneio" tambem adicionado no `Menu.jsx` (visivel apenas para usuario logado, ao lado do botao de Painel Admin).
   - A rota `/torneios/criar` foi registrada em `App.jsx` **antes** de `/torneios/:id` para nao ser capturada pela rota dinamica de detalhes.
 - O navbar proprio pedido em `docs/pagina_criacao_torneio.md` nao foi recriado porque o projeto ja usa um `Menu` global (via `App.jsx`) compartilhado entre todas as paginas, seguindo o padrao ja usado por `Torneios.jsx`, `Regras.jsx`, etc.
+
+## Pagina de Torneios (listagem + detalhes)
+- **Componente:** `src/componentes/Torneios.jsx` (rotas `/torneios`, `/torneios/:id`)
+- **CSS:** `src/css/torneios.css` e `src/css/bracket.css`
+- `loadTournaments()` busca os dados reais da tabela `public.torneios` usando o client compartilhado `src/supabase.js` (`supabase.from('torneios').select('*').order('data_inicio')`).
+- Removidos os dados ficticios (`TORNEIOS_FICTICIOS`) usados como fallback; a tela agora reflete somente o banco real, com estados separados de carregamento, erro (`erro`, mensagem amigavel) e lista vazia ("Nenhum torneio disponivel no momento.").
+- Campos exibidos seguem a tabela `torneios`: `nome`, `data_inicio`, `dinheiro` (premio), `formato` e `descricao` (dropdown "Ver descricao"). O status (boolean) mapeia para "INSCRICOES ABERTAS" (`true`) ou "ENCERRADO" (`false`).
+- O stat "TIMES INSCRITOS" foi removido do card e da tela de detalhes porque a tabela `torneios` nao tem essa coluna; nao ha relacao com uma tabela de inscricoes ainda ligada a esse `id` (bigint). Se for necessario no futuro, criar uma consulta agregada em uma tabela de inscricoes que referencie `torneios.id`.
+- Detalhes do torneio (`TournamentDetails`) incluem bracket de chaveamento simulado (times e resultados aleatorios, apenas para demonstracao visual — nao vem do banco).
+- **Fluxo completo de criacao (CriarTorneio -> SelecaoMapas):** o `handleFinalizar` em `SelecaoMapas.jsx` insere em `torneios` (`nome`, `descricao` com o mapa escolhido anexado, `jogo`, `formato`, `data_inicio`, `status`, `id_criador`, `dinheiro`) e so navega para `/torneios` se nao houver erro. Em caso de falha no insert, exibe mensagem de erro no modal de confirmacao (`.selecao-mapas-mensagem-erro`) e mantem o usuario na tela para tentar novamente, em vez de navegar silenciosamente. O botao "Continuar" fica desabilitado ("Salvando...") durante o insert para evitar duplo envio.
+- **Pendencia conhecida:** `src/componentes/CriarEquipe.jsx` ainda busca torneios abertos na tabela antiga `tournaments` (`status: 'open'`, `tournament_date`) e nao foi migrado para `torneios` nesta tarefa, pois o pedido foi restrito a tela de Torneios/criacao. Precisa de atualizacao futura para `torneios` (`status` boolean, `data_inicio`) e para o vinculo com `tournament_teams`/`torneios.id` (bigint).
 
 ## Pagina de Criacao de Equipe
 - **Componente:** `src/componentes/CriarEquipe.jsx` (rota `/equipes/criar`)
