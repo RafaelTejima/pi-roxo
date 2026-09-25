@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../css/suporte.css';
 
@@ -12,8 +12,8 @@ const categorias = [
   'Outro'
 ];
 
-export default function Suporte() {
-  const [formulario, setFormulario] = useState({
+function criarFormularioInicial() {
+  const formularioInicial = {
     nome: '',
     email: '',
     categoria: '',
@@ -22,24 +22,24 @@ export default function Suporte() {
     torneio: '',
     partida: '',
     evidencia: ''
-  });
+  };
+
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || 'null');
+    return {
+      ...formularioInicial,
+      nome: usuario?.nome || '',
+      email: usuario?.email || ''
+    };
+  } catch (error) {
+    console.error('Erro ao carregar os dados do usuário:', error);
+    return formularioInicial;
+  }
+}
+
+export default function Suporte({ embedded = false }) {
+  const [formulario, setFormulario] = useState(criarFormularioInicial);
   const [mensagem, setMensagem] = useState('');
-
-  useEffect(() => {
-    try {
-      const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || 'null');
-
-      if (usuario) {
-        setFormulario((atual) => ({
-          ...atual,
-          nome: usuario.nome || atual.nome,
-          email: usuario.email || atual.email
-        }));
-      }
-    } catch (error) {
-      console.error('Erro ao carregar os dados do usuário:', error);
-    }
-  }, []);
 
   function alterarCampo(evento) {
     const { name, value } = evento.target;
@@ -68,12 +68,13 @@ export default function Suporte() {
     setMensagem('Seu aplicativo de e-mail foi aberto com a mensagem preenchida. Revise e envie por lá.');
   }
 
+  const Elemento = embedded ? 'section' : 'main';
+
   return (
-    <main id="pagina-suporte">
+    <Elemento id="pagina-suporte" className={embedded ? 'pagina-suporte-embutida' : undefined}>
       <div className="suporte-conteudo">
         <header className="suporte-cabecalho">
-          <p className="suporte-etiqueta"><span></span> CENTRAL DE SUPORTE / CS2</p>
-          <h1>Vamos resolver isso.</h1>
+          <h1>Precisa de Ajuda?</h1>
           <p className="suporte-introducao">
             Conte o que aconteceu. Quanto mais detalhes sobre a conta, torneio ou partida, mais fácil será encaminhar seu pedido.
           </p>
@@ -246,13 +247,15 @@ export default function Suporte() {
               <p>Informe partida, horário aproximado e evidências. A FAQ pede que o contato seja feito em até 2 horas após a partida.</p>
             </div>
 
-            <Link className="suporte-link-faq" to="/faq">
-              <span>Voltar às perguntas frequentes</span>
-              <span aria-hidden="true">↗</span>
-            </Link>
+            {!embedded && (
+              <Link className="suporte-link-faq" to="/faq">
+                <span>Voltar às perguntas frequentes</span>
+                <span aria-hidden="true">↗</span>
+              </Link>
+            )}
           </aside>
         </div>
       </div>
-    </main>
+    </Elemento>
   );
 }
