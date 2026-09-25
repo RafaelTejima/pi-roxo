@@ -23,6 +23,7 @@ function App() {
         <Route path="/torneios/criar" element={<CriarTorneio />} />
         <Route path="/equipes/criar" element={<CriarEquipe />} />
         <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
+        <Route path="/selecao-mapas" element={<SelecaoMapas />} />
         <Route path="/torneios/:id" element={<Torneios />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/login" element={<Entrar />} />

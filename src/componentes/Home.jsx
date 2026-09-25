@@ -42,7 +42,7 @@ export default function Home() {
                 <path d="M95.000,183.812 C104.250,183.812 104.250,200.941 116.000,223.812 C123.824,239.041 112.121,254.812 95.000,254.812 C77.879,254.812 69.000,240.933 69.000,223.812 C69.000,206.692 85.750,183.812 95.000,183.812 Z" fill="#fce202" fillRule="evenodd" />
               </g>
             </svg>
-            TEMPORADA 2026 OFICIAL
+            TEMPORADA 2026 
           </span>
           <h1 className="titulo">DOMINE O SERVIDOR</h1>
           <p className="subtitulo">
