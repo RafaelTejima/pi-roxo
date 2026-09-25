@@ -13,7 +13,8 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 ## Pagina de Criacao de Torneio
 - **Componente:** `src/componentes/CriarTorneio.jsx` (rota `/torneios/criar`)
 - **CSS:** `src/css/criar-torneio.css` (escopado por `#pagina-criar-torneio`)
-- Formulario com campos: nome do torneio, data/hora (`datetime-local`), valor do premio e regras.
+- Formulario com campos: nome do torneio, data/hora e valor do premio e regras.
+- Campo de data/hora substituiu o `input type="datetime-local"` unico por um input `date` + dois `select` (hora 00-23, minuto em passos de 5) para garantir formato 24h independente do idioma/locale do navegador. Os tres valores sao combinados em `${data}T${hora}:${minuto}` no `handleSubmit`, mantendo o mesmo formato usado antes.
 - Regras sao adicionadas em uma lista via `<details>`/dropdown antes do envio; o formulario bloqueia o envio (`setErro`) se a lista de regras estiver vazia.
 - No envio, insere um registro na tabela `tournaments` do Supabase (`name`, `tournament_date`, `prize`, `rules`, `status: 'open'`, `teams_count: 0`) usando o client em `src/supabase.js`.
 - Apos sucesso, redireciona para `/torneios`.
