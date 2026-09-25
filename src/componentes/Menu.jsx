@@ -162,6 +162,7 @@ export default function Menu({ children }) {
           <div className="rodape-coluna">
             <h4 className="rodape-titulo">Suporte</h4>
             <ul className="rodape-links">
+              <li><Link to="/suporte">Entrar em contato</Link></li>
               <li><Link to="/faq">Central de Ajuda</Link></li>
               <li><Link to="/regras">Regulamento Oficial</Link></li>
               <li><a href="mailto:suporte@csgotournaments.com">suporte@csgotournaments.com</a></li>
