@@ -6,6 +6,7 @@ import './menu.css';
 export default function Menu({ children }) {
   const location = useLocation();
   const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   useEffect(() => {
     const checarUsuario = () => {
@@ -24,9 +25,21 @@ export default function Menu({ children }) {
     return () => window.removeEventListener('storage', checarUsuario);
   }, [location.pathname]);
 
+  // Fechar o menu dropdown ao clicar fora
+  useEffect(() => {
+    const fecharAoClicarFora = (e) => {
+      if (!e.target.closest('.menu-usuario-container')) {
+        setMenuAberto(false);
+      }
+    };
+    document.addEventListener('click', fecharAoClicarFora);
+    return () => document.removeEventListener('click', fecharAoClicarFora);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogado');
     setUsuarioLogado(null);
+    setMenuAberto(false);
   };
 
   return (
@@ -96,17 +109,21 @@ export default function Menu({ children }) {
 
         <div className="user-area">
           {usuarioLogado ? (
-            <div className="menu-usuario-container">
-              <button className="botao-perfil-trigger usuario-nome" type="button" title={usuarioLogado.email || usuarioLogado.nome}>
+            <div className={`menu-usuario-container ${menuAberto ? 'menu-aberto' : ''}`}>
+              <button 
+                className="botao-perfil-trigger usuario-nome" 
+                type="button"
+                onClick={() => setMenuAberto((prev) => !prev)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="icone-svg icone-usuario"><path fill="#450fe5" d="M463 448.2C440.9 409.8 399.4 384 352 384L288 384C240.6 384 199.1 409.8 177 448.2C212.2 487.4 263.2 512 320 512C376.8 512 427.8 487.3 463 448.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM320 336C359.8 336 392 303.8 392 264C392 224.2 359.8 192 320 192C280.2 192 248 224.2 248 264C248 303.8 280.2 336 320 336z"/></svg> {usuarioLogado.nome || usuarioLogado.email || 'Usuário'}
               </button>
 
               <div className="dropdown-usuario">
-                <Link className="item-dropdown" to="/perfil">
+                <Link className="item-dropdown" to="/perfil" onClick={() => setMenuAberto(false)}>
                   Perfil do Usuário
                 </Link>
                 {usuarioLogado.admin && (
-                  <Link className="item-dropdown" to="/admin">
+                  <Link className="item-dropdown" to="/admin" onClick={() => setMenuAberto(false)}>
                     Painel Admin
                   </Link>
                 )}
@@ -152,7 +169,7 @@ export default function Menu({ children }) {
             <ul className="rodape-links">
               <li><Link to="/">Início</Link></li>
               <li><Link to="/equipes">Times</Link></li>
-              <li><Link to="/torneios">Torneios</Link></li>
+              <li><Link to="/torneios">Competir</Link></li>
               <li><Link to="/regras">Regras &amp; Diretrizes</Link></li>
               <li><Link to="/faq">Perguntas Frequentes (FAQ)</Link></li>
             </ul>
