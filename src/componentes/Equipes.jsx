@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../css/equipes.css';
+import evaPersonagemImg from '../../imagens/eva-06-1.png';
 
 export default function Equipes() {
   const [equipes, setEquipes] = useState([]);
@@ -59,6 +60,14 @@ export default function Equipes() {
           </div>
         )}
       </section>
+
+      <div className="equipes-personagem-wrap" aria-hidden="true">
+        <img 
+          src={evaPersonagemImg} 
+          alt="Agente EVA" 
+          className="equipes-personagem-img" 
+        />
+      </div>
     </main>
   );
 }
