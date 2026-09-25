@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+
 import './menu.css';
 
 export default function Menu({ children }) {
@@ -49,24 +50,50 @@ export default function Menu({ children }) {
           <div className="nav-line-container">
             <div className="nav-line"></div>
           </div>
-          <Link to="/" className={`nav-link ${location.pathname === '/' ? 'ativo' : ''}`}>
-            INÍCIO
-            <span className="diamond"></span>
-          </Link>
-          <Link to="/regras" className={`nav-link ${location.pathname === '/regras' ? 'ativo' : ''}`}>
-            REGRAS
-            <span className="diamond"></span>
-          </Link>
-          <Link to="/torneios" className={`nav-link play-btn ${location.pathname.startsWith('/torneios') ? 'ativo' : ''}`}>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => `nav-link ${isActive ? 'ativo nav-item-ativo' : ''}`}
+          >
+            <div className="play-bg"></div>
+            <span className="play-text">INÍCIO</span>
+            <span className="diamond indicador-losango" aria-hidden="true"></span>
+          </NavLink>
+          <NavLink
+            to="/equipes"
+            className={({ isActive }) => `nav-link ${isActive || location.pathname.startsWith('/equipes') ? 'ativo nav-item-ativo' : ''}`}
+          >
+            <div className="play-bg"></div>
+            <span className="play-text">TIMES</span>
+            <span className="diamond indicador-losango" aria-hidden="true"></span>
+          </NavLink>
+          <NavLink
+            to="/torneios"
+            className={({ isActive }) => `nav-link nav-link-torneios ${isActive || location.pathname.startsWith('/torneios') ? 'ativo nav-item-ativo' : ''}`}
+          >
             <div className="play-bg"></div>
             <span className="play-text">TORNEIOS</span>
-            <span className="diamond"></span>
-          </Link>
-          <Link to="/faq" className={`nav-link ${location.pathname === '/faq' ? 'ativo' : ''}`}>
-            FAQ
-            <span className="diamond"></span>
-          </Link>
+            <span className="diamond indicador-losango" aria-hidden="true"></span>
+          </NavLink>
+          <NavLink
+            to="/regras"
+            className={({ isActive }) => `nav-link ${isActive ? 'ativo nav-item-ativo' : ''}`}
+          >
+            <div className="play-bg"></div>
+            <span className="play-text">REGRAS</span>
+            <span className="diamond indicador-losango" aria-hidden="true"></span>
+          </NavLink>
+          <NavLink
+            to="/faq"
+            className={({ isActive }) => `nav-link ${isActive ? 'ativo nav-item-ativo' : ''}`}
+          >
+            <div className="play-bg"></div>
+            <span className="play-text">FAQ</span>
+            <span className="diamond indicador-losango" aria-hidden="true"></span>
+          </NavLink>
         </nav>
+
+
         <div className="user-area">
           {usuarioLogado ? (
             <div className="menu-usuario-container">
@@ -108,10 +135,58 @@ export default function Menu({ children }) {
       {/* Conteúdo Principal */}
       {children}
 
-      {/* Rodapé Simples */}
-      <footer className="rodape">
-        <p>&copy; 2026 CS:GO Tournaments. Todos os direitos reservados.</p>
+      {/* Rodapé Global */}
+      <footer className="rodape-global">
+        <div className="rodape-container">
+          {/* Coluna 1: Marca e Quem Somos */}
+          <div className="rodape-coluna rodape-marca">
+            <h3 className="rodape-logo">CS:GO <span>TOURNAMENTS</span></h3>
+            <p className="rodape-descricao">
+              Plataforma competitiva dedicada a torneios e campeonatos de CS. Conectamos equipes, criamos disputas justas e impulsionamos o cenário de esports.
+            </p>
+          </div>
+
+          {/* Coluna 2: Navegação Rápida */}
+          <div className="rodape-coluna">
+            <h4 className="rodape-titulo">Navegação</h4>
+            <ul className="rodape-links">
+              <li><Link to="/">Início</Link></li>
+              <li><Link to="/equipes">Times</Link></li>
+              <li><Link to="/torneios">Torneios</Link></li>
+              <li><Link to="/regras">Regras &amp; Diretrizes</Link></li>
+              <li><Link to="/faq">Perguntas Frequentes (FAQ)</Link></li>
+            </ul>
+          </div>
+
+          {/* Coluna 3: Suporte & Ajuda */}
+          <div className="rodape-coluna">
+            <h4 className="rodape-titulo">Suporte</h4>
+            <ul className="rodape-links">
+              <li><Link to="/faq">Central de Ajuda</Link></li>
+              <li><Link to="/regras">Regulamento Oficial</Link></li>
+              <li><a href="mailto:suporte@csgotournaments.com">suporte@csgotournaments.com</a></li>
+              <li><span>Atendimento: 24/7 via Discord</span></li>
+            </ul>
+          </div>
+
+          {/* Coluna 4: Comunidade e Redes */}
+          <div className="rodape-coluna">
+            <h4 className="rodape-titulo">Comunidade</h4>
+            <p className="rodape-comunidade-texto">Junte-se à nossa comunidade para atualizações de partidas e suporte em tempo real.</p>
+            <div className="rodape-redes">
+              <a href="https://discord.com" target="_blank" rel="noreferrer" aria-label="Discord">Discord</a>
+              <a href="https://steamcommunity.com" target="_blank" rel="noreferrer" aria-label="Steam">Steam</a>
+              <a href="https://x.com" target="_blank" rel="noreferrer" aria-label="Twitter/X">X (Twitter)</a>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra Inferior */}
+        <div className="rodape-bottom">
+          <p>© 2026 CS:GO Tournaments. Todos os direitos reservados.</p>
+        </div>
       </footer>
+
     </div>
   );
 }

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap');
+
 /* ================= Cabeçalho ================= */
 .cabecalho {
     position: fixed;
@@ -17,19 +19,25 @@
 }
 
 .logo {
+    font-family: 'Orbitron', sans-serif;
     font-weight: 800;
-    font-size: 22px;
-    letter-spacing: 1.5px;
+    font-size: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .titulo-animado-container {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
+  font-family: 'Orbitron', sans-serif;
 }
 
 .letra-animada {
   display: inline-block;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  letter-spacing: 2px;
   opacity: 0;
   transform: translateX(-12px);
   filter: blur(3px);
@@ -51,10 +59,11 @@
 }
 
 .roxo {
-    background: linear-gradient(120deg, var(--roxo-claro), var(--roxo-vivo));
+    background: linear-gradient(120deg, var(--roxo-claro, #d69eff), var(--roxo-vivo, #b565f2));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    font-weight: 900;
 }
 
 .val-nav {
@@ -62,13 +71,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 40px;
-    height: 60px; /* Definindo altura fixa para o nav */
+    gap: 24px;
+    height: 60px;
 }
 
 .nav-line-container {
     position: absolute;
-    bottom: 5px; /* Distância do fundo */
+    bottom: 5px;
     left: 0;
     width: 100%;
     height: 1px;
@@ -78,93 +87,163 @@
 .nav-line {
     width: 100%;
     height: 1px;
-    background-color: rgba(157, 78, 221, 0.4); /* Linha roxa sutil */
+    background-color: rgba(157, 78, 221, 0.4);
 }
 
 .nav-link {
     position: relative;
-    color: #e0e0e0;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #b8b8b8;
     text-decoration: none;
     font-weight: 700;
-    font-size: 1.1rem;
-    letter-spacing: 2px;
+    font-size: 0.98rem;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    transition: color 0.3s ease;
+    transition: all 0.25s ease;
     height: 100%;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
+    padding: 0 20px;
     z-index: 2;
 }
 
-.nav-link:hover,
-.nav-link.ativo {
-    color: #fff;
-    text-shadow: 0 0 10px rgba(157, 78, 221, 0.6);
+.nav-link-torneios {
+    font-size: 1.28rem;
+    font-weight: 900;
+    padding: 0 38px;
 }
 
-/* O losango/diamante */
-.diamond {
-    position: absolute;
-    bottom: -5px; /* Alinhar com a linha */
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-    width: 6px;
-    height: 6px;
-    background-color: rgba(157, 78, 221, 0.6);
-    opacity: 0.5;
-    transition: opacity 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+.nav-link-torneios .play-text {
+    font-size: 1.28rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
 
-.nav-link:hover .diamond,
-.nav-link.ativo .diamond {
+/* Trapézio ampliado para o destaque central de TORNEIOS */
+.nav-link-torneios .play-bg {
+    height: 46px;
+    box-shadow: 0 4px 18px rgba(114, 62, 195, 0.5);
+}
+
+.nav-link-torneios:hover .play-bg,
+.nav-link-torneios.ativo .play-bg,
+.nav-link-torneios.nav-item-ativo .play-bg {
+    transform: translateY(-50%) skewX(-20deg) scale(1.05);
+    box-shadow: 0 0 25px rgba(181, 101, 242, 0.85), 0 6px 22px rgba(157, 78, 221, 0.65);
+}
+
+.nav-link-torneios:hover .play-text,
+.nav-link-torneios.ativo .play-text,
+.nav-link-torneios.nav-item-ativo .play-text {
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Losango indicador proporcionalmente ampliado para TORNEIOS */
+.nav-link-torneios .diamond,
+.nav-link-torneios .indicador-losango {
+    width: 8px;
+    height: 8px;
+    bottom: 3px;
+}
+
+.nav-link-torneios:hover .diamond,
+.nav-link-torneios:hover .indicador-losango,
+.nav-link-torneios.ativo .diamond,
+.nav-link-torneios.ativo .indicador-losango,
+.nav-link-torneios.nav-item-ativo .diamond,
+.nav-link-torneios.nav-item-ativo .indicador-losango {
     opacity: 1;
-    background-color: #ffd700; /* Cor dourada ao passar o mouse */
-    box-shadow: 0 0 8px #ffd700;
+    background: #ffd43b;
+    box-shadow: 0 0 10px #ffd43b, 0 0 18px rgba(255, 212, 59, 0.9);
 }
 
-/* PLAY button styling (TORNEIOS) */
-.play-btn {
-    color: #fff !important;
-    padding: 0 45px; /* Mais destaque */
-    margin: 0 15px;
-}
-
-.play-bg {
+/* Fundo Trapézio estilo Valorant */
+.play-bg,
+.nav-tab-bg {
     position: absolute;
     top: 50%;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 42px;
     background: linear-gradient(135deg, var(--roxo-principal, #723ec3), var(--roxo-vivo, #b565f2));
     transform: translateY(-50%) skewX(-20deg);
     z-index: -1;
-    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
     box-shadow: 0 4px 15px rgba(114, 62, 195, 0.4);
     border-left: 2px solid rgba(255, 255, 255, 0.4);
     border-right: 2px solid rgba(255, 255, 255, 0.4);
 }
 
-.play-btn:hover .play-bg,
-.play-btn.ativo .play-bg {
-    background: linear-gradient(135deg, var(--roxo-vivo, #b565f2), var(--roxo-claro, #d69eff));
-    transform: translateY(-50%) skewX(-20deg) scale(1.05);
-    box-shadow: 0 6px 20px rgba(157, 78, 221, 0.6);
-}
-
 .play-text {
     position: relative;
     z-index: 2;
-    font-size: 1.35rem; /* Um pouco maior */
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para destacar o texto no roxo */
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    transition: all 0.25s ease;
 }
 
-/* Fix diamond for play btn */
-.play-btn .diamond {
-    bottom: -23px; /* Adjust because height of play btn */
+/* Estado Ativo e Hover de cada nav link */
+.nav-link:hover,
+.nav-link.ativo,
+.nav-link.nav-item-ativo {
+    color: #ffffff;
+    font-weight: 800;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
+
+.nav-link:hover .play-bg,
+.nav-link:hover .nav-tab-bg,
+.nav-link.ativo .play-bg,
+.nav-link.ativo .nav-tab-bg,
+.nav-link.nav-item-ativo .play-bg,
+.nav-link.nav-item-ativo .nav-tab-bg {
+    opacity: 1;
+    visibility: visible;
+    background: linear-gradient(135deg, var(--roxo-vivo, #b565f2), var(--roxo-claro, #d69eff));
+    transform: translateY(-50%) skewX(-20deg) scale(1.04);
+    box-shadow: 0 6px 20px rgba(157, 78, 221, 0.6);
+}
+
+.nav-link:hover .play-text,
+.nav-link.ativo .play-text,
+.nav-link.nav-item-ativo .play-text {
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* O losango/diamante indicador colado abaixo do texto dentro do header */
+.diamond,
+.indicador-losango {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 6px;
+    height: 6px;
+    background-color: rgba(157, 78, 221, 0.4);
+    opacity: 0.4;
+    transition: all 0.25s ease;
+}
+
+.nav-link:hover .diamond,
+.nav-link:hover .indicador-losango,
+.nav-link.ativo .diamond,
+.nav-link.ativo .indicador-losango,
+.nav-link.nav-item-ativo .diamond,
+.nav-link.nav-item-ativo .indicador-losango {
+    opacity: 1;
+    background: #ffd43b;
+    box-shadow: 0 0 8px #ffd43b, 0 0 14px rgba(255, 212, 59, 0.6);
+}
+
+
 
 .user-area {
     display: flex;
@@ -374,15 +453,146 @@
     box-shadow: 0 8px 24px rgba(157, 78, 221, 0.65);
 }
 
-/* ================= Rodapé ================= */
-.rodape {
-    text-align: center;
-    padding: 32px;
-    background: #020004;
-    color: #666;
-    font-size: 13px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+/* ================= Rodapé Global ================= */
+.rodape-global {
+  background: #06030c;
+  border-top: 1px solid rgba(114, 62, 195, 0.2);
+  padding: 50px 24px 20px;
+  margin-top: 60px;
+  color: #94a3b8;
+  position: relative;
+  z-index: 10;
 }
+
+.rodape-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1.2fr 1.2fr;
+  gap: 40px;
+}
+
+.rodape-logo {
+  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 14px;
+}
+
+.rodape-logo span {
+  color: var(--roxo-vivo, #b565f2);
+}
+
+.rodape-descricao {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #837a94;
+  max-width: 320px;
+}
+
+.rodape-titulo {
+  color: #f1f5f9;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rodape-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rodape-links a,
+.rodape-links span {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.rodape-links a:hover {
+  color: var(--roxo-vivo, #b565f2);
+  transform: translateX(3px);
+}
+
+.rodape-comunidade-texto {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.rodape-redes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rodape-redes a {
+  background: rgba(114, 62, 195, 0.15);
+  border: 1px solid rgba(181, 101, 242, 0.25);
+  color: #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.rodape-redes a:hover {
+  background: var(--roxo-principal, #723EC3);
+  border-color: var(--roxo-vivo, #b565f2);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.rodape-bottom {
+  max-width: 1200px;
+  margin: 40px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+/* Responsividade do Rodapé */
+@media (max-width: 900px) {
+  .rodape-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .rodape-container {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    text-align: center;
+  }
+
+  .rodape-descricao {
+    max-width: 100%;
+  }
+
+  .rodape-links a:hover {
+    transform: none;
+  }
+
+  .rodape-redes {
+    justify-content: center;
+  }
+}
+
 
 /* ================= Responsividade do Cabeçalho ================= */
 @media (max-width: 860px) {

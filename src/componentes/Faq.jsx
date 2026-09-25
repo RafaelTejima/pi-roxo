@@ -106,7 +106,6 @@ export default function Faq() {
     <main className="conteudo-principal">
       <div className="container-faq">
         <div className="secao-titulo">
-          <span className="badge-faq">💬 Central de Ajuda</span>
           <h1>PERGUNTAS FREQUENTES</h1>
           <p>
             Reunimos as dúvidas mais comuns sobre cadastro, torneios, premiações e suporte. Não encontrou o que precisava? Fale com a nossa equipe.

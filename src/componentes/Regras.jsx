@@ -93,7 +93,6 @@ export default function Regras() {
     <main className="conteudo-principal">
       <div className="container-regras">
         <div className="secao-titulo">
-          <span className="badge-regras">⚖️ Regulamento Oficial</span>
           <h1>REGRAS DO COMPETITIVO</h1>
           <p>
             Consulte abaixo todas as diretrizes, termos de conduta e padrões exigidos para participar dos nossos campeonatos de CS:GO. Clique em uma regra para expandir os detalhes.
