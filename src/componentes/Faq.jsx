@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Suporte from './Suporte';
 import '../css/faq.css';
 
 const faqCategories = [
@@ -142,14 +142,9 @@ export default function Faq() {
                 );
               })}
             </div>
-            {cat.id === 'suporte' && (
-              <Link className="faq-link-suporte" to="/suporte">
-                <span>Entrar em contato com o suporte</span>
-                <span aria-hidden="true">↗</span>
-              </Link>
-            )}
           </div>
         ))}
+        <Suporte embedded />
       </div>
     </main>
   );

@@ -44,6 +44,84 @@
 #pagina-criar-equipe .criar-equipe-cancelar { display: flex; align-items: center; padding: 12px 19px; color: #d9c3ec; border: 1px solid rgba(157, 78, 221, .3); border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; }
 #pagina-criar-equipe .criar-equipe-enviar:disabled { cursor: wait; opacity: .65; }
 
+#pagina-criar-equipe .buscar-jogador-wrap {
+  position: relative;
+  width: 100%;
+}
+
+#pagina-criar-equipe .autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(22, 15, 38, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(157, 78, 221, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65), 0 0 18px rgba(114, 62, 195, 0.25);
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#pagina-criar-equipe .autocomplete-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#pagina-criar-equipe .autocomplete-item:hover {
+  background: rgba(114, 62, 195, 0.25);
+  border-color: rgba(181, 101, 242, 0.5);
+}
+
+#pagina-criar-equipe .autocomplete-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#pagina-criar-equipe .autocomplete-item-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+#pagina-criar-equipe .autocomplete-item-email {
+  color: #a094ab;
+  font-size: 11px;
+}
+
+#pagina-criar-equipe .autocomplete-add-btn {
+  color: #b565f2;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+#pagina-criar-equipe .autocomplete-item:hover .autocomplete-add-btn {
+  color: #ffffff;
+}
+
+#pagina-criar-equipe .autocomplete-empty {
+  padding: 14px;
+  text-align: center;
+  color: #9f93aa;
+  font-size: 13px;
+  font-style: italic;
+}
+
 @media (max-width: 620px) {
   #pagina-criar-equipe { margin-top: 125px; }
   #pagina-criar-equipe .criar-equipe-form { padding: 24px 18px; }

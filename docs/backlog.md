@@ -46,7 +46,6 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - No envio, insere a equipe em `teams`, seus membros em `team_members` e a inscricao em `tournament_teams` usando `src/supabase.js`.
 - Possui validacao de campos obrigatorios, sigla, quantidade minima de jogadores, duplicidade de jogadores e estados de carregamento, erro e sucesso.
 
-<<<<<<< Updated upstream
 ## Lista de Amigos
 - **Componente:** `src/componentes/ListaAmigos.jsx`
 - **CSS:** `src/css/lista-amigos.css` (escopado por `#widget-amigos`)
@@ -54,7 +53,7 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Inclui um botão toggle que exibe a quantidade de amigos online.
 - Funcionalidade com dados mockados (não conectada ao banco de dados por enquanto), exibindo jogadores online/offline, status de jogo e placeholder para convite.
 - Interface escura com tema roxo (#723EC3) em destaque, utilizando animações CSS simples e placeholders visuais do `placehold.co` para avatares, de acordo com as restrições do projeto.
-=======
+
 ## Documentacao da Pagina de Suporte
 - Criado `docs/pagina_suporte.md` com o contexto e os requisitos propostos para um formulario de contato do suporte de CS2, incluindo campos, validacao, estados da interface e integracao futura com Supabase.
 
@@ -63,6 +62,16 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **CSS:** `src/css/suporte.css` (escopado por `#pagina-suporte`)
 - Formulario responsivo com campos de contato, categoria, assunto, descricao, torneio, partida e link de evidencia; nome e e-mail sao preenchidos a partir de `localStorage` quando existe usuario autenticado.
 - Validacao nativa de obrigatoriedade, e-mail e URL. O envio monta uma mensagem para `suporte@csgotournaments.com` e abre o aplicativo de e-mail configurado; a pessoa precisa concluir o envio por esse aplicativo.
-- Adicionado acesso pelo ultimo botao da categoria Suporte na FAQ e pelo rodape global.
+- Adicionado o formulario ao final da FAQ, com atalho de navegacao na categoria Suporte; a rota `/suporte` e o link do rodape continuam disponiveis.
 - O formulario ainda nao persiste chamados no Supabase nem aceita upload de arquivos; schema, permissoes e armazenamento continuam pendentes conforme `docs/pagina_suporte.md`.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+
+## Pagina de Perfil do Usuario
+- **Componente:** `src/componentes/Perfil.jsx` (rota `/perfil`)
+- **CSS:** `src/css/perfil.css` (escopado por `#perfil-page`)
+- **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
+- **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
+- **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos). Como esses campos ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
+=======
 >>>>>>> Stashed changes
