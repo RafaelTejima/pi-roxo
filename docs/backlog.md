@@ -61,12 +61,15 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Validacao nativa de obrigatoriedade, e-mail e URL. O envio monta uma mensagem para `suporte@csgotournaments.com` e abre o aplicativo de e-mail configurado; a pessoa precisa concluir o envio por esse aplicativo.
 - Adicionado o formulario ao final da FAQ, com atalho de navegacao na categoria Suporte; a rota `/suporte` e o link do rodape continuam disponiveis.
 - O formulario ainda nao persiste chamados no Supabase nem aceita upload de arquivos; schema, permissoes e armazenamento continuam pendentes conforme `docs/pagina_suporte.md`.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 
 ## Pagina de Perfil do Usuario
 - **Componente:** `src/componentes/Perfil.jsx` (rota `/perfil`)
 - **CSS:** `src/css/perfil.css` (escopado por `#perfil-page`)
 - **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
 - **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
+<<<<<<< Updated upstream
 - **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos). Como esses campos ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
 
 ## Integracao da Criacao de Equipe com o banco (tabela `times`)

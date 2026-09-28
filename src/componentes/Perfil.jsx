@@ -97,6 +97,7 @@ export default function Perfil() {
   const { mostrarAlerta } = useAlerta();
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPublico, setIsPublico] = useState(false); // CORRIGIDO: Estado adicionado
   
   // Estados para edição
   const [editando, setEditando] = useState(false);
@@ -146,13 +147,7 @@ export default function Perfil() {
 
       // Perfil do próprio usuário logado
       setIsPublico(false);
-      if (!salvo) {
-        navigate('/login');
-        return;
-      }
-      
-      const userLocal = JSON.parse(salvo);
-      if (!userLocal.id) {
+      if (!salvo || !userLocal?.id) {
         navigate('/login');
         return;
       }
@@ -167,7 +162,7 @@ export default function Perfil() {
       if (data) {
         setUsuario(data);
       } else {
-        setUsuario(userParsed);
+        setUsuario(userLocal); // CORRIGIDO: userParsed trocado por userLocal
       }
       setLoading(false);
     }
@@ -187,7 +182,6 @@ export default function Perfil() {
       nome_usuario: usuario.nome_usuario || '',
       imagem: usuario.imagem || '',
       bio: usuario.bio || '',
-      // Simulando campos que ainda não existem no DB
       discord: localStorage.getItem(`discord_${usuario.id}`) || '',
       steam: localStorage.getItem(`steam_${usuario.id}`) || '',
       twitter: localStorage.getItem(`twitter_${usuario.id}`) || '',
@@ -227,7 +221,6 @@ export default function Perfil() {
       return;
     }
 
-    // Salva configs extras locais (pendente update no schema)
     localStorage.setItem(`discord_${usuario.id}`, form.discord);
     localStorage.setItem(`steam_${usuario.id}`, form.steam);
     localStorage.setItem(`twitter_${usuario.id}`, form.twitter);
@@ -264,13 +257,23 @@ export default function Perfil() {
   const dataRegistro = new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
-  // Extraimos as configs locais apenas para exibição no perfil
-  const discord = localStorage.getItem(`discord_${usuario.id}`);
-  const steam = localStorage.getItem(`steam_${usuario.id}`);
-  const twitter = localStorage.getItem(`twitter_${usuario.id}`);
+  // CORRIGIDO: Extração de valores com fallback de mock / localStorage
+  const discord = usuario.discord || localStorage.getItem(`discord_${usuario.id}`);
+  const steam = usuario.steam || localStorage.getItem(`steam_${usuario.id}`);
+  const twitter = usuario.twitter || localStorage.getItem(`twitter_${usuario.id}`);
+  const youtube = usuario.youtube || localStorage.getItem(`youtube_${usuario.id}`);
+  const twitch = usuario.twitch || localStorage.getItem(`twitch_${usuario.id}`);
+  const bluesky = usuario.bluesky || localStorage.getItem(`bluesky_${usuario.id}`);
+  const fundo = localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1';
+
   const privNome = localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico';
   const privGanhos = localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico';
   const privAmigos = localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico';
+
+  const statsPartidas = usuario.stats?.partidas ?? 0;
+  const statsTorneios = usuario.stats?.torneios ?? 0;
+  const statsTitulos = usuario.stats?.titulos ?? 0;
+  const statsGanhos = privGanhos === 'privado' ? '******' : (usuario.stats?.ganhos ?? 'R$ 0,00');
 
   return (
     <main id="perfil-page" className="perfil-page" style={{
@@ -297,7 +300,6 @@ export default function Perfil() {
               ></span>
             </div>
 
-            {/* Regra de privacidade do Nome */}
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
               {privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}
               {usuario.admin && <span style={{ fontSize: '10px', background: '#8c52ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>ADM</span>}
@@ -333,8 +335,6 @@ export default function Perfil() {
                   <div><span className="perfil-kicker">Configurações</span><h2>Editar Perfil</h2></div>
                 </div>
                 <form onSubmit={salvarEdicao} style={{ display: 'grid', gap: '20px' }}>
-
-                  {/* DADOS BÁSICOS */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Dados Básicos</h3>
                     <div className="perfil-detalhes-grid">
@@ -354,7 +354,6 @@ export default function Perfil() {
                     <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows="3" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', resize: 'vertical' }}></textarea>
                   </div>
 
-                  {/* REDES SOCIAIS */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Conexões (Redes)</h3>
                     <div className="perfil-detalhes-grid">
@@ -385,8 +384,6 @@ export default function Perfil() {
                     </div>
                   </div>
 
-
-                  {/* PRIVACIDADE */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Privacidade</h3>
                     <div className="perfil-detalhes-grid">
@@ -415,10 +412,8 @@ export default function Perfil() {
                     </div>
                   </div>
 
-                  {/* PERSONALIZAÇÃO */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Personalização</h3>
-
                     <div>
                       <label style={{ fontSize: '12px', color: 'var(--texto-secundario)', display: 'block', marginBottom: '8px' }}>Fundo do Perfil</label>
                       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -447,7 +442,6 @@ export default function Perfil() {
               </section>
             ) : (
               <>
-                {/* DETALHES DA CONTA */}
                 <section className="perfil-secao" id="detalhes-conta">
                   <div className="perfil-secao-titulo">
                     <div><span className="perfil-kicker">Informações</span><h2>Biografia</h2></div>
@@ -457,7 +451,7 @@ export default function Perfil() {
                       {usuario.bio || 'Este jogador ainda não escreveu nenhuma biografia.'}
                     </p>
                   </div>
-                  <div><span className="perfil-kicker">Desempenho</span><h2>Estatísticas e Histórico</h2></div>
+                  <div style={{ marginTop: '24px' }}><span className="perfil-kicker">Desempenho</span><h2>Estatísticas e Histórico</h2></div>
                   <div className="perfil-detalhes-grid">
                     <div><span>Partidas Jogadas</span><strong style={{ fontSize: '20px' }}>{statsPartidas}</strong></div>
                     <div><span>Torneios Participados</span><strong style={{ fontSize: '20px' }}>{statsTorneios}</strong></div>
@@ -511,7 +505,6 @@ export default function Perfil() {
                   </div>
                 </section>
 
-                {/* LISTA DE AMIGOS (MOCK) */}
                 <section className="perfil-secao" style={{ marginTop: '24px' }}>
                   <div className="perfil-secao-titulo">
                     <div><span className="perfil-kicker">Comunidade</span><h2>Lista de Amigos</h2></div>
