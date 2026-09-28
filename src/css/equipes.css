@@ -82,6 +82,8 @@
 }
 
 .equipe-card {
+  display: block;
+  text-decoration: none;
   background: rgba(18, 12, 35, 0.7);
   border: 1px solid rgba(114, 62, 195, 0.25);
   border-radius: 12px;

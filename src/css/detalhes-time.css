@@ -1,0 +1,159 @@
+/* ============================================================
+   DETALHES-TIME.CSS — Estilos da Página de Detalhes do Time
+   ============================================================ */
+
+#pagina-detalhes-time {
+  max-width: 900px;
+  margin: 160px auto 110px;
+  padding: 0 20px;
+}
+
+.detalhes-time-status {
+  text-align: center;
+  color: var(--texto-secundario, #a8a8a8);
+  padding: 60px 20px;
+}
+
+.detalhes-time-voltar {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: var(--roxo-claro, #9d4edd);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.detalhes-time-voltar:hover {
+  text-decoration: underline;
+}
+
+.detalhes-time-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: rgba(18, 13, 30, 0.65);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 20px;
+  padding: 28px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 24px;
+}
+
+.detalhes-time-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 16px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(114, 62, 195, 0.4);
+}
+
+.detalhes-time-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--roxo-claro, #9d4edd);
+  letter-spacing: 1px;
+}
+
+.detalhes-time-info h1 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 4px 0 8px;
+}
+
+.detalhes-time-registro {
+  color: #837a94;
+  font-size: 0.85rem;
+}
+
+.detalhes-time-editar-btn {
+  margin-top: 14px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 100px;
+  background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.detalhes-time-editar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(181, 101, 242, 0.5);
+}
+
+.detalhes-time-secao {
+  background: rgba(18, 13, 30, 0.65);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 20px;
+  padding: 28px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 24px;
+}
+
+.detalhes-time-secao h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 16px;
+}
+
+.detalhes-time-secao p {
+  color: var(--texto-secundario, #a8a8a8);
+  line-height: 1.7;
+}
+
+.detalhes-time-jogadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.detalhes-time-jogador-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(114, 62, 195, 0.08);
+  border: 1px solid rgba(114, 62, 195, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.detalhes-time-jogador-card strong {
+  color: #e2e8f0;
+  font-size: 0.95rem;
+}
+
+.detalhes-time-jogador-card span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #837a94;
+}
+
+.detalhes-time-jogador-card.capitao {
+  border-color: var(--roxo-vivo, #b565f2);
+}
+
+.detalhes-time-jogador-card.capitao span {
+  color: var(--roxo-claro, #9d4edd);
+}
+
+.detalhes-time-aviso {
+  margin-top: 14px;
+  color: #837a94;
+  font-size: 0.9rem;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 600px) {
+  .detalhes-time-cabecalho {
+    flex-direction: column;
+    text-align: center;
+  }
+}

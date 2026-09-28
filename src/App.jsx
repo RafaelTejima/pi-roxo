@@ -13,6 +13,7 @@ import EsqueciSenha from './componentes/EsqueciSenha';
 import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
+import DetalhesTime from './componentes/DetalhesTime';
 import SelecaoMapas from './componentes/SelecaoMapas';
 import ListaAmigos from './componentes/ListaAmigos';
 function App() {
@@ -26,6 +27,7 @@ function App() {
 
         <Route path="/torneios/criar" element={<CriarTorneio />} />
         <Route path="/equipes/criar" element={<CriarEquipe />} />
+        <Route path="/equipes/:id" element={<DetalhesTime />} />
         <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
         <Route path="/selecao-mapas" element={<SelecaoMapas />} />
         <Route path="/torneios/:id" element={<Torneios />} />

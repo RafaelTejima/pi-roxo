@@ -3,20 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/criar-equipe.css'
 
-const MOCK_JOGADORES = [
-  { id: 'usr-admin', nome: 'admin', email: 'admin@csgo.com' },
-  { id: 'usr-fallen', nome: 'FalleN', email: 'fallen@imperial.gg' },
-  { id: 'usr-coldzera', nome: 'coldzera', email: 'coldzera@redcanids.com.br' },
-  { id: 'usr-s1mple', nome: 's1mple', email: 's1mple@navi.gg' },
-  { id: 'usr-zywoo', nome: 'ZywOo', email: 'zywoo@vitality.gg' },
-  { id: 'usr-fer', nome: 'fer', email: 'fer@csgo.com' },
-  { id: 'usr-taco', nome: 'TACO', email: 'taco@csgo.com' },
-  { id: 'usr-kscerato', nome: 'KSCERATO', email: 'kscerato@furia.gg' },
-  { id: 'usr-yuurih', nome: 'yuurih', email: 'yuurih@furia.gg' },
-  { id: 'usr-chelo', nome: 'chelo', email: 'chelo@furia.gg' },
-  { id: 'usr-art', nome: 'arT', email: 'art@fluxo.gg' }
-]
-
 const equipeInicial = { nome: '', sigla: '', descricao: '' }
 
 export default function CriarEquipe() {
@@ -52,7 +38,7 @@ export default function CriarEquipe() {
     return () => document.removeEventListener('click', fecharAoClicarFora)
   }, [])
 
-  // Filtro dinâmico em tempo real conforme digita
+  // Busca de jogadores reais na tabela 'usuarios' conforme digita
   useEffect(() => {
     const termo = buscaJogador.trim().toLowerCase()
     if (!termo) {
@@ -63,41 +49,20 @@ export default function CriarEquipe() {
 
     let ativo = true
 
-    // Filtrar nos mocks locais instantaneamente
-    const locais = MOCK_JOGADORES.filter(
-      (j) =>
-        (j.nome.toLowerCase().includes(termo) || j.email.toLowerCase().includes(termo)) &&
-        j.id !== usuario?.id &&
-        !jogadores.some((item) => item.id === j.id)
-    )
-
-    setResultados(locais)
-    setDropdownAberto(true)
-
-    // Buscar no Supabase se houver conexão
-    if (supabase) {
-      supabase
-        .from('usuarios')
-        .select('id, nome, email')
-        .or(`nome.ilike.%${termo}%,email.ilike.%${termo}%`)
-        .limit(5)
-        .then(({ data, error }) => {
-          if (ativo && !error && data) {
-            const combinados = [...locais]
-            data.forEach((jDb) => {
-              if (
-                jDb.id !== usuario?.id &&
-                !jogadores.some((item) => item.id === jDb.id) &&
-                !combinados.some((item) => item.id === jDb.id || item.email === jDb.email)
-              ) {
-                combinados.push(jDb)
-              }
-            })
-            setResultados(combinados)
-          }
-        })
-        .catch(() => {})
-    }
+    supabase
+      .from('usuarios')
+      .select('id, nome, nome_usuario, email')
+      .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%,email.ilike.%${termo}%`)
+      .limit(5)
+      .then(({ data, error }) => {
+        if (!ativo || error || !data) return
+        const filtrados = data
+          .filter((j) => j.id !== usuario?.id && !jogadores.some((item) => item.id === j.id))
+          .map((j) => ({ id: j.id, nome: j.nome_usuario || j.nome, email: j.email }))
+        setResultados(filtrados)
+        setDropdownAberto(true)
+      })
+      .catch(() => {})
 
     return () => {
       ativo = false
@@ -131,18 +96,10 @@ export default function CriarEquipe() {
   function handleKeyDown(e) {
     if (e.key === 'Enter') {
       e.preventDefault()
-      const termo = buscaJogador.trim()
-      if (!termo) return
-
       if (resultados.length > 0) {
         adicionarJogador(resultados[0])
       } else {
-        const novoConvidado = {
-          id: 'usr-' + Date.now(),
-          nome: termo,
-          email: `${termo.toLowerCase().replace(/\s+/g, '')}@jogador.com`
-        }
-        adicionarJogador(novoConvidado)
+        setErro('Nenhum jogador cadastrado foi encontrado com esse nome ou e-mail.')
       }
     }
   }
@@ -159,58 +116,36 @@ export default function CriarEquipe() {
 
     setEnviando(true)
 
-    const novaEquipeObj = {
-      id: 'team-' + Date.now(),
-      nome: equipe.nome.trim(),
-      tag: equipe.sigla.trim().toUpperCase(),
-      descricao: equipe.descricao.trim(),
-      capitao: usuario.nome || usuario.email,
-      jogadoresCount: `${jogadores.length + 1}/5`,
-      jogadores: [
-        { id: usuario.id, nome: usuario.nome || usuario.email, role: 'captain' },
-        ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, role: 'player' }))
-      ],
-      createdAt: new Date().toISOString()
-    }
-
-    // Salvar no localStorage para que a lista em /equipes exiba imediatamente
     try {
-      const salvas = localStorage.getItem('equipesCadastradas')
-      const lista = salvas ? JSON.parse(salvas) : []
-      lista.unshift(novaEquipeObj)
-      localStorage.setItem('equipesCadastradas', JSON.stringify(lista))
-    } catch (err) {
-      console.error('Erro ao salvar no localStorage:', err)
-    }
-
-    // Integração Supabase opcional
-    try {
-      const { data: novaEquipeDb, error: erroEquipe } = await supabase
-        .from('teams')
+      const { data: novoTime, error: erroTime } = await supabase
+        .from('times')
         .insert({
-          name: equipe.nome.trim(),
+          nome: equipe.nome.trim(),
           tag: equipe.sigla.trim().toUpperCase(),
-          description: equipe.descricao.trim(),
-          captain_id: usuario.id,
-          avatar_url: 'https://placehold.co/96x96/723EC3/FFFFFF?text=TEAM'
+          logo: 'https://placehold.co/96x96/723EC3/FFFFFF?text=TEAM',
+          descricao: equipe.descricao.trim() || null,
+          id_capitao: usuario.id
         })
         .select()
         .single()
 
-      if (!erroEquipe && novaEquipeDb) {
-        const membros = [
-          { team_id: novaEquipeDb.id, user_id: usuario.id, role: 'captain' },
-          ...jogadores.map((j) => ({ team_id: novaEquipeDb.id, user_id: j.id, role: 'player' }))
-        ]
-        await supabase.from('team_members').insert(membros)
-      }
-    } catch (err) {
-      console.warn('Integração Supabase opcional:', err)
-    }
+      if (erroTime) throw erroTime
 
-    setEnviando(false)
-    setSucesso('Equipe criada com sucesso!')
-    setTimeout(() => navigate('/equipes'), 1200)
+      const integrantes = [
+        { id_time: novoTime.id, id_usuario: usuario.id, funcao: 'capitao' },
+        ...jogadores.map((j) => ({ id_time: novoTime.id, id_usuario: j.id, funcao: 'jogador' }))
+      ]
+      const { error: erroIntegrantes } = await supabase.from('times_integrantes').insert(integrantes)
+      if (erroIntegrantes) throw erroIntegrantes
+
+      setSucesso('Equipe criada com sucesso!')
+      setTimeout(() => navigate('/equipes'), 1200)
+    } catch (err) {
+      console.error('Erro ao criar equipe:', err)
+      setErro('Não foi possível criar a equipe. Tente novamente.')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   if (!usuario) return null

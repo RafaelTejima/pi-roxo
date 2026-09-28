@@ -35,16 +35,13 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - O stat "TIMES INSCRITOS" foi removido do card e da tela de detalhes porque a tabela `torneios` nao tem essa coluna; nao ha relacao com uma tabela de inscricoes ainda ligada a esse `id` (bigint). Se for necessario no futuro, criar uma consulta agregada em uma tabela de inscricoes que referencie `torneios.id`.
 - Detalhes do torneio (`TournamentDetails`) incluem bracket de chaveamento simulado (times e resultados aleatorios, apenas para demonstracao visual — nao vem do banco).
 - **Fluxo completo de criacao (CriarTorneio -> SelecaoMapas):** o `handleFinalizar` em `SelecaoMapas.jsx` insere em `torneios` (`nome`, `descricao` com o mapa escolhido anexado, `jogo`, `formato`, `data_inicio`, `status`, `id_criador`, `dinheiro`) e so navega para `/torneios` se nao houver erro. Em caso de falha no insert, exibe mensagem de erro no modal de confirmacao (`.selecao-mapas-mensagem-erro`) e mantem o usuario na tela para tentar novamente, em vez de navegar silenciosamente. O botao "Continuar" fica desabilitado ("Salvando...") durante o insert para evitar duplo envio.
-- **Pendencia conhecida:** `src/componentes/CriarEquipe.jsx` ainda busca torneios abertos na tabela antiga `tournaments` (`status: 'open'`, `tournament_date`) e nao foi migrado para `torneios` nesta tarefa, pois o pedido foi restrito a tela de Torneios/criacao. Precisa de atualizacao futura para `torneios` (`status` boolean, `data_inicio`) e para o vinculo com `tournament_teams`/`torneios.id` (bigint).
 
 ## Pagina de Criacao de Equipe
 - **Componente:** `src/componentes/CriarEquipe.jsx` (rota `/equipes/criar`)
 - **CSS:** `src/css/criar-equipe.css` (escopado por `#pagina-criar-equipe`)
-- Formulario responsivo com nome, sigla, descricao, torneio aberto e busca de jogadores por nome ou e-mail.
+- Formulario responsivo com nome, sigla, descricao e busca de jogadores por nome ou e-mail.
 - Usuario autenticado pelo `localStorage` `usuarioLogado` entra automaticamente como capitao; usuarios nao autenticados sao direcionados para `/login`.
-- Torneios abertos sao buscados na tabela `tournaments`; jogadores sao buscados na tabela `usuarios`.
-- No envio, insere a equipe em `teams`, seus membros em `team_members` e a inscricao em `tournament_teams` usando `src/supabase.js`.
-- Possui validacao de campos obrigatorios, sigla, quantidade minima de jogadores, duplicidade de jogadores e estados de carregamento, erro e sucesso.
+- **Atualizado:** nao busca mais torneios (a selecao de torneio na criacao de equipe foi removida/nunca foi finalizada); ver secao "Integracao da Criacao de Equipe com o banco (tabela `times`)" para o fluxo real e atual de persistencia.
 
 ## Lista de Amigos
 - **Componente:** `src/componentes/ListaAmigos.jsx`
@@ -64,8 +61,6 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Validacao nativa de obrigatoriedade, e-mail e URL. O envio monta uma mensagem para `suporte@csgotournaments.com` e abre o aplicativo de e-mail configurado; a pessoa precisa concluir o envio por esse aplicativo.
 - Adicionado o formulario ao final da FAQ, com atalho de navegacao na categoria Suporte; a rota `/suporte` e o link do rodape continuam disponiveis.
 - O formulario ainda nao persiste chamados no Supabase nem aceita upload de arquivos; schema, permissoes e armazenamento continuam pendentes conforme `docs/pagina_suporte.md`.
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
 
 ## Pagina de Perfil do Usuario
 - **Componente:** `src/componentes/Perfil.jsx` (rota `/perfil`)
@@ -73,5 +68,25 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
 - **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
 - **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos). Como esses campos ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
+
+## Integracao da Criacao de Equipe com o banco (tabela `times`)
+- **Componentes:** `src/componentes/CriarEquipe.jsx` (rota `/equipes/criar`) e `src/componentes/Equipes.jsx` (rota `/equipes`)
+- **Tabela real (Supabase):** `public.times` — colunas `id` (bigint identity), `nome`, `tag` (varchar 5), `logo`, `descricao`, `id_capitao` (bigint, sem FK declarada no schema, referencia logica a `usuarios.id`), `registro` (timestamptz default now()). Substitui completamente as tabelas antigas `teams`/`team_members` usadas anteriormente.
+- **Nova tabela `times_integrantes`** (criada nesta tarefa para guardar a line-up, ja que `times` so tem `id_capitao`): `id` (bigint identity), `id_time` (bigint, FK -> `times.id`), `id_usuario` (bigint, FK -> `usuarios.id`), `funcao` (varchar, `'capitao'` ou `'jogador'`), `registro` (timestamptz default now()).
+- `CriarEquipe.jsx`: o envio insere primeiro em `times` (`nome`, `tag`, `logo` com placeholder `placehold.co`, `descricao`, `id_capitao` <- `usuario.id` do `usuarioLogado`), depois insere em `times_integrantes` uma linha para o capitao e uma para cada jogador adicionado na busca. Se qualquer insert falhar, exibe erro (`setErro`) e nao navega.
+- A busca de jogadores (`buscaJogador`) agora consulta somente a tabela real `usuarios` (`select('id, nome, nome_usuario, email')` com `.or(ilike)` em `nome`, `nome_usuario` e `email`); os `MOCK_JOGADORES` locais e o fallback que criava um "convidado" fake (com id nao numerico) foram removidos, pois `times_integrantes.id_usuario` e bigint com FK para `usuarios.id` e nao aceitaria ids inventados.
+- `equipesCadastradas` no `localStorage` foi removido; `Equipes.jsx` agora busca a listagem direto do Supabase: `times` ordenado por `registro` desc, depois busca em paralelo os nomes dos capitaes (`usuarios` filtrado por `id_capitao` via `.in`) e a contagem de integrantes (`times_integrantes` filtrado por `id_time` via `.in`), montando `capitaoNome` e `totalIntegrantes` em memoria (sem embed do PostgREST, pois nao ha FK declarada em `times.id_capitao`). Estados de carregamento e erro adicionados na tela.
+
+## Pagina de Detalhes do Time
+- **Documentacao:** `docs/detalhes_time.md`
+- **Componente:** `src/componentes/DetalhesTime.jsx` (rota `/equipes/:id`, registrada em `App.jsx` apos `/equipes/criar` para nao ser capturada por engano)
+- **CSS:** `src/css/detalhes-time.css` (escopado por `#pagina-detalhes-time`)
+- Cada card em `Equipes.jsx` virou um `Link` para `/equipes/:id` (a `div` do card foi trocada por `Link`; CSS de `.equipe-card` ajustado para `display: block` e `text-decoration: none`).
+- `DetalhesTime.jsx` busca o time em `times` pelo `id` da rota (`.eq('id', id).single()`), depois busca a line-up em `times_integrantes` (`id_time` igual ao `id` da rota) e os nomes correspondentes em `usuarios` (`.in('id', idsUsuarios)`), sem usar embed do PostgREST (mesma limitacao de `Equipes.jsx`, pois nao ha FK declarada).
+- Exibe cabecalho (logo/placeholder, nome, tag, data de registro formatada em pt-BR), descricao (quando existir) e a line-up separada em capitao (`funcao = 'capitao'`) e jogadores (`funcao = 'jogador'`), com contagem `X/5` e aviso quando so houver o capitao.
+- Estados tratados: carregando, time nao encontrado/erro (com link de volta para `/equipes`) e sucesso.
+- Se o usuario logado (`localStorage.usuarioLogado`) for o capitao (`usuario.id === time.id_capitao`), aparece um botao "Editar time" — **apenas visual por enquanto**, sem funcionalidade de edicao implementada ainda (fica como pendencia futura, conforme `docs/detalhes_time.md`).
+
+
 =======
 >>>>>>> Stashed changes
