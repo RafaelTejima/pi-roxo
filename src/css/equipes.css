@@ -92,6 +92,33 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+.equipes-busca-wrap {
+  margin-bottom: 28px;
+}
+
+.equipes-busca-input {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px 18px;
+  color: #fff;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 100px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.04);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.equipes-busca-input::placeholder {
+  color: #837a94;
+}
+
+.equipes-busca-input:focus {
+  border-color: var(--roxo-vivo, #b565f2);
+  box-shadow: 0 0 0 3px rgba(114, 62, 195, 0.18);
+}
+
 .equipes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

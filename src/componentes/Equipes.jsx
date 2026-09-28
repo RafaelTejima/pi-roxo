@@ -87,6 +87,7 @@ export default function Equipes() {
   const [equipes, setEquipes] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+  const [busca, setBusca] = useState('');
 
   useEffect(() => {
     async function carregarEquipes() {
@@ -180,6 +181,15 @@ export default function Equipes() {
     carregarEquipes();
   }, []);
 
+  const termoBusca = busca.trim().toLowerCase();
+  const equipesFiltradas = termoBusca
+    ? equipes.filter((equipe) =>
+        [equipe.nome, equipe.tag, equipe.capitaoNome, equipe.capitao]
+          .filter(Boolean)
+          .some((campo) => campo.toLowerCase().includes(termoBusca))
+      )
+    : equipes;
+
   return (
     <main id="pagina-equipes">
       <section className="equipes-heading">
@@ -191,6 +201,16 @@ export default function Equipes() {
       </section>
 
       <section className="equipes-container">
+        <div className="equipes-busca-wrap">
+          <input
+            type="text"
+            className="equipes-busca-input"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Pesquisar por nome, tag ou capitão..."
+          />
+        </div>
+
         {carregando ? (
           <div className="equipes-vazio">
             <p>Carregando equipes...</p>
@@ -199,9 +219,9 @@ export default function Equipes() {
           <div className="equipes-vazio">
             <p>{erro}</p>
           </div>
-        ) : equipes.length > 0 ? (
+        ) : equipesFiltradas.length > 0 ? (
           <div className="equipes-grid">
-            {equipes.map((equipe) => (
+            {equipesFiltradas.map((equipe) => (
               <Link to={`/equipes/${equipe.id}`} key={equipe.id} className="equipe-card">
                 <div className="equipe-card-header">
                   <div className="equipe-avatar">
@@ -227,7 +247,7 @@ export default function Equipes() {
           </div>
         ) : (
           <div className="equipes-vazio">
-            <p>Nenhuma equipe cadastrada no momento</p>
+            <p>{termoBusca ? 'Nenhuma equipe encontrada para essa pesquisa.' : 'Nenhuma equipe cadastrada no momento'}</p>
           </div>
         )}
       </section>
