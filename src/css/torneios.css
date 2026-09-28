@@ -16,7 +16,7 @@
 /* --- Cabeçalho / Título da Página de Torneios --- */
 .tournaments-heading {
   text-align: center;
-  margin-bottom: 55px;
+  margin-bottom: 36px;
 }
 
 .tournaments-overline {
@@ -77,6 +77,138 @@
 
 .tournaments-criar-btn:hover {
   transform: translateY(-2px);
+}
+
+/* ============================================================
+   BARRA DE PESQUISA DE TORNEIOS
+   ============================================================ */
+
+.tournaments-busca-container {
+  max-width: 680px;
+  margin: 0 auto 40px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.tournaments-busca-box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: rgba(18, 13, 30, 0.72);
+  border: 1px solid rgba(157, 78, 221, 0.28);
+  border-radius: 12px;
+  padding: 0 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s ease;
+}
+
+.tournaments-busca-box:focus-within {
+  border-color: #b565f2;
+  box-shadow: 0 0 20px rgba(181, 101, 242, 0.35), 0 8px 30px rgba(0, 0, 0, 0.55);
+  background: rgba(22, 15, 38, 0.92);
+}
+
+.tournaments-busca-icone {
+  color: var(--roxo-claro, #9d4edd);
+  margin-right: 12px;
+  flex-shrink: 0;
+  transition: color 0.25s ease;
+}
+
+.tournaments-busca-box:focus-within .tournaments-busca-icone {
+  color: var(--roxo-vivo, #b565f2);
+}
+
+.tournaments-busca-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f1f5f9;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  width: 100%;
+  padding: 13px 0;
+}
+
+.tournaments-busca-input::placeholder {
+  color: #8a7e99;
+  font-size: 13.5px;
+}
+
+.tournaments-busca-limpar {
+  background: transparent;
+  border: none;
+  color: #a094ab;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.tournaments-busca-limpar:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+/* --- Feedback de Busca Vazia --- */
+.tournaments-busca-vazio {
+  text-align: center;
+  padding: 50px 24px;
+  background: rgba(18, 13, 30, 0.65);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+  margin: 0 auto 50px;
+  position: relative;
+  z-index: 2;
+}
+
+.tournaments-busca-vazio-icone {
+  color: #8a7e99;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.tournaments-busca-vazio h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 8px;
+}
+
+.tournaments-busca-vazio p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.tournaments-busca-limpar-btn {
+  padding: 9px 22px;
+  border: 1px solid rgba(157, 78, 221, 0.4);
+  border-radius: 8px;
+  background: rgba(114, 62, 195, 0.15);
+  color: #e9d5ff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tournaments-busca-limpar-btn:hover {
+  background: rgba(114, 62, 195, 0.35);
+  border-color: #b565f2;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(181, 101, 242, 0.3);
 }
 
 /* --- Grade de Torneios (Grid Layout) --- */
@@ -503,6 +635,16 @@
 
   .tournaments-heading h1 {
     font-size: 34px;
+  }
+
+  .tournaments-busca-container {
+    max-width: 100%;
+    margin-bottom: 30px;
+  }
+
+  .tournaments-busca-input {
+    font-size: 13px;
+    padding: 11px 0;
   }
 }
 

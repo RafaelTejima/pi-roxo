@@ -1,8 +1,142 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
 import { useAlerta } from './AlertaModal';
+
+const AMIGOS_PADRAO = [
+  {
+    id: 'amg-1',
+    nome: 'Lucas Silva',
+    name: 'Lucas Silva',
+    equipe: 'Vortex Gaming',
+    status: 'online',
+    imagem: 'https://placehold.co/96x96/291547/ffffff?text=LS'
+  },
+  {
+    id: 'amg-2',
+    nome: 'Ana Costa',
+    name: 'Ana Costa',
+    equipe: 'Nexus Five',
+    status: 'offline',
+    imagem: 'https://placehold.co/96x96/42206b/ffffff?text=AC'
+  },
+  {
+    id: 'amg-3',
+    nome: 'Rafael Lima',
+    name: 'Rafael Lima',
+    equipe: 'Sem equipe',
+    status: 'offline',
+    imagem: 'https://placehold.co/96x96/17121f/ffffff?text=RL'
+  }
+];
+
+const POOL_JOGADORES_DISPONIVEIS = [
+  {
+    id: '1',
+    nome: 'Gabriel Toledo',
+    nome_usuario: 'FalleN',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '2',
+    nome: 'Marcelo David',
+    nome_usuario: 'coldzera',
+    time_usuario: 'RED Canids',
+    imagem: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces',
+    status: 'offline'
+  },
+  {
+    id: '3',
+    nome: 'Fernando Alvarenga',
+    nome_usuario: 'fer',
+    time_usuario: 'O PLANO',
+    imagem: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '4',
+    nome: 'Epitácio de Melo',
+    nome_usuario: 'TACO',
+    time_usuario: 'Legacy',
+    imagem: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '5',
+    nome: 'Lincoln Lau',
+    nome_usuario: 'fnx',
+    time_usuario: 'Imperial',
+    imagem: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces',
+    status: 'offline'
+  },
+  {
+    id: '6',
+    nome: 'Alexandre Borba',
+    nome_usuario: 'gaules',
+    time_usuario: 'Tribo Gaules',
+    imagem: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: 'usr-s1mple',
+    nome: 'Oleksandr Kostyliev',
+    nome_usuario: 's1mple',
+    time_usuario: 'Natus Vincere',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=S1',
+    status: 'online'
+  },
+  {
+    id: 'usr-zywoo',
+    nome: 'Mathieu Herbaut',
+    nome_usuario: 'ZywOo',
+    time_usuario: 'Team Vitality',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=ZY',
+    status: 'online'
+  },
+  {
+    id: 'usr-kscerato',
+    nome: 'Kaike Cerato',
+    nome_usuario: 'KSCERATO',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=KS',
+    status: 'online'
+  },
+  {
+    id: 'usr-yuurih',
+    nome: 'Yuri Santos',
+    nome_usuario: 'yuurih',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=YU',
+    status: 'online'
+  },
+  {
+    id: 'usr-chelo',
+    nome: 'Marcelo Cespedes',
+    nome_usuario: 'chelo',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=CH',
+    status: 'offline'
+  },
+  {
+    id: 'usr-art',
+    nome: 'Andrei Piovezan',
+    nome_usuario: 'arT',
+    time_usuario: 'Fluxo',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=AR',
+    status: 'online'
+  },
+  {
+    id: 'usr-admin',
+    nome: 'Administrador',
+    nome_usuario: 'admin',
+    time_usuario: 'Staff Antigravity',
+    imagem: 'https://placehold.co/96x96/35176b/ffffff?text=AD',
+    status: 'online'
+  }
+];
 
 const MOCK_PERFIS_AMIGOS = {
   '1': {
@@ -97,12 +231,48 @@ export default function Perfil() {
   const { mostrarAlerta } = useAlerta();
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isPublico, setIsPublico] = useState(false); // CORRIGIDO: Estado adicionado
+  const [isPublico, setIsPublico] = useState(false);
   
   // Estados para edição
   const [editando, setEditando] = useState(false);
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
+
+  // Estados para Lista de Amigos e Busca Dinâmica
+  const [listaAmigos, setListaAmigos] = useState(() => {
+    try {
+      const salvasPerfil = localStorage.getItem('listaAmigosPerfil');
+      if (salvasPerfil) return JSON.parse(salvasPerfil);
+      const salvasMenu = localStorage.getItem('listaAmigosUsuario');
+      if (salvasMenu) {
+        const parsed = JSON.parse(salvasMenu);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((a, idx) => ({
+            id: a.id || `amg-${idx}`,
+            nome: a.nome || a.name || 'Jogador',
+            name: a.name || a.nome || 'Jogador',
+            equipe: a.equipe || a.time_usuario || (a.game ? `Game: ${a.game}` : 'Sem equipe'),
+            status: a.status || 'offline',
+            imagem:
+              a.imagem ||
+              a.avatar ||
+              `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+                (a.nome || a.name || 'J').substring(0, 2).toUpperCase()
+              )}`
+          }));
+        }
+      }
+      return AMIGOS_PADRAO;
+    } catch {
+      return AMIGOS_PADRAO;
+    }
+  });
+
+  const [buscaAmigo, setBuscaAmigo] = useState('');
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [dropdownAmigoAberto, setDropdownAmigoAberto] = useState(false);
+  const [buscandoAmigos, setBuscandoAmigos] = useState(false);
+  const buscarAmigoRef = useRef(null);
 
   useEffect(() => {
     async function carregarPerfil() {
@@ -147,7 +317,13 @@ export default function Perfil() {
 
       // Perfil do próprio usuário logado
       setIsPublico(false);
-      if (!salvo || !userLocal?.id) {
+      if (!salvo) {
+        navigate('/login');
+        return;
+      }
+      
+      const userParsed = JSON.parse(salvo);
+      if (!userParsed.id) {
         navigate('/login');
         return;
       }
@@ -156,18 +332,236 @@ export default function Perfil() {
       const { data } = await supabase
         .from('usuarios')
         .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro')
-        .eq('id', userLocal.id)
+        .eq('id', userParsed.id)
         .single();
 
       if (data) {
         setUsuario(data);
       } else {
-        setUsuario(userLocal); // CORRIGIDO: userParsed trocado por userLocal
+        setUsuario(userParsed);
       }
       setLoading(false);
     }
     carregarPerfil();
   }, [id, navigate]);
+
+  // Fechar dropdown de busca ao clicar fora
+  useEffect(() => {
+    const fecharAoClicarFora = (e) => {
+      if (buscarAmigoRef.current && !buscarAmigoRef.current.contains(e.target)) {
+        setDropdownAmigoAberto(false);
+      }
+    };
+    document.addEventListener('click', fecharAoClicarFora);
+    return () => document.removeEventListener('click', fecharAoClicarFora);
+  }, []);
+
+  // Filtro dinâmico em tempo real de busca de jogadores
+  useEffect(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) {
+      setResultadosBusca([]);
+      setDropdownAmigoAberto(false);
+      setBuscandoAmigos(false);
+      return;
+    }
+
+    setBuscandoAmigos(true);
+    let ativo = true;
+
+    // 1. Filtrar nos jogadores do pool local
+    const locais = POOL_JOGADORES_DISPONIVEIS.filter((j) => {
+      const matchNome = j.nome && j.nome.toLowerCase().includes(termo);
+      const matchNick = j.nome_usuario && j.nome_usuario.toLowerCase().includes(termo);
+      const matchTime = j.time_usuario && j.time_usuario.toLowerCase().includes(termo);
+
+      if (!matchNome && !matchNick && !matchTime) return false;
+
+      // Não permitir o próprio usuário
+      if (
+        String(j.id) === String(usuario?.id) ||
+        (j.nome_usuario && usuario?.nome_usuario && j.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+        (j.nome && usuario?.nome && j.nome.toLowerCase() === usuario.nome.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Não permitir quem já é amigo
+      const jaAmigo = listaAmigos.some(
+        (a) =>
+          String(a.id) === String(j.id) ||
+          (a.nome || a.name || '').toLowerCase() === (j.nome || j.nome_usuario || '').toLowerCase() ||
+          (j.nome_usuario && (a.nome || a.name || '').toLowerCase() === j.nome_usuario.toLowerCase())
+      );
+
+      return !jaAmigo;
+    });
+
+    setResultadosBusca(locais);
+    setDropdownAmigoAberto(true);
+
+    // 2. Buscar no Supabase se houver conexão
+    if (supabase) {
+      supabase
+        .from('usuarios')
+        .select('id, nome, nome_usuario, time_usuario, imagem')
+        .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
+        .limit(8)
+        .then(({ data, error }) => {
+          if (ativo && !error && data) {
+            const combinados = [...locais];
+            data.forEach((jDb) => {
+              const ehProprioUsuario =
+                String(jDb.id) === String(usuario?.id) ||
+                (jDb.nome_usuario && usuario?.nome_usuario && jDb.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+                (jDb.nome && usuario?.nome && jDb.nome.toLowerCase() === usuario.nome.toLowerCase());
+
+              const jaAmigo = listaAmigos.some(
+                (a) =>
+                  String(a.id) === String(jDb.id) ||
+                  (a.nome || a.name || '').toLowerCase() === (jDb.nome || jDb.nome_usuario || '').toLowerCase() ||
+                  (jDb.nome_usuario && (a.nome || a.name || '').toLowerCase() === jDb.nome_usuario.toLowerCase())
+              );
+
+              const jaPresente = combinados.some(
+                (item) =>
+                  String(item.id) === String(jDb.id) ||
+                  (item.nome_usuario && jDb.nome_usuario && item.nome_usuario.toLowerCase() === jDb.nome_usuario.toLowerCase())
+              );
+
+              if (!ehProprioUsuario && !jaAmigo && !jaPresente) {
+                combinados.push({
+                  id: jDb.id,
+                  nome: jDb.nome || jDb.nome_usuario,
+                  nome_usuario: jDb.nome_usuario || jDb.nome,
+                  time_usuario: jDb.time_usuario || 'Sem equipe',
+                  imagem: jDb.imagem || '',
+                  status: 'offline'
+                });
+              }
+            });
+            setResultadosBusca(combinados);
+          }
+          if (ativo) setBuscandoAmigos(false);
+        })
+        .catch(() => {
+          if (ativo) setBuscandoAmigos(false);
+        });
+    } else {
+      setBuscandoAmigos(false);
+    }
+
+    return () => {
+      ativo = false;
+    };
+  }, [buscaAmigo, listaAmigos, usuario]);
+
+  function handleKeyDownBusca(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (resultadosBusca.length > 0) {
+        handleAdicionarAmigo(resultadosBusca[0]);
+      }
+    }
+  }
+
+  function handleAdicionarAmigo(jogador) {
+    if (
+      String(jogador.id) === String(usuario?.id) ||
+      (jogador.nome_usuario && usuario?.nome_usuario && jogador.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+      (jogador.nome && usuario?.nome && jogador.nome.toLowerCase() === usuario.nome.toLowerCase())
+    ) {
+      mostrarAlerta({
+        titulo: 'Ação não permitida',
+        mensagem: 'Você não pode adicionar a si mesmo como amigo.',
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const jaAdicionado = listaAmigos.some(
+      (a) =>
+        String(a.id) === String(jogador.id) ||
+        (a.nome || a.name || '').toLowerCase() === (jogador.nome || jogador.nome_usuario || '').toLowerCase() ||
+        (jogador.nome_usuario && (a.nome || a.name || '').toLowerCase() === jogador.nome_usuario.toLowerCase())
+    );
+
+    if (jaAdicionado) {
+      mostrarAlerta({
+        titulo: 'Jogador já adicionado',
+        mensagem: `${jogador.nome || jogador.nome_usuario} já está na sua lista de amigos.`,
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const novoAmigo = {
+      id: jogador.id || `amg-${Date.now()}`,
+      nome: jogador.nome || jogador.nome_usuario || 'Jogador',
+      name: jogador.nome_usuario || jogador.nome || 'Jogador',
+      equipe: jogador.time_usuario || jogador.equipe || 'Sem equipe',
+      status: jogador.status || 'online',
+      imagem:
+        jogador.imagem ||
+        `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+          (jogador.nome_usuario || jogador.nome || 'J').substring(0, 2).toUpperCase()
+        )}`
+    };
+
+    const novaLista = [novoAmigo, ...listaAmigos];
+    setListaAmigos(novaLista);
+
+    try {
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error('Erro ao salvar amigos:', err);
+    }
+
+    if (supabase && usuario?.id && jogador.id) {
+      try {
+        supabase
+          .from('amizades')
+          .insert({
+            id_usuario: usuario.id,
+            id_amigo: jogador.id,
+            status: 'aceito'
+          })
+          .then(() => {})
+          .catch(() => {});
+      } catch {
+        // Fallback caso tabela não exista
+      }
+    }
+
+    setBuscaAmigo('');
+    setResultadosBusca([]);
+    setDropdownAmigoAberto(false);
+
+    mostrarAlerta({
+      titulo: 'Amigo Adicionado!',
+      mensagem: `${novoAmigo.nome} foi adicionado à sua lista de amigos com sucesso.`,
+      tipo: 'sucesso'
+    });
+  }
+
+  function handleRemoverAmigo(amigo) {
+    const novaLista = listaAmigos.filter((a) => String(a.id) !== String(amigo.id));
+    setListaAmigos(novaLista);
+    try {
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error(err);
+    }
+    mostrarAlerta({
+      titulo: 'Amizade Removida',
+      mensagem: `${amigo.nome || amigo.name} foi removido da sua lista de amigos.`,
+      tipo: 'aviso'
+    });
+  }
 
   function sair() {
     if (window.confirm('Deseja realmente sair da sua conta?')) {
@@ -182,13 +576,10 @@ export default function Perfil() {
       nome_usuario: usuario.nome_usuario || '',
       imagem: usuario.imagem || '',
       bio: usuario.bio || '',
+      // Simulando campos que ainda não existem no DB
       discord: localStorage.getItem(`discord_${usuario.id}`) || '',
       steam: localStorage.getItem(`steam_${usuario.id}`) || '',
       twitter: localStorage.getItem(`twitter_${usuario.id}`) || '',
-      youtube: localStorage.getItem(`youtube_${usuario.id}`) || '',
-      twitch: localStorage.getItem(`twitch_${usuario.id}`) || '',
-      bluesky: localStorage.getItem(`bluesky_${usuario.id}`) || '',
-      fundo: localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1',
       privacidade_amigos: localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico',
       privacidade_nome: localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico',
       privacidade_ganhos: localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico'
@@ -221,13 +612,10 @@ export default function Perfil() {
       return;
     }
 
+    // Salva configs extras locais (pendente update no schema)
     localStorage.setItem(`discord_${usuario.id}`, form.discord);
     localStorage.setItem(`steam_${usuario.id}`, form.steam);
     localStorage.setItem(`twitter_${usuario.id}`, form.twitter);
-    localStorage.setItem(`youtube_${usuario.id}`, form.youtube);
-    localStorage.setItem(`twitch_${usuario.id}`, form.twitch);
-    localStorage.setItem(`bluesky_${usuario.id}`, form.bluesky);
-    localStorage.setItem(`fundo_${usuario.id}`, form.fundo);
     localStorage.setItem(`priv_amigos_${usuario.id}`, form.privacidade_amigos);
     localStorage.setItem(`priv_nome_${usuario.id}`, form.privacidade_nome);
     localStorage.setItem(`priv_ganhos_${usuario.id}`, form.privacidade_ganhos);
@@ -257,28 +645,21 @@ export default function Perfil() {
   const dataRegistro = new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
-  // CORRIGIDO: Extração de valores com fallback de mock / localStorage
-  const discord = usuario.discord || localStorage.getItem(`discord_${usuario.id}`);
-  const steam = usuario.steam || localStorage.getItem(`steam_${usuario.id}`);
-  const twitter = usuario.twitter || localStorage.getItem(`twitter_${usuario.id}`);
-  const youtube = usuario.youtube || localStorage.getItem(`youtube_${usuario.id}`);
-  const twitch = usuario.twitch || localStorage.getItem(`twitch_${usuario.id}`);
-  const bluesky = usuario.bluesky || localStorage.getItem(`bluesky_${usuario.id}`);
-  const fundo = localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1';
+  // Extraimos as configs locais apenas para exibição no perfil
+  const discord = isPublico ? (usuario.discord || null) : localStorage.getItem(`discord_${usuario.id}`);
+  const steam = isPublico ? (usuario.steam || null) : localStorage.getItem(`steam_${usuario.id}`);
+  const twitter = isPublico ? (usuario.twitter || null) : localStorage.getItem(`twitter_${usuario.id}`);
+  const privNome = isPublico ? 'publico' : (localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico');
+  const privGanhos = isPublico ? (usuario.stats ? 'publico' : 'privado') : (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico');
+  const privAmigos = isPublico ? 'publico' : (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico');
 
-  const privNome = localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico';
-  const privGanhos = localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico';
-  const privAmigos = localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico';
-
-  const statsPartidas = usuario.stats?.partidas ?? 0;
-  const statsTorneios = usuario.stats?.torneios ?? 0;
-  const statsTitulos = usuario.stats?.titulos ?? 0;
-  const statsGanhos = privGanhos === 'privado' ? '******' : (usuario.stats?.ganhos ?? 'R$ 0,00');
+  const statsPartidas = usuario.stats ? usuario.stats.partidas : 0;
+  const statsTorneios = usuario.stats ? usuario.stats.torneios : 0;
+  const statsTitulos = usuario.stats ? usuario.stats.titulos : 0;
+  const statsGanhos = usuario.stats ? usuario.stats.ganhos : (privGanhos === 'privado' ? 'Oculto' : 'R$ 0,00');
 
   return (
-    <main id="perfil-page" className="perfil-page" style={{
-      background: `radial-gradient(circle at 80% 0%, rgba(114, 62, 195, 0.22), transparent 34%), linear-gradient(135deg, rgba(8, 4, 18, 0.8), rgba(3, 1, 8, 0.9)), url(${fundo}) center/cover no-repeat`
-    }}>
+    <main id="perfil-page" className="perfil-page">
       <div className="perfil-container">
         <div className="perfil-cabecalho">
           <div>
@@ -286,7 +667,18 @@ export default function Perfil() {
             <h1>{isPublico ? (usuario.nome || usuario.nome_usuario || 'Perfil') : 'Meu perfil'}</h1>
             <p>{isPublico ? 'Visualizando perfil público do jogador.' : 'Gerencie suas informações, conexões e privacidade.'}</p>
           </div>
-          <Link to="/torneios" className="perfil-link-voltar">Ver torneios</Link>
+          {isPublico ? (
+            <button
+              type="button"
+              className="perfil-link-voltar"
+              onClick={() => navigate(-1)}
+              style={{ background: 'transparent', border: '1px solid rgba(181, 101, 242, 0.4)', cursor: 'pointer' }}
+            >
+              Voltar
+            </button>
+          ) : (
+            <Link to="/torneios" className="perfil-link-voltar">Ver torneios</Link>
+          )}
         </div>
 
         <section className="perfil-grid">
@@ -299,16 +691,21 @@ export default function Perfil() {
                 aria-label={usuario.status === 'offline' ? 'Offline' : 'Online'}
               ></span>
             </div>
-
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-              {privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}
-              {usuario.admin && <span style={{ fontSize: '10px', background: '#8c52ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>ADM</span>}
-            </h2>
-
+            
+            {/* Regra de privacidade do Nome */}
+            <h2>{privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}</h2>
+            
             <p className="perfil-cargo">{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Sem usuário'}</p>
             <div className="perfil-dados">
               <div><span>Time atual</span><strong>{usuario.time_usuario || 'Nenhum'}</strong></div>
-              <div><span>Status</span><strong className="perfil-online">Online agora</strong></div>
+              <div>
+                <span>Status</span>
+                {usuario.status === 'offline' ? (
+                  <strong style={{ color: '#94a3b8' }}>Offline</strong>
+                ) : (
+                  <strong className="perfil-online">Online agora</strong>
+                )}
+              </div>
               <div><span>Membro desde</span><strong style={{textTransform: 'capitalize'}}>{dataRegistro}</strong></div>
             </div>
             {!isPublico && (
@@ -335,61 +732,53 @@ export default function Perfil() {
                   <div><span className="perfil-kicker">Configurações</span><h2>Editar Perfil</h2></div>
                 </div>
                 <form onSubmit={salvarEdicao} style={{ display: 'grid', gap: '20px' }}>
+                  
+                  {/* DADOS BÁSICOS */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Dados Básicos</h3>
                     <div className="perfil-detalhes-grid">
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>URL da Imagem</label>
-                        <input type="url" value={form.imagem} onChange={e => setForm({ ...form, imagem: e.target.value })} placeholder="https://..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="url" value={form.imagem} onChange={e => setForm({...form, imagem: e.target.value})} placeholder="https://..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Nome de usuário (@)</label>
-                        <input type="text" value={form.nome_usuario} onChange={e => setForm({ ...form, nome_usuario: e.target.value })} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="text" value={form.nome_usuario} onChange={e => setForm({...form, nome_usuario: e.target.value})} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Biografia</label>
-                    <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows="3" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', resize: 'vertical' }}></textarea>
+                    <textarea value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} rows="3" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', resize: 'vertical' }}></textarea>
                   </div>
 
+                  {/* REDES SOCIAIS */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Conexões (Redes)</h3>
                     <div className="perfil-detalhes-grid">
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Discord</label>
-                        <input type="text" value={form.discord} onChange={e => setForm({ ...form, discord: e.target.value })} placeholder="@Usuário" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="text" value={form.discord} onChange={e => setForm({...form, discord: e.target.value})} placeholder="Usuário#0000" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Steam URL</label>
-                        <input type="text" value={form.steam} onChange={e => setForm({ ...form, steam: e.target.value })} placeholder="https://steamcommunity.com/id/..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="text" value={form.steam} onChange={e => setForm({...form, steam: e.target.value})} placeholder="https://steamcommunity.com/id/..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Twitter</label>
-                        <input type="text" value={form.twitter} onChange={e => setForm({ ...form, twitter: e.target.value })} placeholder="@seu_twitter" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', borderRadius: '8px' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>YouTube</label>
-                        <input type="text" value={form.youtube} onChange={e => setForm({ ...form, youtube: e.target.value })} placeholder="https://youtube.com/..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', borderRadius: '8px' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Twitch</label>
-                        <input type="text" value={form.twitch} onChange={e => setForm({ ...form, twitch: e.target.value })} placeholder="https://twitch.tv/..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', borderRadius: '8px' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Bluesky</label>
-                        <input type="text" value={form.bluesky} onChange={e => setForm({ ...form, bluesky: e.target.value })} placeholder="@usuario.bsky.social" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', borderRadius: '8px' }} />
+                        <input type="text" value={form.twitter} onChange={e => setForm({...form, twitter: e.target.value})} placeholder="@seu_twitter" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                     </div>
                   </div>
 
+                  {/* PRIVACIDADE */}
                   <div>
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Privacidade</h3>
                     <div className="perfil-detalhes-grid">
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Nome de Perfil</label>
-                        <select value={form.privacidade_nome} onChange={e => setForm({ ...form, privacidade_nome: e.target.value })} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
+                        <select value={form.privacidade_nome} onChange={e => setForm({...form, privacidade_nome: e.target.value})} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
                           <option value="publico">Público</option>
                           <option value="amigos">Apenas Amigos</option>
                           <option value="privado">Privado</option>
@@ -397,35 +786,17 @@ export default function Perfil() {
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Lista de Amigos</label>
-                        <select value={form.privacidade_amigos} onChange={e => setForm({ ...form, privacidade_amigos: e.target.value })} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
+                        <select value={form.privacidade_amigos} onChange={e => setForm({...form, privacidade_amigos: e.target.value})} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
                           <option value="publico">Mostrar</option>
                           <option value="privado">Privar</option>
                         </select>
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Meus Ganhos</label>
-                        <select value={form.privacidade_ganhos} onChange={e => setForm({ ...form, privacidade_ganhos: e.target.value })} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
+                        <select value={form.privacidade_ganhos} onChange={e => setForm({...form, privacidade_ganhos: e.target.value})} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
                           <option value="publico">Mostrar</option>
                           <option value="privado">Privar</option>
                         </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Personalização</h3>
-                    <div>
-                      <label style={{ fontSize: '12px', color: 'var(--texto-secundario)', display: 'block', marginBottom: '8px' }}>Fundo do Perfil</label>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        {[1, 2, 3, 4, 5].map(num => {
-                          const url = `https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+${num}`;
-                          return (
-                            <label key={num} style={{ cursor: 'pointer', border: form.fundo === url ? '2px solid var(--roxo-claro)' : '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}>
-                              <input type="radio" name="fundo" value={url} checked={form.fundo === url} onChange={e => setForm({ ...form, fundo: e.target.value })} style={{ display: 'none' }} />
-                              <img src={`https://placehold.co/100x60/1a1a2e/ffffff?text=Fundo+${num}`} alt={`Fundo ${num}`} style={{ display: 'block' }} />
-                            </label>
-                          );
-                        })}
                       </div>
                     </div>
                   </div>
@@ -442,16 +813,50 @@ export default function Perfil() {
               </section>
             ) : (
               <>
+                {/* DETALHES DA CONTA */}
                 <section className="perfil-secao" id="detalhes-conta">
                   <div className="perfil-secao-titulo">
-                    <div><span className="perfil-kicker">Informações</span><h2>Biografia</h2></div>
+                    <div><span className="perfil-kicker">Informações</span><h2>Detalhes da conta</h2></div>
+                  </div>
+                  <div className="perfil-detalhes-grid">
+                    <div><span>Nome de exibição</span><strong>{privNome === 'privado' ? 'Privado' : (usuario.nome || 'Não informado')}</strong></div>
+                    <div><span>Username</span><strong>{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Não informado'}</strong></div>
+                  </div>
+                  
+                  <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '32px 0 16px' }}>Conexões Vinculadas</h3>
+                  <div className="perfil-contas" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                    <div className="perfil-conta">
+                      <span className="perfil-conta-icone perfil-conta-discord">D</span>
+                      <div><strong>Discord</strong><span>{discord || 'Não conectado'}</span></div>
+                    </div>
+                    <div className="perfil-conta">
+                      <span className="perfil-conta-icone perfil-conta-steam">S</span>
+                      <div><strong>Steam</strong><span>{steam || 'Não conectado'}</span></div>
+                    </div>
+                    <div className="perfil-conta">
+                      <span className="perfil-conta-icone" style={{ background: '#1DA1F2' }}>T</span>
+                      <div><strong>Twitter</strong><span>{twitter || 'Não conectado'}</span></div>
+                    </div>
+                  </div>
+                </section>
+                
+                {/* SOBRE / BIOGRAFIA */}
+                <section className="perfil-secao" style={{ marginTop: '24px' }}>
+                  <div className="perfil-secao-titulo">
+                    <div><span className="perfil-kicker">Sobre</span><h2>Biografia</h2></div>
                   </div>
                   <div>
                     <p style={{ color: 'var(--texto-secundario)', lineHeight: '1.6' }}>
                       {usuario.bio || 'Este jogador ainda não escreveu nenhuma biografia.'}
                     </p>
                   </div>
-                  <div style={{ marginTop: '24px' }}><span className="perfil-kicker">Desempenho</span><h2>Estatísticas e Histórico</h2></div>
+                </section>
+
+                {/* HISTÓRICO & ESTATÍSTICAS */}
+                <section className="perfil-secao" style={{ marginTop: '24px' }}>
+                  <div className="perfil-secao-titulo">
+                    <div><span className="perfil-kicker">Desempenho</span><h2>Estatísticas e Histórico</h2></div>
+                  </div>
                   <div className="perfil-detalhes-grid">
                     <div><span>Partidas Jogadas</span><strong style={{ fontSize: '20px' }}>{statsPartidas}</strong></div>
                     <div><span>Torneios Participados</span><strong style={{ fontSize: '20px' }}>{statsTorneios}</strong></div>
@@ -463,68 +868,138 @@ export default function Perfil() {
                       </strong>
                     </div>
                   </div>
-
-                  <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '32px 0 16px' }}>Conexões Vinculadas</h3>
-                  <div className="perfil-contas" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone perfil-conta-discord" style={{ borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/discord.svg" alt="Discord" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>Discord</strong><span>{discord || 'Não conectado'}</span></div>
-                    </div>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone perfil-conta-steam" style={{ borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/steam.svg" alt="Steam" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>Steam</strong><span>{steam || 'Não conectado'}</span></div>
-                    </div>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone" style={{ background: '#1DA1F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/twitter.svg" alt="Twitter" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>Twitter</strong><span>{twitter || 'Não conectado'}</span></div>
-                    </div>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone" style={{ background: '#FF0000', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/youtube.svg" alt="YouTube" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>YouTube</strong><span>{youtube || 'Não conectado'}</span></div>
-                    </div>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone" style={{ background: '#9146FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/twitch.svg" alt="Twitch" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>Twitch</strong><span>{twitch || 'Não conectado'}</span></div>
-                    </div>
-                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)' }}>
-                      <span className="perfil-conta-icone" style={{ background: '#0085ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="/svg/bluesky.svg" alt="Bluesky" style={{ width: '20px', height: '20px' }} />
-                      </span>
-                      <div><strong>Bluesky</strong><span>{bluesky || 'Não conectado'}</span></div>
-                    </div>
-                  </div>
                 </section>
 
-                <section className="perfil-secao" style={{ marginTop: '24px' }}>
-                  <div className="perfil-secao-titulo">
-                    <div><span className="perfil-kicker">Comunidade</span><h2>Lista de Amigos</h2></div>
+                {/* LISTA DE AMIGOS */}
+                <section className="perfil-secao perfil-secao-amigos" style={{ marginTop: '24px' }}>
+                  <div className="perfil-secao-titulo perfil-amigos-header">
+                    <div>
+                      <span className="perfil-kicker">Comunidade</span>
+                      <h2>Lista de Amigos <small>({listaAmigos.length})</small></h2>
+                    </div>
+
+                    {!isPublico && (
+                      <div className="perfil-buscar-amigo-wrap" ref={buscarAmigoRef}>
+                        <div className="perfil-buscar-input-container">
+                          <svg className="perfil-buscar-icone" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          </svg>
+                          <input
+                            type="text"
+                            className="perfil-buscar-input"
+                            value={buscaAmigo}
+                            onChange={(e) => setBuscaAmigo(e.target.value)}
+                            onKeyDown={handleKeyDownBusca}
+                            onFocus={() => buscaAmigo.trim() && setDropdownAmigoAberto(true)}
+                            placeholder="Buscar jogadores para adicionar..."
+                          />
+                          {buscaAmigo && (
+                            <button
+                              type="button"
+                              className="perfil-buscar-limpar"
+                              onClick={() => {
+                                setBuscaAmigo('');
+                                setResultadosBusca([]);
+                                setDropdownAmigoAberto(false);
+                              }}
+                              aria-label="Limpar busca"
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+
+                        {dropdownAmigoAberto && buscaAmigo.trim().length > 0 && (
+                          <div className="perfil-autocomplete-dropdown">
+                            {buscandoAmigos ? (
+                              <div className="perfil-autocomplete-loading">Buscando jogadores...</div>
+                            ) : resultadosBusca.length > 0 ? (
+                              resultadosBusca.map((j) => (
+                                <div key={j.id} className="perfil-autocomplete-item">
+                                  <div className="perfil-autocomplete-user">
+                                    <img
+                                      src={
+                                        j.imagem ||
+                                        `https://placehold.co/96x96/35176b/ffffff?text=${encodeURIComponent(
+                                          (j.nome_usuario || j.nome || 'J').substring(0, 2).toUpperCase()
+                                        )}`
+                                      }
+                                      alt={j.nome || j.nome_usuario}
+                                      className="perfil-autocomplete-avatar"
+                                    />
+                                    <div className="perfil-autocomplete-info">
+                                      <strong>{j.nome || j.nome_usuario}</strong>
+                                      <span>
+                                        {j.nome_usuario ? `@${j.nome_usuario}` : ''}
+                                        {j.time_usuario ? ` • ${j.time_usuario}` : ''}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="perfil-autocomplete-add-btn"
+                                    onClick={() => handleAdicionarAmigo(j)}
+                                    title="Adicionar amigo"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span>Adicionar</span>
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="perfil-autocomplete-empty">Nenhum jogador encontrado</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
                   {privAmigos === 'privado' ? (
                     <p className="perfil-vazio">Sua lista de amigos está definida como privada nas configurações.</p>
                   ) : (
                     <div className="perfil-amigos">
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/291547/ffffff?text=LS" alt="Lucas Silva" />
-                        <div className="perfil-amigo-info"><strong>Lucas Silva</strong><span>Vortex Gaming</span><em className="online" style={{ color: '#5ce390' }}>Online</em></div>
-                      </article>
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/42206b/ffffff?text=AC" alt="Ana Costa" />
-                        <div className="perfil-amigo-info"><strong>Ana Costa</strong><span>Nexus Five</span><em style={{ color: 'var(--texto-terciario)' }}>Offline</em></div>
-                      </article>
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/17121f/ffffff?text=RL" alt="Rafael Lima" />
-                        <div className="perfil-amigo-info"><strong>Rafael Lima</strong><span>Sem equipe</span><em style={{ color: 'var(--texto-terciario)' }}>Offline</em></div>
-                      </article>
+                      {listaAmigos.map((amigo) => (
+                        <article className="perfil-amigo" key={amigo.id}>
+                          <img
+                            src={
+                              amigo.imagem ||
+                              `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+                                (amigo.nome || amigo.name || 'J').substring(0, 2).toUpperCase()
+                              )}`
+                            }
+                            alt={amigo.nome || amigo.name}
+                          />
+                          <div className="perfil-amigo-info">
+                            <strong>{amigo.nome || amigo.name}</strong>
+                            <span>{amigo.equipe || amigo.time_usuario || 'Sem equipe'}</span>
+                            <em
+                              className={amigo.status === 'online' ? 'online' : ''}
+                              style={amigo.status === 'online' ? { color: '#5ce390' } : { color: 'var(--texto-terciario)' }}
+                            >
+                              {amigo.status === 'online' ? 'Online' : 'Offline'}
+                            </em>
+                          </div>
+                          {!isPublico && (
+                            <div className="perfil-amigo-acoes">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoverAmigo(amigo)}
+                                title="Remover amigo"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          )}
+                        </article>
+                      ))}
+                      {listaAmigos.length === 0 && (
+                        <p className="perfil-vazio">Nenhum amigo na sua lista no momento. Use o campo de busca acima para encontrar e adicionar jogadores!</p>
+                      )}
                     </div>
                   )}
                 </section>
