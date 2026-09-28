@@ -178,6 +178,8 @@ export default function CriarEquipe() {
       tag: equipe.sigla.trim().toUpperCase(),
       descricao: equipe.descricao.trim(),
       capitao: usuario.nome || usuario.email,
+      id_capitao: usuario.id,
+      totalIntegrantes: jogadores.length + 1,
       jogadoresCount: `${jogadores.length + 1}/5`,
       jogadores: [
         { id: usuario.id, nome: usuario.nome || usuario.email, role: 'captain' },

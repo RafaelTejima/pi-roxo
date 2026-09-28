@@ -13,6 +13,7 @@ import EsqueciSenha from './componentes/EsqueciSenha';
 import AdminPanel from './componentes/AdminPanel';
 import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
+import DetalhesTime from './componentes/DetalhesTime';
 import SelecaoMapas from './componentes/SelecaoMapas';
 import { AlertaProvider } from './componentes/AlertaModal';
 
@@ -23,11 +24,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/equipes" element={<Equipes />} />
+          <Route path="/equipes/criar" element={<CriarEquipe />} />
+          <Route path="/equipes/:id" element={<DetalhesTime />} />
+          <Route path="/equipe/:id" element={<DetalhesTime />} />
+          <Route path="/time/:id" element={<DetalhesTime />} />
           <Route path="/regras" element={<Regras />} />
           <Route path="/torneios" element={<Torneios />} />
 
           <Route path="/torneios/criar" element={<CriarTorneio />} />
-          <Route path="/equipes/criar" element={<CriarEquipe />} />
           <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
           <Route path="/selecao-mapas" element={<SelecaoMapas />} />
           <Route path="/torneios/:id" element={<Torneios />} />
