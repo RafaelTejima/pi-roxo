@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/admin.css';
+import { useAlerta } from './AlertaModal';
 
 // Tabelas conhecidas do projeto, com nome amigável e colunas relevantes
 const TABELAS_CONHECIDAS = [
@@ -31,6 +32,7 @@ function formatarValor(valor) {
 
 // ----- Componente de seção de tabela -----
 function SecaoTabela({ tabela, usuarioLogado }) {
+  const { mostrarAlerta } = useAlerta();
   const [dados, setDados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -102,28 +104,57 @@ function SecaoTabela({ tabela, usuarioLogado }) {
       .eq('id', linhaId);
     setSalvando(false);
     if (error) {
-      alert('Erro ao salvar: ' + error.message);
+      mostrarAlerta({
+        titulo: 'Erro ao Salvar',
+        mensagem: 'Erro ao salvar alterações: ' + error.message,
+        tipo: 'erro'
+      });
     } else {
       setDados((prev) =>
         prev.map((l) => (l.id === linhaId ? { ...l, ...camposEdicao } : l))
       );
       cancelarEdicao();
+      mostrarAlerta({
+        titulo: 'Alteração Salva',
+        mensagem: 'Registro atualizado com sucesso na tabela ' + tabela.label + '.',
+        tipo: 'sucesso'
+      });
     }
   }
 
   // ---- Deletar ----
   async function confirmarDelete(linha) {
-    if (!linha.id) { alert('Este registro não possui ID, não é possível deletar.'); return; }
+    if (!linha.id) {
+      mostrarAlerta({
+        titulo: 'Aviso',
+        mensagem: 'Este registro não possui ID, não é possível deletar.',
+        tipo: 'aviso'
+      });
+      return;
+    }
     if (tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id) {
-      alert('Você não pode deletar a sua própria conta de administrador.');
+      mostrarAlerta({
+        titulo: 'Ação Bloqueada',
+        mensagem: 'Você não pode deletar a sua própria conta de administrador.',
+        tipo: 'erro'
+      });
       setConfirmandoDelete(null);
       return;
     }
     const { error } = await supabase.from(tabela.nome).delete().eq('id', linha.id);
     if (error) {
-      alert('Erro ao deletar: ' + error.message);
+      mostrarAlerta({
+        titulo: 'Erro ao Deletar',
+        mensagem: 'Erro ao deletar registro: ' + error.message,
+        tipo: 'erro'
+      });
     } else {
       setDados((prev) => prev.filter((l) => l.id !== linha.id));
+      mostrarAlerta({
+        titulo: 'Registro Removido',
+        mensagem: 'O registro foi excluído com sucesso.',
+        tipo: 'sucesso'
+      });
     }
     setConfirmandoDelete(null);
   }
@@ -214,7 +245,11 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                                       checked={camposEdicao[col] === true || camposEdicao[col] === 'true'}
                                       onChange={(e) => {
                                         if (col === 'admin' && tabela.nome === 'usuarios' && linha.id === usuarioLogado?.id && !e.target.checked) {
-                                          alert('Voce nao pode remover seu proprio acesso de administrador.');
+                                          mostrarAlerta({
+                                            titulo: 'Ação Bloqueada',
+                                            mensagem: 'Você não pode remover seu próprio acesso de administrador.',
+                                            tipo: 'erro'
+                                          });
                                           return;
                                         }
                                         setCamposEdicao((prev) => ({ ...prev, [col]: e.target.checked }));

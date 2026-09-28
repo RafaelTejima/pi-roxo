@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../css/criar-torneio.css'
+import { useAlerta } from './AlertaModal'
 
 // ============================================================
 // COMPONENTE PRINCIPAL: PAGINA DE CRIACAO DE TORNEIO
@@ -16,6 +17,7 @@ const FORMATO_PADRAO = 'Eliminação Simples'
 
 export default function CriarTorneio() {
   const navigate = useNavigate()
+  const { mostrarAlerta } = useAlerta()
   const [usuario] = useState(() => {
     const usuarioSalvo = localStorage.getItem('usuarioLogado')
     return usuarioSalvo ? JSON.parse(usuarioSalvo) : null
@@ -50,17 +52,37 @@ export default function CriarTorneio() {
     setSucesso('')
 
     if (!usuario) {
-      setErro('Voce precisa estar logado para criar um torneio.')
+      const msg = 'Você precisa estar logado para criar um torneio.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Acesso Restrito',
+        mensagem: msg,
+        tipo: 'aviso',
+        botaoTexto: 'Fazer Login',
+        onConfirmar: () => navigate('/login')
+      })
       return
     }
 
     if (!nome.trim() || !data || !hora || !minuto || !premio) {
-      setErro('Preencha todos os campos do torneio.')
+      const msg = 'Preencha todos os campos do torneio antes de prosseguir.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Campos Incompletos',
+        mensagem: msg,
+        tipo: 'aviso'
+      })
       return
     }
 
     if (regras.length === 0) {
-      setErro('Adicione ao menos uma regra antes de continuar.')
+      const msg = 'Adicione ao menos uma regra antes de continuar.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Regulamento Necessário',
+        mensagem: msg,
+        tipo: 'aviso'
+      })
       return
     }
 

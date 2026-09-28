@@ -53,9 +53,12 @@
 
 #perfil-page .perfil-resumo,
 #perfil-page .perfil-secao {
-    border: 1px solid rgba(157, 78, 221, 0.2);
-    background: rgba(15, 9, 28, 0.82);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 10, 35, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+    border-radius: 24px;
 }
 
 #perfil-page .perfil-resumo {
@@ -90,6 +93,10 @@
     background: #49d17d;
     border: 3px solid #100a1c;
     border-radius: 50%;
+}
+
+#perfil-page .perfil-status-dot.offline {
+    background: #64748b;
 }
 
 #perfil-page .perfil-resumo h2 {

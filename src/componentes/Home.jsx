@@ -10,13 +10,48 @@ export default function Home() {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = true;
-      videoRef.current.play().catch((err) => {
-        console.warn('Autoplay do vídeo prevenido pelo navegador:', err);
-      });
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Autoplay do vídeo prevenido pelo navegador:', err);
+        });
+      }
     }
   }, []);
+
+  // Reinicia o vídeo instantaneamente ao terminar para eliminar qualquer tela preta ou gap
+  const handleVideoEnded = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = 0;
+      video.play().catch((err) => {
+        console.warn('Erro ao reiniciar vídeo no onEnded:', err);
+      });
+    }
+  };
+
+  // Previne engasgos/congelamentos nativos milissegundos antes do término do arquivo
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (video && video.duration && video.currentTime > 0.5) {
+      if (video.duration - video.currentTime <= 0.1) {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      }
+    }
+  };
+
+  // Garante início imediato assim que os primeiros frames estiverem prontos
+  const handleCanPlay = () => {
+    const video = videoRef.current;
+    if (video && video.paused) {
+      video.play().catch(() => {});
+    }
+  };
 
   const handleCriarEquipe = () => {
     const usuarioLogado = localStorage.getItem('usuarioLogado');
@@ -31,7 +66,7 @@ export default function Home() {
     <>
       {/* Seção Principal (Hero com Vídeo de Fundo em Looping) */}
       <main className="hero">
-        {/* Vídeo de fundo em looping (Modo Teste Temporário) */}
+        {/* Vídeo de fundo em looping com carregamento agressivo e loop contínuo */}
         <video 
           ref={videoRef}
           className="hero-video" 
@@ -41,6 +76,10 @@ export default function Home() {
           muted 
           defaultMuted
           playsInline
+          preload="auto"
+          onEnded={handleVideoEnded}
+          onTimeUpdate={handleTimeUpdate}
+          onCanPlay={handleCanPlay}
         >
           <source src={videoplayback} type="video/mp4" />
         </video>
