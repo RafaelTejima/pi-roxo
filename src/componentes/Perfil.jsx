@@ -1,8 +1,142 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
 import { useAlerta } from './AlertaModal';
+
+const AMIGOS_PADRAO = [
+  {
+    id: 'amg-1',
+    nome: 'Lucas Silva',
+    name: 'Lucas Silva',
+    equipe: 'Vortex Gaming',
+    status: 'online',
+    imagem: 'https://placehold.co/96x96/291547/ffffff?text=LS'
+  },
+  {
+    id: 'amg-2',
+    nome: 'Ana Costa',
+    name: 'Ana Costa',
+    equipe: 'Nexus Five',
+    status: 'offline',
+    imagem: 'https://placehold.co/96x96/42206b/ffffff?text=AC'
+  },
+  {
+    id: 'amg-3',
+    nome: 'Rafael Lima',
+    name: 'Rafael Lima',
+    equipe: 'Sem equipe',
+    status: 'offline',
+    imagem: 'https://placehold.co/96x96/17121f/ffffff?text=RL'
+  }
+];
+
+const POOL_JOGADORES_DISPONIVEIS = [
+  {
+    id: '1',
+    nome: 'Gabriel Toledo',
+    nome_usuario: 'FalleN',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '2',
+    nome: 'Marcelo David',
+    nome_usuario: 'coldzera',
+    time_usuario: 'RED Canids',
+    imagem: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces',
+    status: 'offline'
+  },
+  {
+    id: '3',
+    nome: 'Fernando Alvarenga',
+    nome_usuario: 'fer',
+    time_usuario: 'O PLANO',
+    imagem: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '4',
+    nome: 'Epitácio de Melo',
+    nome_usuario: 'TACO',
+    time_usuario: 'Legacy',
+    imagem: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: '5',
+    nome: 'Lincoln Lau',
+    nome_usuario: 'fnx',
+    time_usuario: 'Imperial',
+    imagem: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces',
+    status: 'offline'
+  },
+  {
+    id: '6',
+    nome: 'Alexandre Borba',
+    nome_usuario: 'gaules',
+    time_usuario: 'Tribo Gaules',
+    imagem: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces',
+    status: 'online'
+  },
+  {
+    id: 'usr-s1mple',
+    nome: 'Oleksandr Kostyliev',
+    nome_usuario: 's1mple',
+    time_usuario: 'Natus Vincere',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=S1',
+    status: 'online'
+  },
+  {
+    id: 'usr-zywoo',
+    nome: 'Mathieu Herbaut',
+    nome_usuario: 'ZywOo',
+    time_usuario: 'Team Vitality',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=ZY',
+    status: 'online'
+  },
+  {
+    id: 'usr-kscerato',
+    nome: 'Kaike Cerato',
+    nome_usuario: 'KSCERATO',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=KS',
+    status: 'online'
+  },
+  {
+    id: 'usr-yuurih',
+    nome: 'Yuri Santos',
+    nome_usuario: 'yuurih',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=YU',
+    status: 'online'
+  },
+  {
+    id: 'usr-chelo',
+    nome: 'Marcelo Cespedes',
+    nome_usuario: 'chelo',
+    time_usuario: 'FURIA Esports',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=CH',
+    status: 'offline'
+  },
+  {
+    id: 'usr-art',
+    nome: 'Andrei Piovezan',
+    nome_usuario: 'arT',
+    time_usuario: 'Fluxo',
+    imagem: 'https://placehold.co/96x96/120d20/ffffff?text=AR',
+    status: 'online'
+  },
+  {
+    id: 'usr-admin',
+    nome: 'Administrador',
+    nome_usuario: 'admin',
+    time_usuario: 'Staff Antigravity',
+    imagem: 'https://placehold.co/96x96/35176b/ffffff?text=AD',
+    status: 'online'
+  }
+];
 
 const MOCK_PERFIS_AMIGOS = {
   '1': {
@@ -104,6 +238,42 @@ export default function Perfil() {
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
 
+  // Estados para Lista de Amigos e Busca Dinâmica
+  const [listaAmigos, setListaAmigos] = useState(() => {
+    try {
+      const salvasPerfil = localStorage.getItem('listaAmigosPerfil');
+      if (salvasPerfil) return JSON.parse(salvasPerfil);
+      const salvasMenu = localStorage.getItem('listaAmigosUsuario');
+      if (salvasMenu) {
+        const parsed = JSON.parse(salvasMenu);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((a, idx) => ({
+            id: a.id || `amg-${idx}`,
+            nome: a.nome || a.name || 'Jogador',
+            name: a.name || a.nome || 'Jogador',
+            equipe: a.equipe || a.time_usuario || (a.game ? `Game: ${a.game}` : 'Sem equipe'),
+            status: a.status || 'offline',
+            imagem:
+              a.imagem ||
+              a.avatar ||
+              `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+                (a.nome || a.name || 'J').substring(0, 2).toUpperCase()
+              )}`
+          }));
+        }
+      }
+      return AMIGOS_PADRAO;
+    } catch {
+      return AMIGOS_PADRAO;
+    }
+  });
+
+  const [buscaAmigo, setBuscaAmigo] = useState('');
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [dropdownAmigoAberto, setDropdownAmigoAberto] = useState(false);
+  const [buscandoAmigos, setBuscandoAmigos] = useState(false);
+  const buscarAmigoRef = useRef(null);
+
   useEffect(() => {
     async function carregarPerfil() {
       const salvo = localStorage.getItem('usuarioLogado');
@@ -174,6 +344,224 @@ export default function Perfil() {
     }
     carregarPerfil();
   }, [id, navigate]);
+
+  // Fechar dropdown de busca ao clicar fora
+  useEffect(() => {
+    const fecharAoClicarFora = (e) => {
+      if (buscarAmigoRef.current && !buscarAmigoRef.current.contains(e.target)) {
+        setDropdownAmigoAberto(false);
+      }
+    };
+    document.addEventListener('click', fecharAoClicarFora);
+    return () => document.removeEventListener('click', fecharAoClicarFora);
+  }, []);
+
+  // Filtro dinâmico em tempo real de busca de jogadores
+  useEffect(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) {
+      setResultadosBusca([]);
+      setDropdownAmigoAberto(false);
+      setBuscandoAmigos(false);
+      return;
+    }
+
+    setBuscandoAmigos(true);
+    let ativo = true;
+
+    // 1. Filtrar nos jogadores do pool local
+    const locais = POOL_JOGADORES_DISPONIVEIS.filter((j) => {
+      const matchNome = j.nome && j.nome.toLowerCase().includes(termo);
+      const matchNick = j.nome_usuario && j.nome_usuario.toLowerCase().includes(termo);
+      const matchTime = j.time_usuario && j.time_usuario.toLowerCase().includes(termo);
+
+      if (!matchNome && !matchNick && !matchTime) return false;
+
+      // Não permitir o próprio usuário
+      if (
+        String(j.id) === String(usuario?.id) ||
+        (j.nome_usuario && usuario?.nome_usuario && j.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+        (j.nome && usuario?.nome && j.nome.toLowerCase() === usuario.nome.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Não permitir quem já é amigo
+      const jaAmigo = listaAmigos.some(
+        (a) =>
+          String(a.id) === String(j.id) ||
+          (a.nome || a.name || '').toLowerCase() === (j.nome || j.nome_usuario || '').toLowerCase() ||
+          (j.nome_usuario && (a.nome || a.name || '').toLowerCase() === j.nome_usuario.toLowerCase())
+      );
+
+      return !jaAmigo;
+    });
+
+    setResultadosBusca(locais);
+    setDropdownAmigoAberto(true);
+
+    // 2. Buscar no Supabase se houver conexão
+    if (supabase) {
+      supabase
+        .from('usuarios')
+        .select('id, nome, nome_usuario, time_usuario, imagem')
+        .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
+        .limit(8)
+        .then(({ data, error }) => {
+          if (ativo && !error && data) {
+            const combinados = [...locais];
+            data.forEach((jDb) => {
+              const ehProprioUsuario =
+                String(jDb.id) === String(usuario?.id) ||
+                (jDb.nome_usuario && usuario?.nome_usuario && jDb.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+                (jDb.nome && usuario?.nome && jDb.nome.toLowerCase() === usuario.nome.toLowerCase());
+
+              const jaAmigo = listaAmigos.some(
+                (a) =>
+                  String(a.id) === String(jDb.id) ||
+                  (a.nome || a.name || '').toLowerCase() === (jDb.nome || jDb.nome_usuario || '').toLowerCase() ||
+                  (jDb.nome_usuario && (a.nome || a.name || '').toLowerCase() === jDb.nome_usuario.toLowerCase())
+              );
+
+              const jaPresente = combinados.some(
+                (item) =>
+                  String(item.id) === String(jDb.id) ||
+                  (item.nome_usuario && jDb.nome_usuario && item.nome_usuario.toLowerCase() === jDb.nome_usuario.toLowerCase())
+              );
+
+              if (!ehProprioUsuario && !jaAmigo && !jaPresente) {
+                combinados.push({
+                  id: jDb.id,
+                  nome: jDb.nome || jDb.nome_usuario,
+                  nome_usuario: jDb.nome_usuario || jDb.nome,
+                  time_usuario: jDb.time_usuario || 'Sem equipe',
+                  imagem: jDb.imagem || '',
+                  status: 'offline'
+                });
+              }
+            });
+            setResultadosBusca(combinados);
+          }
+          if (ativo) setBuscandoAmigos(false);
+        })
+        .catch(() => {
+          if (ativo) setBuscandoAmigos(false);
+        });
+    } else {
+      setBuscandoAmigos(false);
+    }
+
+    return () => {
+      ativo = false;
+    };
+  }, [buscaAmigo, listaAmigos, usuario]);
+
+  function handleKeyDownBusca(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (resultadosBusca.length > 0) {
+        handleAdicionarAmigo(resultadosBusca[0]);
+      }
+    }
+  }
+
+  function handleAdicionarAmigo(jogador) {
+    if (
+      String(jogador.id) === String(usuario?.id) ||
+      (jogador.nome_usuario && usuario?.nome_usuario && jogador.nome_usuario.toLowerCase() === usuario.nome_usuario.toLowerCase()) ||
+      (jogador.nome && usuario?.nome && jogador.nome.toLowerCase() === usuario.nome.toLowerCase())
+    ) {
+      mostrarAlerta({
+        titulo: 'Ação não permitida',
+        mensagem: 'Você não pode adicionar a si mesmo como amigo.',
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const jaAdicionado = listaAmigos.some(
+      (a) =>
+        String(a.id) === String(jogador.id) ||
+        (a.nome || a.name || '').toLowerCase() === (jogador.nome || jogador.nome_usuario || '').toLowerCase() ||
+        (jogador.nome_usuario && (a.nome || a.name || '').toLowerCase() === jogador.nome_usuario.toLowerCase())
+    );
+
+    if (jaAdicionado) {
+      mostrarAlerta({
+        titulo: 'Jogador já adicionado',
+        mensagem: `${jogador.nome || jogador.nome_usuario} já está na sua lista de amigos.`,
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const novoAmigo = {
+      id: jogador.id || `amg-${Date.now()}`,
+      nome: jogador.nome || jogador.nome_usuario || 'Jogador',
+      name: jogador.nome_usuario || jogador.nome || 'Jogador',
+      equipe: jogador.time_usuario || jogador.equipe || 'Sem equipe',
+      status: jogador.status || 'online',
+      imagem:
+        jogador.imagem ||
+        `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+          (jogador.nome_usuario || jogador.nome || 'J').substring(0, 2).toUpperCase()
+        )}`
+    };
+
+    const novaLista = [novoAmigo, ...listaAmigos];
+    setListaAmigos(novaLista);
+
+    try {
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error('Erro ao salvar amigos:', err);
+    }
+
+    if (supabase && usuario?.id && jogador.id) {
+      try {
+        supabase
+          .from('amizades')
+          .insert({
+            id_usuario: usuario.id,
+            id_amigo: jogador.id,
+            status: 'aceito'
+          })
+          .then(() => {})
+          .catch(() => {});
+      } catch {
+        // Fallback caso tabela não exista
+      }
+    }
+
+    setBuscaAmigo('');
+    setResultadosBusca([]);
+    setDropdownAmigoAberto(false);
+
+    mostrarAlerta({
+      titulo: 'Amigo Adicionado!',
+      mensagem: `${novoAmigo.nome} foi adicionado à sua lista de amigos com sucesso.`,
+      tipo: 'sucesso'
+    });
+  }
+
+  function handleRemoverAmigo(amigo) {
+    const novaLista = listaAmigos.filter((a) => String(a.id) !== String(amigo.id));
+    setListaAmigos(novaLista);
+    try {
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error(err);
+    }
+    mostrarAlerta({
+      titulo: 'Amizade Removida',
+      mensagem: `${amigo.nome || amigo.name} foi removido da sua lista de amigos.`,
+      tipo: 'aviso'
+    });
+  }
 
   function sair() {
     if (window.confirm('Deseja realmente sair da sua conta?')) {
@@ -482,27 +870,136 @@ export default function Perfil() {
                   </div>
                 </section>
 
-                {/* LISTA DE AMIGOS (MOCK) */}
-                <section className="perfil-secao" style={{ marginTop: '24px' }}>
-                  <div className="perfil-secao-titulo">
-                    <div><span className="perfil-kicker">Comunidade</span><h2>Lista de Amigos</h2></div>
+                {/* LISTA DE AMIGOS */}
+                <section className="perfil-secao perfil-secao-amigos" style={{ marginTop: '24px' }}>
+                  <div className="perfil-secao-titulo perfil-amigos-header">
+                    <div>
+                      <span className="perfil-kicker">Comunidade</span>
+                      <h2>Lista de Amigos <small>({listaAmigos.length})</small></h2>
+                    </div>
+
+                    {!isPublico && (
+                      <div className="perfil-buscar-amigo-wrap" ref={buscarAmigoRef}>
+                        <div className="perfil-buscar-input-container">
+                          <svg className="perfil-buscar-icone" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          </svg>
+                          <input
+                            type="text"
+                            className="perfil-buscar-input"
+                            value={buscaAmigo}
+                            onChange={(e) => setBuscaAmigo(e.target.value)}
+                            onKeyDown={handleKeyDownBusca}
+                            onFocus={() => buscaAmigo.trim() && setDropdownAmigoAberto(true)}
+                            placeholder="Buscar jogadores para adicionar..."
+                          />
+                          {buscaAmigo && (
+                            <button
+                              type="button"
+                              className="perfil-buscar-limpar"
+                              onClick={() => {
+                                setBuscaAmigo('');
+                                setResultadosBusca([]);
+                                setDropdownAmigoAberto(false);
+                              }}
+                              aria-label="Limpar busca"
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+
+                        {dropdownAmigoAberto && buscaAmigo.trim().length > 0 && (
+                          <div className="perfil-autocomplete-dropdown">
+                            {buscandoAmigos ? (
+                              <div className="perfil-autocomplete-loading">Buscando jogadores...</div>
+                            ) : resultadosBusca.length > 0 ? (
+                              resultadosBusca.map((j) => (
+                                <div key={j.id} className="perfil-autocomplete-item">
+                                  <div className="perfil-autocomplete-user">
+                                    <img
+                                      src={
+                                        j.imagem ||
+                                        `https://placehold.co/96x96/35176b/ffffff?text=${encodeURIComponent(
+                                          (j.nome_usuario || j.nome || 'J').substring(0, 2).toUpperCase()
+                                        )}`
+                                      }
+                                      alt={j.nome || j.nome_usuario}
+                                      className="perfil-autocomplete-avatar"
+                                    />
+                                    <div className="perfil-autocomplete-info">
+                                      <strong>{j.nome || j.nome_usuario}</strong>
+                                      <span>
+                                        {j.nome_usuario ? `@${j.nome_usuario}` : ''}
+                                        {j.time_usuario ? ` • ${j.time_usuario}` : ''}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="perfil-autocomplete-add-btn"
+                                    onClick={() => handleAdicionarAmigo(j)}
+                                    title="Adicionar amigo"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span>Adicionar</span>
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="perfil-autocomplete-empty">Nenhum jogador encontrado</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
                   {privAmigos === 'privado' ? (
                     <p className="perfil-vazio">Sua lista de amigos está definida como privada nas configurações.</p>
                   ) : (
                     <div className="perfil-amigos">
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/291547/ffffff?text=LS" alt="Lucas Silva" />
-                        <div className="perfil-amigo-info"><strong>Lucas Silva</strong><span>Vortex Gaming</span><em className="online" style={{ color: '#5ce390' }}>Online</em></div>
-                      </article>
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/42206b/ffffff?text=AC" alt="Ana Costa" />
-                        <div className="perfil-amigo-info"><strong>Ana Costa</strong><span>Nexus Five</span><em style={{ color: 'var(--texto-terciario)' }}>Offline</em></div>
-                      </article>
-                      <article className="perfil-amigo">
-                        <img src="https://placehold.co/96x96/17121f/ffffff?text=RL" alt="Rafael Lima" />
-                        <div className="perfil-amigo-info"><strong>Rafael Lima</strong><span>Sem equipe</span><em style={{ color: 'var(--texto-terciario)' }}>Offline</em></div>
-                      </article>
+                      {listaAmigos.map((amigo) => (
+                        <article className="perfil-amigo" key={amigo.id}>
+                          <img
+                            src={
+                              amigo.imagem ||
+                              `https://placehold.co/96x96/291547/ffffff?text=${encodeURIComponent(
+                                (amigo.nome || amigo.name || 'J').substring(0, 2).toUpperCase()
+                              )}`
+                            }
+                            alt={amigo.nome || amigo.name}
+                          />
+                          <div className="perfil-amigo-info">
+                            <strong>{amigo.nome || amigo.name}</strong>
+                            <span>{amigo.equipe || amigo.time_usuario || 'Sem equipe'}</span>
+                            <em
+                              className={amigo.status === 'online' ? 'online' : ''}
+                              style={amigo.status === 'online' ? { color: '#5ce390' } : { color: 'var(--texto-terciario)' }}
+                            >
+                              {amigo.status === 'online' ? 'Online' : 'Offline'}
+                            </em>
+                          </div>
+                          {!isPublico && (
+                            <div className="perfil-amigo-acoes">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoverAmigo(amigo)}
+                                title="Remover amigo"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          )}
+                        </article>
+                      ))}
+                      {listaAmigos.length === 0 && (
+                        <p className="perfil-vazio">Nenhum amigo na sua lista no momento. Use o campo de busca acima para encontrar e adicionar jogadores!</p>
+                      )}
                     </div>
                   )}
                 </section>

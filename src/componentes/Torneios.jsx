@@ -1,18 +1,103 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/torneios.css'
 import '../css/bracket.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 
-async function loadTournaments() {
-  const { data, error } = await supabase
-    .from('torneios')
-    .select('*')
-    .order('data_inicio', { ascending: true })
+const TORNEIOS_PADRAO = [
+  {
+    id: 'torneio-blast',
+    nome: 'BLAST Premier Fall Final',
+    jogo: 'CS2',
+    formato: 'Eliminação Simples',
+    data_inicio: '2026-10-15T18:00:00',
+    dinheiro: 150000,
+    status: true,
+    descricao: 'As 8 melhores equipes do circuito global disputam a glória máxima e vaga direta na World Final.'
+  },
+  {
+    id: 'torneio-pgl',
+    nome: 'PGL Major Copenhagen',
+    jogo: 'CS2',
+    formato: 'Eliminação Simples',
+    data_inicio: '2026-11-02T14:30:00',
+    dinheiro: 500000,
+    status: true,
+    descricao: 'O campeonato mais prestigiado do Counter-Strike mundial reunindo os maiores times do planeta.'
+  },
+  {
+    id: 'torneio-iem',
+    nome: 'IEM Katowice Championship',
+    jogo: 'CS2',
+    formato: 'Eliminação Simples',
+    data_inicio: '2026-11-20T16:00:00',
+    dinheiro: 250000,
+    status: true,
+    descricao: 'A lendária Spodek Arena recebe o confronto épico das lendas dos esportes eletrônicos.'
+  },
+  {
+    id: 'torneio-esl',
+    nome: 'ESL Pro League Season 20',
+    jogo: 'CS2',
+    formato: 'Eliminação Dupla',
+    data_inicio: '2026-12-05T19:00:00',
+    dinheiro: 100000,
+    status: false,
+    descricao: 'Fase de grupos intensa e playoffs eliminatórios valendo pontos vitais no ranking mundial.'
+  }
+]
 
-  if (error) throw error
-  return data || []
+async function loadTournaments() {
+  let torneiosLocais = []
+  try {
+    const salvas = localStorage.getItem('torneiosCadastrados')
+    if (salvas) {
+      torneiosLocais = JSON.parse(salvas)
+    }
+  } catch (err) {
+    console.warn('Erro ao ler torneios do localStorage:', err)
+  }
+
+  let torneiosSupabase = []
+  try {
+    const { data, error } = await supabase
+      .from('torneios')
+      .select('*')
+      .order('data_inicio', { ascending: true })
+
+    if (!error && data) {
+      torneiosSupabase = data
+    }
+  } catch (err) {
+    console.warn('Falha na consulta Supabase torneios:', err)
+  }
+
+  const combinados = []
+  const idsVistos = new Set()
+
+  torneiosLocais.forEach((t) => {
+    if (t && t.id && !idsVistos.has(String(t.id))) {
+      idsVistos.add(String(t.id))
+      combinados.push(t)
+    }
+  })
+
+  torneiosSupabase.forEach((t) => {
+    if (t && t.id && !idsVistos.has(String(t.id))) {
+      idsVistos.add(String(t.id))
+      combinados.push(t)
+    }
+  })
+
+  TORNEIOS_PADRAO.forEach((t) => {
+    if (t && t.id && !idsVistos.has(String(t.id))) {
+      idsVistos.add(String(t.id))
+      combinados.push(t)
+    }
+  })
+
+  return combinados
 }
 
 function formatDate(value) {
@@ -454,6 +539,7 @@ export default function Torneios() {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
+  const [busca, setBusca] = useState('')
   const { id } = useParams()
 
   useEffect(() => {
@@ -462,9 +548,27 @@ export default function Torneios() {
         setTournaments(data)
         setErro('')
       })
-      .catch(() => setErro('Nao foi possivel carregar os torneios. Tente novamente mais tarde.'))
+      .catch(() => setErro('Não foi possível carregar os torneios. Tente novamente mais tarde.'))
       .finally(() => setLoading(false))
   }, [])
+
+  const torneiosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase()
+    if (!termo) return tournaments
+
+    return tournaments.filter((tournament) => {
+      const matchNome = (tournament.nome || '').toLowerCase().includes(termo)
+      const matchFormato = (tournament.formato || '').toLowerCase().includes(termo)
+      const matchJogo = (tournament.jogo || '').toLowerCase().includes(termo)
+      const matchDesc = (tournament.descricao || '').toLowerCase().includes(termo)
+      
+      const valorPremioStr = String(tournament.dinheiro || '')
+      const premioFormatado = formatPrize(tournament.dinheiro).toLowerCase()
+      const matchPremio = valorPremioStr.includes(termo) || premioFormatado.includes(termo)
+
+      return matchNome || matchFormato || matchJogo || matchDesc || matchPremio
+    })
+  }, [tournaments, busca])
 
   if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={erro} />
 
@@ -477,6 +581,35 @@ export default function Torneios() {
         <p>Encontre um campeonato, monte sua equipe e dispute o topo do ranking.</p>
         <Link to="/torneios/criar" className="tournaments-criar-btn">Criar Torneio</Link>
       </section>
+
+      {/* Barra de Pesquisa de Competições */}
+      <div className="tournaments-busca-container">
+        <div className="tournaments-busca-box">
+          <svg className="tournaments-busca-icone" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            className="tournaments-busca-input"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar competição por nome, formato ou premiação..."
+            aria-label="Buscar competições"
+          />
+          {busca && (
+            <button
+              type="button"
+              className="tournaments-busca-limpar"
+              onClick={() => setBusca('')}
+              title="Limpar pesquisa"
+              aria-label="Limpar pesquisa"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+      </div>
 
       {loading && (
         <div className="tournament-page-state">
@@ -492,13 +625,30 @@ export default function Torneios() {
 
       {!loading && !erro && tournaments.length === 0 && (
         <div className="tournament-page-state">
-          <p>Nenhum torneio disponivel no momento.</p>
+          <p>Nenhum torneio disponível no momento.</p>
         </div>
       )}
 
-      {!loading && !erro && tournaments.length > 0 && (
+      {!loading && !erro && tournaments.length > 0 && torneiosFiltrados.length === 0 && (
+        <div className="tournaments-busca-vazio">
+          <div className="tournaments-busca-vazio-icone" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+          </div>
+          <h3>Nenhuma competição encontrada</h3>
+          <p>Nenhuma competição encontrada para esta busca.</p>
+          <button type="button" className="tournaments-busca-limpar-btn" onClick={() => setBusca('')}>
+            Limpar busca
+          </button>
+        </div>
+      )}
+
+      {!loading && !erro && torneiosFiltrados.length > 0 && (
         <div className="tournaments-grid">
-          {tournaments.map((tournament, index) => (
+          {torneiosFiltrados.map((tournament, index) => (
             <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
           ))}
         </div>
@@ -512,6 +662,5 @@ export default function Torneios() {
         />
       </div>
     </main>
-
   )
 }
