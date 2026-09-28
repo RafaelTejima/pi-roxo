@@ -331,7 +331,7 @@ export default function Perfil() {
       // Busca dados atualizados do banco
       const { data } = await supabase
         .from('usuarios')
-        .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro')
+        .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
         .eq('id', userParsed.id)
         .single();
 
@@ -576,10 +576,14 @@ export default function Perfil() {
       nome_usuario: usuario.nome_usuario || '',
       imagem: usuario.imagem || '',
       bio: usuario.bio || '',
-      // Simulando campos que ainda não existem no DB
-      discord: localStorage.getItem(`discord_${usuario.id}`) || '',
-      steam: localStorage.getItem(`steam_${usuario.id}`) || '',
-      twitter: localStorage.getItem(`twitter_${usuario.id}`) || '',
+      // Conexões agora vêm do banco
+      discord: usuario.conexao_discord || '',
+      steam: usuario.conexao_steam || '',
+      twitter: usuario.conexao_twitter || '',
+      youtube: usuario.conexao_youtube || '',
+      twitch: usuario.conexao_twitch || '',
+      bluesky: usuario.conexao_bluesky || '',
+      fundo: localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1',
       privacidade_amigos: localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico',
       privacidade_nome: localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico',
       privacidade_ganhos: localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico'
@@ -594,7 +598,13 @@ export default function Perfil() {
     const payload = {
       nome_usuario: form.nome_usuario,
       imagem: form.imagem,
-      bio: form.bio
+      bio: form.bio,
+      conexao_discord: form.discord,
+      conexao_steam: form.steam,
+      conexao_twitter: form.twitter,
+      conexao_youtube: form.youtube,
+      conexao_twitch: form.twitch,
+      conexao_bluesky: form.bluesky
     };
 
     const { error } = await supabase
@@ -612,10 +622,8 @@ export default function Perfil() {
       return;
     }
 
-    // Salva configs extras locais (pendente update no schema)
-    localStorage.setItem(`discord_${usuario.id}`, form.discord);
-    localStorage.setItem(`steam_${usuario.id}`, form.steam);
-    localStorage.setItem(`twitter_${usuario.id}`, form.twitter);
+    // Salva configs locais (fundo e privacidade ficam em localStorage)
+    localStorage.setItem(`fundo_${usuario.id}`, form.fundo);
     localStorage.setItem(`priv_amigos_${usuario.id}`, form.privacidade_amigos);
     localStorage.setItem(`priv_nome_${usuario.id}`, form.privacidade_nome);
     localStorage.setItem(`priv_ganhos_${usuario.id}`, form.privacidade_ganhos);
@@ -645,10 +653,14 @@ export default function Perfil() {
   const dataRegistro = new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
-  // Extraimos as configs locais apenas para exibição no perfil
-  const discord = isPublico ? (usuario.discord || null) : localStorage.getItem(`discord_${usuario.id}`);
-  const steam = isPublico ? (usuario.steam || null) : localStorage.getItem(`steam_${usuario.id}`);
-  const twitter = isPublico ? (usuario.twitter || null) : localStorage.getItem(`twitter_${usuario.id}`);
+  // Conexões — agora vêm do banco para o usuário logado, ou do mock para perfis públicos
+  const discord = isPublico ? (usuario.discord || null) : usuario.conexao_discord;
+  const steam = isPublico ? (usuario.steam || null) : usuario.conexao_steam;
+  const twitter = isPublico ? (usuario.twitter || null) : usuario.conexao_twitter;
+  const youtube = isPublico ? null : usuario.conexao_youtube;
+  const twitch = isPublico ? null : usuario.conexao_twitch;
+  const bluesky = isPublico ? null : usuario.conexao_bluesky;
+  const fundo = localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1';
   const privNome = isPublico ? 'publico' : (localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico');
   const privGanhos = isPublico ? (usuario.stats ? 'publico' : 'privado') : (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico');
   const privAmigos = isPublico ? 'publico' : (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico');
@@ -659,7 +671,9 @@ export default function Perfil() {
   const statsGanhos = usuario.stats ? usuario.stats.ganhos : (privGanhos === 'privado' ? 'Oculto' : 'R$ 0,00');
 
   return (
-    <main id="perfil-page" className="perfil-page">
+    <main id="perfil-page" className="perfil-page" style={{
+      background: `radial-gradient(circle at 80% 0%, rgba(114, 62, 195, 0.22), transparent 34%), linear-gradient(135deg, rgba(8, 4, 18, 0.85), rgba(3, 1, 8, 0.92)), url(${fundo}) center/cover no-repeat fixed`
+    }}>
       <div className="perfil-container">
         <div className="perfil-cabecalho">
           <div>
@@ -692,8 +706,13 @@ export default function Perfil() {
               ></span>
             </div>
             
-            {/* Regra de privacidade do Nome */}
-            <h2>{privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}</h2>
+            {/* Nome + tag ADM */}
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              {privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}
+              {usuario.admin && (
+                <span style={{ fontSize: '10px', background: '#8c52ff', padding: '2px 7px', borderRadius: '4px', fontWeight: '800', color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', flexShrink: 0 }}>ADM</span>
+              )}
+            </h2>
             
             <p className="perfil-cargo">{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Sem usuário'}</p>
             <div className="perfil-dados">
@@ -766,8 +785,39 @@ export default function Perfil() {
                         <input type="text" value={form.steam} onChange={e => setForm({...form, steam: e.target.value})} placeholder="https://steamcommunity.com/id/..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Twitter</label>
+                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Twitter / X</label>
                         <input type="text" value={form.twitter} onChange={e => setForm({...form, twitter: e.target.value})} placeholder="@seu_twitter" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>YouTube</label>
+                        <input type="text" value={form.youtube} onChange={e => setForm({...form, youtube: e.target.value})} placeholder="@seucanal" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Twitch</label>
+                        <input type="text" value={form.twitch} onChange={e => setForm({...form, twitch: e.target.value})} placeholder="seucanal" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Bluesky</label>
+                        <input type="text" value={form.bluesky} onChange={e => setForm({...form, bluesky: e.target.value})} placeholder="@usuario.bsky.social" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PERSONALIZAÇÃO */}
+                  <div>
+                    <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Personalização</h3>
+                    <div>
+                      <label style={{ fontSize: '12px', color: 'var(--texto-secundario)', display: 'block', marginBottom: '8px' }}>Fundo do Perfil</label>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        {[1, 2, 3, 4, 5].map(num => {
+                          const url = `https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+${num}`;
+                          return (
+                            <label key={num} style={{ cursor: 'pointer', border: form.fundo === url ? '2px solid var(--roxo-claro)' : '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}>
+                              <input type="radio" name="fundo" value={url} checked={form.fundo === url} onChange={e => setForm({ ...form, fundo: e.target.value })} style={{ display: 'none' }} />
+                              <img src={`https://placehold.co/100x60/1a1a2e/ffffff?text=Fundo+${num}`} alt={`Fundo ${num}`} style={{ display: 'block' }} />
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -823,19 +873,43 @@ export default function Perfil() {
                     <div><span>Username</span><strong>{usuario.nome_usuario ? `@${usuario.nome_usuario}` : 'Não informado'}</strong></div>
                   </div>
                   
-                  <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '32px 0 16px' }}>Conexões Vinculadas</h3>
+                  <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '40px 0 16px' }}>Conexões Vinculadas</h3>
                   <div className="perfil-contas" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                    <div className="perfil-conta">
-                      <span className="perfil-conta-icone perfil-conta-discord">D</span>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone perfil-conta-discord" style={{ borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/discord.svg" alt="Discord" style={{ width: '20px', height: '20px' }} />
+                      </span>
                       <div><strong>Discord</strong><span>{discord || 'Não conectado'}</span></div>
                     </div>
-                    <div className="perfil-conta">
-                      <span className="perfil-conta-icone perfil-conta-steam">S</span>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone perfil-conta-steam" style={{ borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/steam.svg" alt="Steam" style={{ width: '20px', height: '20px' }} />
+                      </span>
                       <div><strong>Steam</strong><span>{steam || 'Não conectado'}</span></div>
                     </div>
-                    <div className="perfil-conta">
-                      <span className="perfil-conta-icone" style={{ background: '#1DA1F2' }}>T</span>
-                      <div><strong>Twitter</strong><span>{twitter || 'Não conectado'}</span></div>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone" style={{ background: '#1DA1F2', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/twitter.svg" alt="Twitter" style={{ width: '20px', height: '20px' }} />
+                      </span>
+                      <div><strong>Twitter / X</strong><span>{twitter || 'Não conectado'}</span></div>
+                    </div>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone" style={{ background: '#FF0000', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/youtube.svg" alt="YouTube" style={{ width: '20px', height: '20px' }} />
+                      </span>
+                      <div><strong>YouTube</strong><span>{youtube || 'Não conectado'}</span></div>
+                    </div>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone" style={{ background: '#9146FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/twitch.svg" alt="Twitch" style={{ width: '20px', height: '20px' }} />
+                      </span>
+                      <div><strong>Twitch</strong><span>{twitch || 'Não conectado'}</span></div>
+                    </div>
+                    <div className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
+                      <span className="perfil-conta-icone" style={{ background: '#0085FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="/svg/bluesky.svg" alt="Bluesky" style={{ width: '20px', height: '20px' }} />
+                      </span>
+                      <div><strong>Bluesky</strong><span>{bluesky || 'Não conectado'}</span></div>
                     </div>
                   </div>
                 </section>
