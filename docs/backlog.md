@@ -89,4 +89,9 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 
 
 =======
+=======
+- **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter, YouTube, Twitch e Bluesky, e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos).
+- **Personalizacao e Aparencia:** A secao de "Personalizacao" foi movida para o fim do formulario de edicao. Nela, foi adicionada a escolha visual de **Fundo do Perfil** atraves de uma selecao de 5 imagens (placeholders do `placehold.co`), garantindo uma experiencia interativa na edicao do perfil visual. Foram tambem adicionados icones SVG originais para cada rede social.
+- Como esses novos campos de conexoes, fundo e privacidade ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
+>>>>>>> Stashed changes
 >>>>>>> Stashed changes
