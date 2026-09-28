@@ -358,7 +358,6 @@ function TournamentDetails({ tournaments, loading, error }) {
         <p>{tournament.descricao || 'Nenhuma descricao informada.'}</p>
       </section>
 
-      <Link className="tournaments-criar-btn" to={`/torneios/${id}/mapa`}>Selecionar mapa da partida -&gt;</Link>
 
       {/* =====================================================
           BRACKET / CHAVEAMENTO
