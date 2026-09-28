@@ -20,6 +20,18 @@ export default function DetalhesTime() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
 
+  const [edicaoAtiva, setEdicaoAtiva] = useState(false)
+  const [formEdicao, setFormEdicao] = useState({ nome: '', sigla: '', descricao: '', logo: '' })
+  const [salvando, setSalvando] = useState(false)
+  const [erroEdicao, setErroEdicao] = useState('')
+
+  const [gerenciandoJogadores, setGerenciandoJogadores] = useState(false)
+  const [buscaJogador, setBuscaJogador] = useState('')
+  const [resultados, setResultados] = useState([])
+  const [dropdownAberto, setDropdownAberto] = useState(false)
+  const [processandoId, setProcessandoId] = useState(null)
+  const [erroJogadores, setErroJogadores] = useState('')
+
   useEffect(() => {
     async function carregarTime() {
       setCarregando(true)
@@ -51,6 +63,7 @@ export default function DetalhesTime() {
         const usuarioDoTime = usuariosEncontrados?.find((u) => u.id === linha.id_usuario)
         return {
           id: linha.id,
+          idUsuario: linha.id_usuario,
           funcao: linha.funcao,
           nome: usuarioDoTime?.nome_usuario || usuarioDoTime?.nome || 'Jogador desconhecido'
         }
@@ -63,6 +76,37 @@ export default function DetalhesTime() {
 
     carregarTime()
   }, [id])
+
+  // Busca de jogadores reais na tabela 'usuarios' conforme digita, excluindo quem ja esta no time
+  useEffect(() => {
+    const termo = buscaJogador.trim().toLowerCase()
+    if (!termo) {
+      setResultados([])
+      setDropdownAberto(false)
+      return
+    }
+
+    let ativo = true
+
+    supabase
+      .from('usuarios')
+      .select('id, nome, nome_usuario, email')
+      .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%,email.ilike.%${termo}%`)
+      .limit(5)
+      .then(({ data, error }) => {
+        if (!ativo || error || !data) return
+        const filtrados = data
+          .filter((u) => !integrantes.some((item) => item.idUsuario === u.id))
+          .map((u) => ({ id: u.id, nome: u.nome_usuario || u.nome, email: u.email }))
+        setResultados(filtrados)
+        setDropdownAberto(true)
+      })
+      .catch(() => {})
+
+    return () => {
+      ativo = false
+    }
+  }, [buscaJogador, integrantes])
 
   if (carregando) {
     return (
@@ -85,59 +129,261 @@ export default function DetalhesTime() {
 
   const capitao = integrantes.find((i) => i.funcao === 'capitao')
   const jogadores = integrantes.filter((i) => i.funcao !== 'capitao')
-  const ehCapitao = usuario && usuario.id === time.id_capitao
+  const podeEditar = usuario && (usuario.id === time.id_capitao || usuario.admin)
+
+  function abrirEdicao() {
+    setFormEdicao({
+      nome: time.nome || '',
+      sigla: time.tag || '',
+      descricao: time.descricao || '',
+      logo: time.logo || ''
+    })
+    setErroEdicao('')
+    setEdicaoAtiva(true)
+  }
+
+  function atualizarCampoEdicao(event) {
+    setFormEdicao((atual) => ({ ...atual, [event.target.name]: event.target.value }))
+  }
+
+  async function salvarEdicao(event) {
+    event.preventDefault()
+    setErroEdicao('')
+
+    if (!formEdicao.nome.trim() || formEdicao.sigla.trim().length < 2) {
+      setErroEdicao('Preencha o nome e a sigla (mínimo 2 caracteres) da equipe.')
+      return
+    }
+
+    setSalvando(true)
+
+    const dadosAtualizados = {
+      nome: formEdicao.nome.trim(),
+      tag: formEdicao.sigla.trim().toUpperCase(),
+      descricao: formEdicao.descricao.trim() || null,
+      logo: formEdicao.logo.trim() || null
+    }
+
+    const { data: timeAtualizado, error: erroUpdate } = await supabase
+      .from('times')
+      .update(dadosAtualizados)
+      .eq('id', id)
+      .select()
+      .single()
+
+    setSalvando(false)
+
+    if (erroUpdate || !timeAtualizado) {
+      setErroEdicao('Não foi possível salvar as alterações. Tente novamente.')
+      return
+    }
+
+    setTime(timeAtualizado)
+    setEdicaoAtiva(false)
+  }
+
+  async function adicionarJogador(jogador) {
+    setErroJogadores('')
+
+    if (integrantes.length >= 5) {
+      setErroJogadores('A line-up já atingiu o limite de 5 integrantes.')
+      return
+    }
+
+    setProcessandoId(jogador.id)
+
+    const { data: novaLinha, error: erroInsert } = await supabase
+      .from('times_integrantes')
+      .insert({ id_time: id, id_usuario: jogador.id, funcao: 'jogador' })
+      .select()
+      .single()
+
+    setProcessandoId(null)
+
+    if (erroInsert || !novaLinha) {
+      setErroJogadores('Não foi possível adicionar o jogador. Tente novamente.')
+      return
+    }
+
+    setIntegrantes((atuais) => [
+      ...atuais,
+      { id: novaLinha.id, idUsuario: jogador.id, funcao: 'jogador', nome: jogador.nome }
+    ])
+    setBuscaJogador('')
+    setResultados([])
+    setDropdownAberto(false)
+  }
+
+  async function removerJogador(integranteId) {
+    setErroJogadores('')
+    setProcessandoId(integranteId)
+
+    const { error: erroDelete } = await supabase.from('times_integrantes').delete().eq('id', integranteId)
+
+    setProcessandoId(null)
+
+    if (erroDelete) {
+      setErroJogadores('Não foi possível remover o jogador. Tente novamente.')
+      return
+    }
+
+    setIntegrantes((atuais) => atuais.filter((item) => item.id !== integranteId))
+  }
 
   return (
     <main id="pagina-detalhes-time">
       <Link to="/equipes" className="detalhes-time-voltar">&larr; Voltar para Equipes</Link>
 
-      <section className="detalhes-time-cabecalho">
-        <img
-          src={time.logo || 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'}
-          alt={`Logo do time ${time.nome}`}
-          className="detalhes-time-logo"
-        />
-        <div className="detalhes-time-info">
-          <span className="detalhes-time-tag">[{time.tag}]</span>
-          <h1>{time.nome}</h1>
-          <p className="detalhes-time-registro">Criado em {formatarData(time.registro)}</p>
-          {ehCapitao && (
-            <button type="button" className="detalhes-time-editar-btn">
-              Editar time
-            </button>
+      <div className="detalhes-time-layout">
+        <div className="detalhes-time-coluna-principal">
+          <section className="detalhes-time-cabecalho">
+            <img
+              src={time.logo || 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'}
+              alt={`Logo do time ${time.nome}`}
+              className="detalhes-time-logo"
+            />
+            <div className="detalhes-time-info">
+              <span className="detalhes-time-tag">[{time.tag}]</span>
+              <h1>{time.nome}</h1>
+              <p className="detalhes-time-registro">Criado em {formatarData(time.registro)}</p>
+              {podeEditar && !edicaoAtiva && (
+                <button type="button" className="detalhes-time-editar-btn" onClick={abrirEdicao}>
+                  Editar time
+                </button>
+              )}
+            </div>
+          </section>
+
+          {edicaoAtiva && (
+            <section className="detalhes-time-secao">
+              <h2>Editar time</h2>
+              <form className="detalhes-time-form-edicao" onSubmit={salvarEdicao}>
+                <label>
+                  Nome da equipe
+                  <input name="nome" value={formEdicao.nome} onChange={atualizarCampoEdicao} required />
+                </label>
+                <label>
+                  Sigla / TAG
+                  <input name="sigla" maxLength="5" value={formEdicao.sigla} onChange={atualizarCampoEdicao} required />
+                </label>
+                <label>
+                  URL do logo <span className="campo-opcional">Opcional</span>
+                  <input name="logo" value={formEdicao.logo} onChange={atualizarCampoEdicao} placeholder="https://..." />
+                </label>
+                <label>
+                  Descrição <span className="campo-opcional">Opcional</span>
+                  <textarea name="descricao" value={formEdicao.descricao} onChange={atualizarCampoEdicao} />
+                </label>
+
+                {erroEdicao && <p className="detalhes-time-mensagem-erro">{erroEdicao}</p>}
+
+                <div className="detalhes-time-form-acoes">
+                  <button type="button" className="detalhes-time-cancelar-btn" onClick={() => setEdicaoAtiva(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="detalhes-time-editar-btn" disabled={salvando}>
+                    {salvando ? 'Salvando...' : 'Salvar alterações'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {time.descricao && (
+            <section className="detalhes-time-secao">
+              <h2>Descrição</h2>
+              <p>{time.descricao}</p>
+            </section>
           )}
         </div>
-      </section>
 
-      {time.descricao && (
-        <section className="detalhes-time-secao">
-          <h2>Descrição</h2>
-          <p>{time.descricao}</p>
-        </section>
-      )}
-
-      <section className="detalhes-time-secao">
-        <h2>Line-up ({integrantes.length}/5)</h2>
-
-        <div className="detalhes-time-jogadores">
-          {capitao && (
-            <div className="detalhes-time-jogador-card capitao">
-              <strong>{capitao.nome}</strong>
-              <span>CAPITÃO</span>
+        <aside className="detalhes-time-coluna-lateral">
+          <section className="detalhes-time-secao">
+            <div className="detalhes-time-secao-titulo">
+              <h2>Line-up ({integrantes.length}/5)</h2>
+              {podeEditar && (
+                <button
+                  type="button"
+                  className="detalhes-time-gerenciar-btn"
+                  onClick={() => {
+                    setGerenciandoJogadores((atual) => !atual)
+                    setErroJogadores('')
+                    setBuscaJogador('')
+                    setResultados([])
+                    setDropdownAberto(false)
+                  }}
+                >
+                  {gerenciandoJogadores ? 'Concluir' : 'Adicionar/Remover jogadores'}
+                </button>
+              )}
             </div>
-          )}
-          {jogadores.map((jogador) => (
-            <div className="detalhes-time-jogador-card" key={jogador.id}>
-              <strong>{jogador.nome}</strong>
-              <span>JOGADOR</span>
-            </div>
-          ))}
-        </div>
 
-        {jogadores.length === 0 && (
-          <p className="detalhes-time-aviso">Este time ainda não tem jogadores além do capitão.</p>
-        )}
-      </section>
+            {gerenciandoJogadores && (
+              <div className="detalhes-time-gerenciar-jogadores">
+                <div className="buscar-jogador-wrap">
+                  <input
+                    value={buscaJogador}
+                    onChange={(event) => setBuscaJogador(event.target.value)}
+                    onFocus={() => buscaJogador.trim() && setDropdownAberto(true)}
+                    placeholder="Buscar por nick ou e-mail do jogador..."
+                    disabled={integrantes.length >= 5}
+                  />
+
+                  {dropdownAberto && buscaJogador.trim().length > 0 && (
+                    <div className="autocomplete-dropdown">
+                      {resultados.length > 0 ? (
+                        resultados.map((jogador) => (
+                          <div key={jogador.id} className="autocomplete-item" onClick={() => adicionarJogador(jogador)}>
+                            <div className="autocomplete-item-info">
+                              <span className="autocomplete-item-name">{jogador.nome}</span>
+                              <span className="autocomplete-item-email">{jogador.email}</span>
+                            </div>
+                            <span className="autocomplete-add-btn">
+                              {processandoId === jogador.id ? 'Adicionando...' : '+ Adicionar'}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="autocomplete-empty">Nenhum jogador encontrado</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {erroJogadores && <p className="detalhes-time-mensagem-erro">{erroJogadores}</p>}
+              </div>
+            )}
+
+            <div className="detalhes-time-jogadores">
+              {capitao && (
+                <div className="detalhes-time-jogador-card capitao">
+                  <strong>{capitao.nome}</strong>
+                  <span>CAPITÃO</span>
+                </div>
+              )}
+              {jogadores.map((jogador) => (
+                <div className="detalhes-time-jogador-card" key={jogador.id}>
+                  <strong>{jogador.nome}</strong>
+                  <span>JOGADOR</span>
+                  {gerenciandoJogadores && (
+                    <button
+                      type="button"
+                      className="detalhes-time-remover-btn"
+                      onClick={() => removerJogador(jogador.id)}
+                      disabled={processandoId === jogador.id}
+                    >
+                      {processandoId === jogador.id ? 'Removendo...' : 'Remover'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {jogadores.length === 0 && (
+              <p className="detalhes-time-aviso">Este time ainda não tem jogadores além do capitão.</p>
+            )}
+          </section>
+        </aside>
+      </div>
     </main>
   )
 }
