@@ -1,13 +1,103 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
+import { useAlerta } from './AlertaModal';
+
+const MOCK_PERFIS_AMIGOS = {
+  '1': {
+    id: 1,
+    nome: "Gabriel Toledo",
+    nome_usuario: "FalleN",
+    time_usuario: "FURIA Esports",
+    bio: "Professor do CS brasileiro. Bi-campeão de Major. Capitão, AWP & líder lendário nos servidores.",
+    imagem: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces",
+    registro: "2016-01-15T00:00:00.000Z",
+    status: "online",
+    discord: "FalleN#0001",
+    steam: "https://steamcommunity.com/id/fallen",
+    twitter: "@FalleNCS",
+    stats: { partidas: 1420, torneios: 88, titulos: 24, ganhos: "R$ 4.250.000,00" }
+  },
+  '2': {
+    id: 2,
+    nome: "Marcelo David",
+    nome_usuario: "coldzera",
+    time_usuario: "RED Canids",
+    bio: "2x Melhor Jogador do Mundo (2016/2017). Eternizado no grafite dos 4 abates saltando na Mirage.",
+    imagem: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces",
+    registro: "2016-03-20T00:00:00.000Z",
+    status: "offline",
+    discord: "coldzera#0002",
+    steam: "https://steamcommunity.com/id/coldzera",
+    twitter: "@coldzera",
+    stats: { partidas: 1290, torneios: 82, titulos: 22, ganhos: "R$ 3.900.000,00" }
+  },
+  '3': {
+    id: 3,
+    nome: "Fernando Alvarenga",
+    nome_usuario: "fer",
+    time_usuario: "O PLANO",
+    bio: "A dona morte! Campeão de 2 Majors de CS:GO, agressividade e mira afiada sem medo.",
+    imagem: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&fit=crop&crop=faces",
+    registro: "2016-01-15T00:00:00.000Z",
+    status: "online",
+    discord: "fer#0003",
+    steam: "https://steamcommunity.com/id/fergod",
+    twitter: "@fer",
+    stats: { partidas: 1150, torneios: 75, titulos: 20, ganhos: "R$ 3.400.000,00" }
+  },
+  '4': {
+    id: 4,
+    nome: "Epitácio de Melo",
+    nome_usuario: "TACO",
+    time_usuario: "Legacy",
+    bio: "Entry fragger histórico, 2x campeão de Major. 'Are you mad? Cuz I'm not'.",
+    imagem: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces",
+    registro: "2016-04-10T00:00:00.000Z",
+    status: "online",
+    discord: "TACO#0004",
+    steam: "https://steamcommunity.com/id/tacocs",
+    twitter: "@TACOCS",
+    stats: { partidas: 1080, torneios: 70, titulos: 19, ganhos: "R$ 3.100.000,00" }
+  },
+  '5': {
+    id: 5,
+    nome: "Lincoln Lau",
+    nome_usuario: "fnx",
+    time_usuario: "Imperial",
+    bio: "Sem fnx sem Major! Lenda viva com títulos mundiais no 1.6 e bicampeonato no CS:GO.",
+    imagem: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces",
+    registro: "2015-11-05T00:00:00.000Z",
+    status: "offline",
+    discord: "fnx#0005",
+    steam: "https://steamcommunity.com/id/fnxforever",
+    twitter: "@linfnx",
+    stats: { partidas: 990, torneios: 65, titulos: 21, ganhos: "R$ 2.800.000,00" }
+  },
+  '6': {
+    id: 6,
+    nome: "Alexandre Borba",
+    nome_usuario: "gaules",
+    time_usuario: "Tribo Gaules",
+    bio: "A Tribo cuida da Tribo! Ex-jogador profissional, técnico e maior streamer gamer da América Latina.",
+    imagem: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces",
+    registro: "2015-08-01T00:00:00.000Z",
+    status: "online",
+    discord: "gaules#0006",
+    steam: "https://steamcommunity.com/id/gaules",
+    twitter: "@Gaules",
+    stats: { partidas: 850, torneios: 40, titulos: 10, ganhos: "R$ 1.500.000,00" }
+  }
+};
 
 export default function Perfil() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { mostrarAlerta } = useAlerta();
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  
   // Estados para edição
   const [editando, setEditando] = useState(false);
   const [form, setForm] = useState({});
@@ -16,11 +106,51 @@ export default function Perfil() {
   useEffect(() => {
     async function carregarPerfil() {
       const salvo = localStorage.getItem('usuarioLogado');
+      const userLocal = salvo ? JSON.parse(salvo) : null;
+
+      // Se temos um ID na URL e não é o ID do usuário logado -> visualização pública
+      if (id && (!userLocal || String(userLocal.id) !== String(id))) {
+        setIsPublico(true);
+
+        // 1. Amigo mockado pré-configurado
+        if (MOCK_PERFIS_AMIGOS[String(id)]) {
+          setUsuario(MOCK_PERFIS_AMIGOS[String(id)]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Busca usuário no Supabase
+        const { data } = await supabase
+          .from('usuarios')
+          .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro')
+          .eq('id', id)
+          .single();
+
+        if (data) {
+          setUsuario(data);
+        } else {
+          setUsuario({
+            id,
+            nome: `Jogador #${id}`,
+            nome_usuario: `jogador_${id}`,
+            time_usuario: 'Sem equipe',
+            bio: 'Perfil público de jogador na plataforma.',
+            imagem: '',
+            registro: new Date().toISOString(),
+            status: 'offline'
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Perfil do próprio usuário logado
+      setIsPublico(false);
       if (!salvo) {
         navigate('/login');
         return;
       }
-
+      
       const userLocal = JSON.parse(salvo);
       if (!userLocal.id) {
         navigate('/login');
@@ -28,19 +158,21 @@ export default function Perfil() {
       }
 
       // Busca dados atualizados do banco
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('usuarios')
-        .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro, admin')
+        .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro')
         .eq('id', userLocal.id)
         .single();
 
       if (data) {
         setUsuario(data);
+      } else {
+        setUsuario(userParsed);
       }
       setLoading(false);
     }
     carregarPerfil();
-  }, [navigate]);
+  }, [id, navigate]);
 
   function sair() {
     if (window.confirm('Deseja realmente sair da sua conta?')) {
@@ -86,7 +218,11 @@ export default function Perfil() {
       .eq('id', usuario.id);
 
     if (error) {
-      alert('Erro ao salvar no banco: ' + error.message);
+      mostrarAlerta({
+        titulo: 'Erro ao Salvar',
+        mensagem: 'Erro ao salvar no banco de dados: ' + error.message,
+        tipo: 'erro'
+      });
       setSalvando(false);
       return;
     }
@@ -106,6 +242,11 @@ export default function Perfil() {
     setUsuario(prev => ({ ...prev, ...payload }));
     setSalvando(false);
     setEditando(false);
+    mostrarAlerta({
+      titulo: 'Perfil Atualizado!',
+      mensagem: 'Suas informações de perfil foram salvas com sucesso.',
+      tipo: 'sucesso'
+    });
   }
 
   if (loading) {
@@ -127,10 +268,6 @@ export default function Perfil() {
   const discord = localStorage.getItem(`discord_${usuario.id}`);
   const steam = localStorage.getItem(`steam_${usuario.id}`);
   const twitter = localStorage.getItem(`twitter_${usuario.id}`);
-  const youtube = localStorage.getItem(`youtube_${usuario.id}`);
-  const twitch = localStorage.getItem(`twitch_${usuario.id}`);
-  const bluesky = localStorage.getItem(`bluesky_${usuario.id}`);
-  const fundo = localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1';
   const privNome = localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico';
   const privGanhos = localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico';
   const privAmigos = localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico';
@@ -142,18 +279,22 @@ export default function Perfil() {
       <div className="perfil-container">
         <div className="perfil-cabecalho">
           <div>
-            <span className="perfil-kicker">Conta de jogador</span>
-            <h1>Meu perfil</h1>
-            <p>Gerencie suas informações, conexões e privacidade.</p>
+            <span className="perfil-kicker">{isPublico ? 'Perfil de jogador' : 'Conta de jogador'}</span>
+            <h1>{isPublico ? (usuario.nome || usuario.nome_usuario || 'Perfil') : 'Meu perfil'}</h1>
+            <p>{isPublico ? 'Visualizando perfil público do jogador.' : 'Gerencie suas informações, conexões e privacidade.'}</p>
           </div>
-
+          <Link to="/torneios" className="perfil-link-voltar">Ver torneios</Link>
         </div>
 
         <section className="perfil-grid">
           <aside className="perfil-resumo">
             <div className="perfil-avatar-wrap">
               <img src={avatarUrl} alt={`Avatar de ${usuario.nome || usuario.nome_usuario}`} />
-              <span className="perfil-status-dot" aria-label="Online"></span>
+              <span
+                className={`perfil-status-dot ${usuario.status === 'offline' ? 'offline' : ''}`}
+                style={usuario.status === 'offline' ? { backgroundColor: '#64748b', boxShadow: 'none' } : {}}
+                aria-label={usuario.status === 'offline' ? 'Offline' : 'Online'}
+              ></span>
             </div>
 
             {/* Regra de privacidade do Nome */}
@@ -166,14 +307,23 @@ export default function Perfil() {
             <div className="perfil-dados">
               <div><span>Time atual</span><strong>{usuario.time_usuario || 'Nenhum'}</strong></div>
               <div><span>Status</span><strong className="perfil-online">Online agora</strong></div>
-              <div><span>Membro desde</span><strong style={{ textTransform: 'capitalize' }}>{dataRegistro}</strong></div>
+              <div><span>Membro desde</span><strong style={{textTransform: 'capitalize'}}>{dataRegistro}</strong></div>
             </div>
-            {!editando && (
-              <button className="perfil-botao perfil-botao-principal" type="button" onClick={iniciarEdicao} style={{ marginBottom: '10px' }}>
-                Editar perfil
-              </button>
+            {!isPublico && (
+              <>
+                {!editando && (
+                  <button className="perfil-botao perfil-botao-principal" type="button" onClick={iniciarEdicao} style={{ marginBottom: '10px' }}>
+                    Editar perfil
+                  </button>
+                )}
+                <button className="perfil-botao perfil-botao-perigo" type="button" onClick={sair}>Sair da conta</button>
+              </>
             )}
-            <button className="perfil-botao perfil-botao-perigo" type="button" onClick={sair}>Sair da conta</button>
+            {isPublico && (
+              <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(181, 101, 242, 0.08)', border: '1px solid rgba(181, 101, 242, 0.22)', color: '#c084fc', fontSize: '0.82rem', textAlign: 'center', fontWeight: '600', letterSpacing: '0.5px' }}>
+                PERFIL PÚBLICO
+              </div>
+            )}
           </aside>
 
           <div className="perfil-conteudo">
@@ -309,13 +459,13 @@ export default function Perfil() {
                   </div>
                   <div><span className="perfil-kicker">Desempenho</span><h2>Estatísticas e Histórico</h2></div>
                   <div className="perfil-detalhes-grid">
-                    <div><span>Partidas Jogadas</span><strong style={{ fontSize: '20px' }}>0</strong></div>
-                    <div><span>Torneios Participados</span><strong style={{ fontSize: '20px' }}>0</strong></div>
-                    <div><span>Torneios Vencidos</span><strong style={{ fontSize: '20px' }}>0</strong></div>
+                    <div><span>Partidas Jogadas</span><strong style={{ fontSize: '20px' }}>{statsPartidas}</strong></div>
+                    <div><span>Torneios Participados</span><strong style={{ fontSize: '20px' }}>{statsTorneios}</strong></div>
+                    <div><span>Torneios Vencidos</span><strong style={{ fontSize: '20px' }}>{statsTitulos}</strong></div>
                     <div>
                       <span>Ganhos Totais</span>
                       <strong style={{ fontSize: '20px', color: privGanhos === 'privado' ? 'var(--texto-terciario)' : '#5ce390' }}>
-                        {privGanhos === 'privado' ? 'Oculto' : 'R$ 0,00'}
+                        {statsGanhos}
                       </strong>
                     </div>
                   </div>

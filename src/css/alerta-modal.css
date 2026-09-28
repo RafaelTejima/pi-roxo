@@ -1,0 +1,214 @@
+/* ============================================================
+   ALERTA-MODAL.CSS — Feedback Centralizado Gamer & Tático
+   ============================================================ */
+
+.alerta-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 1, 8, 0.78);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  animation: alertaFadeIn 0.22s ease-out forwards;
+}
+
+.alerta-caixa {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(145deg, rgba(22, 14, 38, 0.96), rgba(10, 6, 20, 0.98));
+  border: 1px solid rgba(181, 101, 242, 0.35);
+  border-radius: 20px;
+  padding: 32px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(114, 62, 195, 0.25);
+  transform-origin: center center;
+  animation: alertaPopIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Variações de Borda e Glow por Tipo */
+.alerta-caixa--sucesso {
+  border-color: rgba(61, 214, 140, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(61, 214, 140, 0.25);
+}
+
+.alerta-caixa--erro {
+  border-color: rgba(248, 113, 113, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(248, 113, 113, 0.25);
+}
+
+.alerta-caixa--aviso,
+.alerta-caixa--info,
+.alerta-caixa--confirmacao {
+  border-color: rgba(181, 101, 242, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(114, 62, 195, 0.35);
+}
+
+/* Ícone de Destaque */
+.alerta-icone-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.alerta-caixa--sucesso .alerta-icone-wrap {
+  background: rgba(61, 214, 140, 0.12);
+  border: 1px solid rgba(61, 214, 140, 0.45);
+  color: #3dd68c;
+  box-shadow: 0 0 24px rgba(61, 214, 140, 0.35);
+}
+
+.alerta-caixa--erro .alerta-icone-wrap {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #f87171;
+  box-shadow: 0 0 24px rgba(248, 113, 113, 0.35);
+}
+
+.alerta-caixa--aviso .alerta-icone-wrap,
+.alerta-caixa--info .alerta-icone-wrap,
+.alerta-caixa--confirmacao .alerta-icone-wrap {
+  background: rgba(181, 101, 242, 0.14);
+  border: 1px solid rgba(181, 101, 242, 0.45);
+  color: #d69eff;
+  box-shadow: 0 0 24px rgba(181, 101, 242, 0.35);
+}
+
+.alerta-icone-svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Tipografia */
+.alerta-titulo {
+  font-family: 'Orbitron', 'Manrope', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ffffff;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.alerta-mensagem {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #cfc5d8;
+  margin-bottom: 24px;
+  max-width: 380px;
+  word-break: break-word;
+}
+
+/* Botões e Ações */
+.alerta-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.alerta-btn-confirmar {
+  min-width: 130px;
+  padding: 12px 28px;
+  border-radius: 100px;
+  background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(181, 101, 242, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alerta-btn-confirmar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(181, 101, 242, 0.7);
+}
+
+.alerta-btn-confirmar:active {
+  transform: translateY(0);
+}
+
+.alerta-btn-cancelar {
+  padding: 12px 22px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cfc5d8;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.alerta-btn-cancelar:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Botão Fechar no Canto */
+.alerta-fechar-topo {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #8b8098;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.alerta-fechar-topo:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+/* Animações */
+@keyframes alertaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes alertaPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .alerta-caixa {
+    padding: 24px 20px 20px;
+  }
+  .alerta-acoes {
+    flex-direction: column;
+    width: 100%;
+  }
+  .alerta-btn-confirmar,
+  .alerta-btn-cancelar {
+    width: 100%;
+  }
+}

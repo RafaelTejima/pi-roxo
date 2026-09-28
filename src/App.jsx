@@ -15,33 +15,38 @@ import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
 import DetalhesTime from './componentes/DetalhesTime';
 import SelecaoMapas from './componentes/SelecaoMapas';
-import ListaAmigos from './componentes/ListaAmigos';
+import { AlertaProvider } from './componentes/AlertaModal';
+
 function App() {
   return (
-    <Menu>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/equipes" element={<Equipes />} />
-        <Route path="/regras" element={<Regras />} />
-        <Route path="/torneios" element={<Torneios />} />
+    <AlertaProvider>
+      <Menu>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/equipes" element={<Equipes />} />
+          <Route path="/equipes/criar" element={<CriarEquipe />} />
+          <Route path="/equipes/:id" element={<DetalhesTime />} />
+          <Route path="/equipe/:id" element={<DetalhesTime />} />
+          <Route path="/time/:id" element={<DetalhesTime />} />
+          <Route path="/regras" element={<Regras />} />
+          <Route path="/torneios" element={<Torneios />} />
 
-        <Route path="/torneios/criar" element={<CriarTorneio />} />
-        <Route path="/equipes/criar" element={<CriarEquipe />} />
-        <Route path="/equipes/:id" element={<DetalhesTime />} />
-        <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
-        <Route path="/selecao-mapas" element={<SelecaoMapas />} />
-        <Route path="/torneios/:id" element={<Torneios />} />
-        <Route path="/faq" element={<Faq />} />
-        <Route path="/suporte" element={<Suporte />} />
-        <Route path="/login" element={<Entrar />} />
-        <Route path="/cadastro" element={<Cadastrar />} />
-        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/admin-panel" element={<AdminPanel />} />
-        <Route path="/perfil" element={<Perfil />} />
-      </Routes>
-      <ListaAmigos />
-    </Menu>
+          <Route path="/torneios/criar" element={<CriarTorneio />} />
+          <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
+          <Route path="/selecao-mapas" element={<SelecaoMapas />} />
+          <Route path="/torneios/:id" element={<Torneios />} />
+          <Route path="/faq" element={<Faq />} />
+          <Route path="/suporte" element={<Suporte />} />
+          <Route path="/login" element={<Entrar />} />
+          <Route path="/cadastro" element={<Cadastrar />} />
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin-panel" element={<AdminPanel />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/perfil/:id" element={<Perfil />} />
+        </Routes>
+      </Menu>
+    </AlertaProvider>
   );
 }
 

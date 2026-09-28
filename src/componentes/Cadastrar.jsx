@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
+import { useAlerta } from './AlertaModal';
 
 export default function Cadastrar() {
   const [nome, setNome] = useState('');
@@ -10,17 +11,26 @@ export default function Cadastrar() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { mostrarAlerta } = useAlerta();
 
   const handleCadastrar = async (e) => {
     e.preventDefault();
     if (senha !== confirmarSenha) {
-      alert("As senhas não coincidem!");
+      mostrarAlerta({
+        titulo: "Senhas Divergentes",
+        mensagem: "As senhas informadas não coincidem. Digite novamente com atenção.",
+        tipo: "aviso"
+      });
       return;
     }
 
     const regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{9,}$/;
     if (!regexSenha.test(senha)) {
-      alert("A senha precisa ter mais de 8 caracteres, números, letra maiúscula e um caractere especial!");
+      mostrarAlerta({
+        titulo: "Senha Fraca",
+        mensagem: "A senha precisa ter mais de 8 caracteres, números, letra maiúscula e um caractere especial!",
+        tipo: "aviso"
+      });
       return;
     }
 
@@ -40,10 +50,19 @@ export default function Cadastrar() {
     setLoading(false);
 
     if (error) {
-      alert("Erro ao cadastrar: " + error.message);
+      mostrarAlerta({
+        titulo: "Erro no Cadastro",
+        mensagem: "Não foi possível concluir seu cadastro: " + error.message,
+        tipo: "erro"
+      });
     } else {
-      alert("Cadastro realizado com sucesso!");
-      navigate('/login');
+      mostrarAlerta({
+        titulo: "Cadastro Realizado!",
+        mensagem: "Sua conta foi criada com sucesso! Faça login para ingressar nas competições.",
+        tipo: "sucesso",
+        botaoTexto: "Ir para o Login",
+        onConfirmar: () => navigate('/login')
+      });
     }
   };
 
