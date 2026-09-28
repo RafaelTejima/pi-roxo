@@ -24,10 +24,13 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/equipes" element={<Equipes />} />
+          <Route path="/times" element={<Equipes />} />
           <Route path="/equipes/criar" element={<CriarEquipe />} />
+          <Route path="/times/criar" element={<CriarEquipe />} />
           <Route path="/equipes/:id" element={<DetalhesTime />} />
           <Route path="/equipe/:id" element={<DetalhesTime />} />
           <Route path="/time/:id" element={<DetalhesTime />} />
+          <Route path="/times/:id" element={<DetalhesTime />} />
           <Route path="/regras" element={<Regras />} />
           <Route path="/torneios" element={<Torneios />} />
 
@@ -38,12 +41,15 @@ function App() {
           <Route path="/faq" element={<Faq />} />
           <Route path="/suporte" element={<Suporte />} />
           <Route path="/login" element={<Entrar />} />
+          <Route path="/entrar" element={<Entrar />} />
           <Route path="/cadastro" element={<Cadastrar />} />
+          <Route path="/cadastrar" element={<Cadastrar />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/perfil/:id" element={<Perfil />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </Menu>
     </AlertaProvider>

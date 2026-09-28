@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAlerta } from './AlertaModal';
 
@@ -18,6 +18,7 @@ export default function Menu({ children }) {
   const { mostrarAlerta } = useAlerta();
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [buscaAmigo, setBuscaAmigo] = useState('');
   const [amigos, setAmigos] = useState(() => {
     try {
       const salvas = localStorage.getItem('listaAmigosUsuario');
@@ -26,6 +27,23 @@ export default function Menu({ children }) {
       return MOCK_AMIGOS;
     }
   });
+
+  const amigosFiltrados = useMemo(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) return amigos;
+
+    return amigos.filter((amigo) => {
+      const nome = (amigo.name || amigo.nome || '').toLowerCase();
+      const jogo = (amigo.game || '').toLowerCase();
+      return nome.includes(termo) || jogo.includes(termo);
+    });
+  }, [amigos, buscaAmigo]);
+
+  useEffect(() => {
+    if (!menuAberto) {
+      setBuscaAmigo('');
+    }
+  }, [menuAberto]);
 
   const handleRemoverAmigo = (e, amigo) => {
     e.stopPropagation();
@@ -216,11 +234,46 @@ export default function Menu({ children }) {
                     </span>
                   </div>
 
+                  {/* Mini Campo de Busca de Amigos */}
+                  <div className="dropdown-amigos-busca-wrap">
+                    <div className="dropdown-amigos-busca-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icone-busca-amigos" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input
+                        type="text"
+                        className="dropdown-amigos-busca-input"
+                        value={buscaAmigo}
+                        onChange={(e) => setBuscaAmigo(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Buscar amigo..."
+                        aria-label="Buscar amigo"
+                      />
+                      {buscaAmigo && (
+                        <button
+                          type="button"
+                          className="dropdown-amigos-busca-limpar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBuscaAmigo('');
+                          }}
+                          title="Limpar pesquisa"
+                          aria-label="Limpar pesquisa"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="dropdown-amigos-lista">
-                    {amigos.length === 0 ? (
-                      <div className="dropdown-amigos-vazio">Nenhum amigo na lista</div>
+                    {amigosFiltrados.length === 0 ? (
+                      <div className="dropdown-amigos-vazio">
+                        {buscaAmigo.trim() ? 'Nenhum amigo encontrado' : 'Nenhum amigo na lista'}
+                      </div>
                     ) : (
-                      amigos.map((amigo) => (
+                      amigosFiltrados.map((amigo) => (
                         <div key={amigo.id} className="dropdown-amigo-item">
                           <Link 
                             to={`/perfil/${amigo.id}`} 

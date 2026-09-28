@@ -456,6 +456,72 @@
   line-height: 1.2;
 }
 
+/* Mini Campo de Busca de Amigos no Dropdown */
+.dropdown-amigos-busca-wrap {
+  padding: 2px 12px 6px;
+}
+
+.dropdown-amigos-busca-box {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 7px;
+  padding: 0 8px;
+  transition: all 0.2s ease;
+}
+
+.dropdown-amigos-busca-box:focus-within {
+  background: rgba(22, 15, 42, 0.95);
+  border-color: #b565f2;
+  box-shadow: 0 0 10px rgba(181, 101, 242, 0.35);
+}
+
+.icone-busca-amigos {
+  width: 12px;
+  height: 12px;
+  color: var(--roxo-claro, #9d4edd);
+  margin-right: 6px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.dropdown-amigos-busca-box:focus-within .icone-busca-amigos {
+  color: #b565f2;
+}
+
+.dropdown-amigos-busca-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f1f5f9;
+  font-size: 0.74rem;
+  font-family: inherit;
+  width: 100%;
+  padding: 5px 0;
+}
+
+.dropdown-amigos-busca-input::placeholder {
+  color: #8e8498;
+  font-size: 0.72rem;
+}
+
+.dropdown-amigos-busca-limpar {
+  background: transparent;
+  border: none;
+  color: #8e8498;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.dropdown-amigos-busca-limpar:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
 .dropdown-amigos-lista {
   padding: 4px 8px;
   display: flex;

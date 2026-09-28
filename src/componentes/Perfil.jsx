@@ -583,7 +583,6 @@ export default function Perfil() {
       youtube: usuario.conexao_youtube || '',
       twitch: usuario.conexao_twitch || '',
       bluesky: usuario.conexao_bluesky || '',
-      fundo: localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1',
       privacidade_amigos: localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico',
       privacidade_nome: localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico',
       privacidade_ganhos: localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico'
@@ -622,8 +621,8 @@ export default function Perfil() {
       return;
     }
 
-    // Salva configs locais (fundo e privacidade ficam em localStorage)
-    localStorage.setItem(`fundo_${usuario.id}`, form.fundo);
+    // Salva configs locais de privacidade
+    localStorage.removeItem(`fundo_${usuario.id}`);
     localStorage.setItem(`priv_amigos_${usuario.id}`, form.privacidade_amigos);
     localStorage.setItem(`priv_nome_${usuario.id}`, form.privacidade_nome);
     localStorage.setItem(`priv_ganhos_${usuario.id}`, form.privacidade_ganhos);
@@ -660,7 +659,6 @@ export default function Perfil() {
   const youtube = isPublico ? null : usuario.conexao_youtube;
   const twitch = isPublico ? null : usuario.conexao_twitch;
   const bluesky = isPublico ? null : usuario.conexao_bluesky;
-  const fundo = localStorage.getItem(`fundo_${usuario.id}`) || 'https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+1';
   const privNome = isPublico ? 'publico' : (localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico');
   const privGanhos = isPublico ? (usuario.stats ? 'publico' : 'privado') : (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico');
   const privAmigos = isPublico ? 'publico' : (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico');
@@ -671,9 +669,7 @@ export default function Perfil() {
   const statsGanhos = usuario.stats ? usuario.stats.ganhos : (privGanhos === 'privado' ? 'Oculto' : 'R$ 0,00');
 
   return (
-    <main id="perfil-page" className="perfil-page" style={{
-      background: `radial-gradient(circle at 80% 0%, rgba(114, 62, 195, 0.22), transparent 34%), linear-gradient(135deg, rgba(8, 4, 18, 0.85), rgba(3, 1, 8, 0.92)), url(${fundo}) center/cover no-repeat fixed`
-    }}>
+    <main id="perfil-page" className="perfil-page">
       <div className="perfil-container">
         <div className="perfil-cabecalho">
           <div>
@@ -799,25 +795,6 @@ export default function Perfil() {
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Bluesky</label>
                         <input type="text" value={form.bluesky} onChange={e => setForm({...form, bluesky: e.target.value})} placeholder="@usuario.bsky.social" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PERSONALIZAÇÃO */}
-                  <div>
-                    <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Personalização</h3>
-                    <div>
-                      <label style={{ fontSize: '12px', color: 'var(--texto-secundario)', display: 'block', marginBottom: '8px' }}>Fundo do Perfil</label>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        {[1, 2, 3, 4, 5].map(num => {
-                          const url = `https://placehold.co/1920x1080/1a1a2e/ffffff?text=Fundo+${num}`;
-                          return (
-                            <label key={num} style={{ cursor: 'pointer', border: form.fundo === url ? '2px solid var(--roxo-claro)' : '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}>
-                              <input type="radio" name="fundo" value={url} checked={form.fundo === url} onChange={e => setForm({ ...form, fundo: e.target.value })} style={{ display: 'none' }} />
-                              <img src={`https://placehold.co/100x60/1a1a2e/ffffff?text=Fundo+${num}`} alt={`Fundo ${num}`} style={{ display: 'block' }} />
-                            </label>
-                          );
-                        })}
                       </div>
                     </div>
                   </div>

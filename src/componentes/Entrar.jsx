@@ -38,14 +38,6 @@ export default function Entrar() {
 
   return (
     <main className="auth-page">
-      <div className="auth-carousel">
-        <img src="https://placehold.co/1920x1080/1a1a2e/723EC3?text=Torneios+Exclusivos" alt="Slide 1" />
-        <img src="https://placehold.co/1920x1080/16213e/723EC3?text=Competicao+Acirrada" alt="Slide 2" />
-        <img src="https://placehold.co/1920x1080/0f3460/723EC3?text=Comunidade+Ativa" alt="Slide 3" />
-        <img src="https://placehold.co/1920x1080/221f2e/723EC3?text=Premios+Incriveis" alt="Slide 4" />
-      </div>
-      <div className="auth-overlay"></div>
-
       <div className="auth-card">
         <h2>Entrar</h2>
         <form className="auth-form" onSubmit={handleLogin}>
