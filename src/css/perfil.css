@@ -92,6 +92,10 @@
     border-radius: 50%;
 }
 
+#perfil-page .perfil-status-dot.offline {
+    background: #64748b;
+}
+
 #perfil-page .perfil-resumo h2 {
     font-size: 23px;
 }

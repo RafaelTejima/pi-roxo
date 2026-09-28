@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/criar-equipe.css'
+import { useAlerta } from './AlertaModal'
 
 const MOCK_JOGADORES = [
   { id: 'usr-admin', nome: 'admin', email: 'admin@csgo.com' },
@@ -21,6 +22,7 @@ const equipeInicial = { nome: '', sigla: '', descricao: '' }
 
 export default function CriarEquipe() {
   const navigate = useNavigate()
+  const { mostrarAlerta } = useAlerta()
   const [usuario] = useState(() => {
     const usuarioSalvo = localStorage.getItem('usuarioLogado')
     return usuarioSalvo ? JSON.parse(usuarioSalvo) : null
@@ -112,6 +114,11 @@ export default function CriarEquipe() {
   function adicionarJogador(jogador) {
     if (jogadores.length >= 4) {
       setErro('A line-up já atingiu o limite de 5 integrantes (1 capitão + 4 jogadores).')
+      mostrarAlerta({
+        titulo: 'Vagas Esgotadas',
+        mensagem: 'A line-up já atingiu o limite máximo de 5 integrantes (1 capitão + 4 jogadores).',
+        tipo: 'aviso'
+      })
       return
     }
     if (!jogadores.some((item) => item.id === jogador.id)) {
@@ -153,7 +160,13 @@ export default function CriarEquipe() {
     setSucesso('')
 
     if (!equipe.nome.trim() || equipe.sigla.trim().length < 2) {
-      setErro('Preencha o nome e a sigla (mínimo 2 caracteres) da equipe.')
+      const msgErro = 'Preencha o nome e a sigla (mínimo 2 caracteres) da equipe.'
+      setErro(msgErro)
+      mostrarAlerta({
+        titulo: 'Campos Obrigatórios',
+        mensagem: msgErro,
+        tipo: 'aviso'
+      })
       return
     }
 
@@ -210,7 +223,14 @@ export default function CriarEquipe() {
 
     setEnviando(false)
     setSucesso('Equipe criada com sucesso!')
-    setTimeout(() => navigate('/equipes'), 1200)
+    mostrarAlerta({
+      titulo: 'Equipe Registrada!',
+      mensagem: `A equipe "${equipe.nome.trim()}" [${equipe.sigla.trim().toUpperCase()}] foi cadastrada com sucesso!`,
+      tipo: 'sucesso',
+      botaoTexto: 'Ver Equipes',
+      onConfirmar: () => navigate('/equipes')
+    })
+    setTimeout(() => navigate('/equipes'), 1500)
   }
 
   if (!usuario) return null

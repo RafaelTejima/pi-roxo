@@ -1,12 +1,74 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useAlerta } from './AlertaModal';
 
 import './menu.css';
 
+const MOCK_AMIGOS = [
+  { id: 1, name: "FalleN", status: "online", game: "CS2" },
+  { id: 2, name: "coldzera", status: "offline" },
+  { id: 3, name: "fer", status: "online", game: "CS2" },
+  { id: 4, name: "TACO", status: "online" },
+  { id: 5, name: "fnx", status: "offline" },
+  { id: 6, name: "gaules", status: "online", game: "Streaming" },
+];
+
 export default function Menu({ children }) {
   const location = useLocation();
+  const { mostrarAlerta } = useAlerta();
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [amigos, setAmigos] = useState(() => {
+    try {
+      const salvas = localStorage.getItem('listaAmigosUsuario');
+      return salvas ? JSON.parse(salvas) : MOCK_AMIGOS;
+    } catch {
+      return MOCK_AMIGOS;
+    }
+  });
+
+  const handleRemoverAmigo = (e, amigo) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const novaLista = amigos.filter((a) => a.id !== amigo.id);
+    setAmigos(novaLista);
+    try {
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+    } catch (err) {
+      console.error(err);
+    }
+
+    mostrarAlerta({
+      titulo: 'Amizade Removida',
+      mensagem: `${amigo.name} foi removido da sua lista de amigos.`,
+      tipo: 'aviso'
+    });
+  };
+
+  const handleBloquearAmigo = (e, amigo) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const novaLista = amigos.filter((a) => a.id !== amigo.id);
+    setAmigos(novaLista);
+    try {
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      const bloqueados = JSON.parse(localStorage.getItem('amigosBloqueados') || '[]');
+      if (!bloqueados.includes(amigo.id)) {
+        bloqueados.push(amigo.id);
+        localStorage.setItem('amigosBloqueados', JSON.stringify(bloqueados));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    mostrarAlerta({
+      titulo: 'Jogador Bloqueado',
+      mensagem: `${amigo.name} foi bloqueado com sucesso.`,
+      tipo: 'erro'
+    });
+  };
 
   useEffect(() => {
     const checarUsuario = () => {
@@ -134,6 +196,98 @@ export default function Menu({ children }) {
                 >
                   Sair
                 </button>
+
+                <div className="dropdown-divisor"></div>
+
+                {/* Seção de Amigos Integrada */}
+                <div className="dropdown-secao-amigos">
+                  <div className="dropdown-amigos-header">
+                    <div className="dropdown-amigos-titulo">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-amigos-header">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      <span>AMIGOS</span>
+                    </div>
+                    <span className="dropdown-amigos-badge">
+                      {amigos.filter((a) => a.status === 'online').length} Online
+                    </span>
+                  </div>
+
+                  <div className="dropdown-amigos-lista">
+                    {amigos.length === 0 ? (
+                      <div className="dropdown-amigos-vazio">Nenhum amigo na lista</div>
+                    ) : (
+                      amigos.map((amigo) => (
+                        <div key={amigo.id} className="dropdown-amigo-item">
+                          <Link 
+                            to={`/perfil/${amigo.id}`} 
+                            className="dropdown-amigo-perfil-link"
+                            onClick={() => setMenuAberto(false)}
+                            title={`Ver perfil de ${amigo.name}`}
+                          >
+                            <div className="dropdown-amigo-avatar-wrap">
+                              <div className="dropdown-amigo-avatar">
+                                {amigo.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className={`dropdown-status-dot ${amigo.status}`}></span>
+                            </div>
+                            <div className="dropdown-amigo-info">
+                              <span className="dropdown-amigo-nome">{amigo.name}</span>
+                              <span className="dropdown-amigo-status-texto">
+                                {amigo.status === 'online'
+                                  ? (amigo.game ? `Jogando ${amigo.game}` : 'Disponível')
+                                  : 'Offline'}
+                              </span>
+                            </div>
+                          </Link>
+
+                          <div className="dropdown-amigo-acoes">
+                            <button
+                              type="button"
+                              className="btn-acao-amigo btn-bloquear"
+                              title={`Bloquear ${amigo.name}`}
+                              aria-label={`Bloquear ${amigo.name}`}
+                              onClick={(e) => handleBloquearAmigo(e, amigo)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-acao-amigo btn-remover"
+                              title={`Remover amizade com ${amigo.name}`}
+                              aria-label={`Remover amizade com ${amigo.name}`}
+                              onClick={(e) => handleRemoverAmigo(e, amigo)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <Link
+                    to="/perfil"
+                    className="dropdown-amigos-gerenciar"
+                    onClick={() => setMenuAberto(false)}
+                  >
+                    <span>Gerenciar Amigos</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-seta-amigos">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </Link>
+                </div>
               </div>
             </div>
           ) : (

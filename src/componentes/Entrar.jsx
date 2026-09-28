@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
+import { useAlerta } from './AlertaModal';
 
 export default function Entrar() {
   const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { mostrarAlerta } = useAlerta();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,7 +25,11 @@ export default function Entrar() {
     setLoading(false);
 
     if (error || !data) {
-      alert("Credenciais incorretas. Tente novamente.");
+      mostrarAlerta({
+        titulo: "Falha no Login",
+        mensagem: "Credenciais incorretas. Verifique seu usuário/e-mail e senha e tente novamente.",
+        tipo: "erro"
+      });
     } else {
       localStorage.setItem('usuarioLogado', JSON.stringify(data));
       navigate('/');

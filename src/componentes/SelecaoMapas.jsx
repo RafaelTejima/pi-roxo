@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/selecao-mapas.css'
+import { useAlerta } from './AlertaModal'
 
 const mapas = [
   {
@@ -75,6 +76,7 @@ export default function SelecaoMapas() {
   const { id: torneioId } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const { mostrarAlerta } = useAlerta()
 
   const [pesquisa, setPesquisa] = useState('')
   const [categoria, setCategoria] = useState('Todos')
@@ -89,7 +91,14 @@ export default function SelecaoMapas() {
     const dadosTorneio = dadosState || (dadosLocal ? JSON.parse(dadosLocal) : null)
 
     if (!dadosTorneio) {
-      setErro('Dados do torneio nao encontrados. Volte e preencha o formulario novamente.')
+      const msg = 'Dados do torneio não encontrados. Volte e preencha o formulário novamente.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Dados Ausentes',
+        mensagem: msg,
+        tipo: 'erro',
+        onConfirmar: () => navigate('/torneios/criar')
+      })
       return
     }
 
@@ -114,13 +123,26 @@ export default function SelecaoMapas() {
 
     if (error) {
       console.error(error)
-      setErro('Nao foi possivel salvar o torneio no banco de dados. Tente novamente.')
+      const msg = 'Não foi possível salvar o torneio no banco de dados. Tente novamente.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Erro ao Publicar',
+        mensagem: msg,
+        tipo: 'erro'
+      })
       return
     }
 
     localStorage.removeItem('dadosTorneioEmCriacao')
     setConfirmado(false)
-    navigate('/torneios')
+    mostrarAlerta({
+      titulo: 'Torneio Publicado!',
+      mensagem: `O campeonato "${dadosTorneio.nome}" com mapa oficial ${mapaNome} foi cadastrado com sucesso!`,
+      tipo: 'sucesso',
+      botaoTexto: 'Ver Torneios',
+      onConfirmar: () => navigate('/torneios')
+    })
+    setTimeout(() => navigate('/torneios'), 1500)
   }
 
   const mapasFiltrados = useMemo(() => {
