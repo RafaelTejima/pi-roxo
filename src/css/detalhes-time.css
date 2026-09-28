@@ -8,6 +8,39 @@
   padding: 0 20px;
 }
 
+.detalhes-time-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  align-items: start;
+  gap: 24px;
+}
+
+.detalhes-time-coluna-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.detalhes-time-coluna-lateral {
+  position: sticky;
+  top: 100px;
+}
+
+@media (max-width: 900px) {
+  #pagina-detalhes-time {
+    max-width: 620px;
+  }
+
+  .detalhes-time-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detalhes-time-coluna-lateral {
+    position: static;
+  }
+}
+
 .detalhes-time-status {
   text-align: center;
   color: var(--texto-secundario, #a8a8a8);
@@ -103,14 +136,138 @@
   margin-bottom: 16px;
 }
 
+.detalhes-time-secao-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detalhes-time-secao-titulo h2 {
+  margin-bottom: 0;
+}
+
+.detalhes-time-gerenciar-btn {
+  padding: 9px 18px;
+  border-radius: 100px;
+  border: 1px solid rgba(157, 78, 221, 0.4);
+  background: rgba(114, 62, 195, 0.12);
+  color: #d9c3ec;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.detalhes-time-gerenciar-btn:hover {
+  border-color: var(--roxo-vivo, #b565f2);
+  color: #ffffff;
+}
+
+.detalhes-time-gerenciar-jogadores {
+  margin-bottom: 20px;
+}
+
+.detalhes-time-gerenciar-jogadores .buscar-jogador-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.detalhes-time-gerenciar-jogadores input {
+  width: 100%;
+  padding: 12px 14px;
+  color: #fff;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 8px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.04);
+  font: inherit;
+  font-size: 13px;
+}
+
+.detalhes-time-gerenciar-jogadores input:focus {
+  border-color: var(--roxo-vivo, #b565f2);
+  box-shadow: 0 0 0 3px rgba(114, 62, 195, 0.18);
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(22, 15, 38, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(157, 78, 221, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65), 0 0 18px rgba(114, 62, 195, 0.25);
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-item:hover {
+  background: rgba(114, 62, 195, 0.25);
+  border-color: rgba(181, 101, 242, 0.5);
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-item-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-item-email {
+  color: #a094ab;
+  font-size: 11px;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-add-btn {
+  color: #b565f2;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.detalhes-time-gerenciar-jogadores .autocomplete-empty {
+  padding: 14px;
+  text-align: center;
+  color: #9f93aa;
+  font-size: 13px;
+  font-style: italic;
+}
+
 .detalhes-time-secao p {
   color: var(--texto-secundario, #a8a8a8);
   line-height: 1.7;
+  white-space: pre-line;
 }
 
 .detalhes-time-jogadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
@@ -144,10 +301,90 @@
   color: var(--roxo-claro, #9d4edd);
 }
 
+.detalhes-time-remover-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  border: 0;
+  background: none;
+  color: #f4a4b3;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.detalhes-time-remover-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.detalhes-time-remover-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .detalhes-time-aviso {
   margin-top: 14px;
   color: #837a94;
   font-size: 0.9rem;
+}
+
+.detalhes-time-form-edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalhes-time-form-edicao label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.detalhes-time-form-edicao input,
+.detalhes-time-form-edicao textarea {
+  background: rgba(114, 62, 195, 0.08);
+  border: 1px solid rgba(114, 62, 195, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.detalhes-time-form-edicao textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.detalhes-time-form-edicao .campo-opcional {
+  font-weight: 400;
+  color: #837a94;
+  font-size: 0.75rem;
+}
+
+.detalhes-time-form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.detalhes-time-cancelar-btn {
+  padding: 10px 22px;
+  border-radius: 100px;
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  background: transparent;
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.detalhes-time-mensagem-erro {
+  color: #f87171;
+  font-size: 0.85rem;
 }
 
 /* --- Responsividade --- */
