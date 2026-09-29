@@ -296,7 +296,9 @@ export default function CriarEquipe() {
 
       if (erroCapitao) {
         // Rollback para integridade transacional: remove o time recém-criado
-        await supabase.from('times').delete().eq('id', novoIdTime).catch(() => {})
+        try {
+          await supabase.from('times').delete().eq('id', novoIdTime)
+        } catch (_) {}
         setEnviando(false)
         const msg = `Falha ao registrar capitão na equipe: ${erroCapitao.message || 'Erro de integridade'}`
         setErro(msg)
@@ -319,9 +321,14 @@ export default function CriarEquipe() {
 
       if (convidadosValidos.length > 0) {
         for (const convidado of convidadosValidos) {
-          await supabase.from('times_integrantes').insert(convidado).catch((err) => {
-            console.warn('Convidado não pôde ser vinculado ao time no banco:', convidado, err)
-          })
+          try {
+            const { error: errMembro } = await supabase.from('times_integrantes').insert(convidado)
+            if (errMembro) {
+              console.warn('Convidado não pôde ser vinculado ao time no banco:', convidado, errMembro)
+            }
+          } catch (errCatch) {
+            console.warn('Erro ao tentar inserir convidado no banco:', convidado, errCatch)
+          }
         }
       }
 

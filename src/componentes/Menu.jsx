@@ -144,7 +144,7 @@ export default function Menu({ children }) {
         } else if (!mapaAtivos.has(amigoId)) {
           // Amigo foi deletado da tabela usuarios: expurga imediatamente o registro órfão
           if (rel.id) {
-            supabase.from('amizades').delete().eq('id', rel.id).catch(() => {});
+            supabase.from('amizades').delete().eq('id', rel.id).then(() => {}).catch(() => {});
           }
         }
       }

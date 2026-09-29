@@ -343,7 +343,7 @@ export default function Perfil() {
             } else if (!mapaAtivos.has(idStr)) {
               // Amigo excluído do sistema: remove relação órfã da tabela amizades
               if (item.amizade_id) {
-                supabase.from('amizades').delete().eq('id', item.amizade_id).catch(() => {});
+                supabase.from('amizades').delete().eq('id', item.amizade_id).then(() => {}).catch(() => {});
               }
             }
           }
@@ -370,7 +370,7 @@ export default function Perfil() {
                 }
               });
             } else {
-              if (p.id) supabase.from('amizades').delete().eq('id', p.id).catch(() => {});
+              if (p.id) supabase.from('amizades').delete().eq('id', p.id).then(() => {}).catch(() => {});
             }
           }
           setPedidosPendentes(pendentesValidados);
@@ -389,7 +389,7 @@ export default function Perfil() {
                 }
               });
             } else {
-              if (e.id) supabase.from('amizades').delete().eq('id', e.id).catch(() => {});
+              if (e.id) supabase.from('amizades').delete().eq('id', e.id).then(() => {}).catch(() => {});
             }
           }
           setPedidosEnviados(enviadosValidados);
