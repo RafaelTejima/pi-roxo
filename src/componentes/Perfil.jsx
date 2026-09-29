@@ -959,18 +959,18 @@ export default function Perfil() {
                     <div className="perfil-detalhes-grid">
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>URL da Imagem</label>
-                        <input type="url" value={form.imagem} onChange={e => setForm({ ...form, imagem: e.target.value })} placeholder="https://..." style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="url" value={form.imagem} onChange={e => setForm({ ...form, imagem: e.target.value })} placeholder="https://..." className="perfil-input" />
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Nome de usuário (@)</label>
-                        <input type="text" value={form.nome_usuario} onChange={e => setForm({ ...form, nome_usuario: e.target.value })} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                        <input type="text" value={form.nome_usuario} onChange={e => setForm({ ...form, nome_usuario: e.target.value })} className="perfil-input" />
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>Biografia</label>
-                    <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows="3" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%', resize: 'vertical' }}></textarea>
+                    <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows="3" className="perfil-input" style={{ resize: 'vertical' }}></textarea>
                   </div>
 
                   <div>
@@ -980,13 +980,13 @@ export default function Perfil() {
                         { key: 'discord', label: 'Discord', placeholder: '@Usuário' },
                         { key: 'steam', label: 'Steam URL', placeholder: 'https://steamcommunity.com/id/...' },
                         { key: 'twitter', label: 'Twitter / X', placeholder: '@seu_twitter' },
-                        { key: 'youtube', label: 'YouTube', placeholder: '@seucanal' },
-                        { key: 'twitch', label: 'Twitch', placeholder: 'seucanal' },
+                        { key: 'youtube', label: 'YouTube', placeholder: 'youtube.com/@seucanal' },
+                        { key: 'twitch', label: 'Twitch', placeholder: 'twitch.tv/seucanal' },
                         { key: 'bluesky', label: 'Bluesky', placeholder: '@usuario.bsky.social' },
                       ].map(({ key, label, placeholder }) => (
                         <div key={key}>
                           <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>{label}</label>
-                          <input type="text" value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder} style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }} />
+                          <input type="text" value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder} className="perfil-input" />
                         </div>
                       ))}
                     </div>
@@ -1002,7 +1002,7 @@ export default function Perfil() {
                       ].map(({ key, label, opts }) => (
                         <div key={key}>
                           <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>{label}</label>
-                          <select value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} style={{ padding: '8px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', width: '100%' }}>
+                          <select value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} className="perfil-input">
                             {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                           </select>
                         </div>
@@ -1046,9 +1046,6 @@ export default function Perfil() {
                     ))}
                   </div>
                 </section>
-
-                {/* ---- BIOGRAFIA + DESEMPENHO ---- */}
-            
 
                 {/* ---- CONEXÕES VINCULADAS ---- */}
                 <section className="perfil-secao" style={{ marginTop: '24px' }}>
