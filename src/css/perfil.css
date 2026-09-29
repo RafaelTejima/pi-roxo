@@ -548,6 +548,85 @@
     }
 }
 
+/* ---- Abas de amigos (próprio perfil) ---- */
+#perfil-page .perfil-amigos-abas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+#perfil-page .perfil-aba-amigos {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #7c6b8e;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+}
+
+#perfil-page .perfil-aba-amigos.ativa {
+  background: rgba(114, 62, 195, 0.25);
+  color: #c084fc;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+#perfil-page .perfil-aba-amigos:hover:not(.ativa) {
+  color: #a78bfa;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+#perfil-page .perfil-aba-badge {
+  background: #e95555;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+/* ---- Pendente badge ---- */
+#perfil-page .perfil-amigo-pendente {
+  border-left: 2px solid rgba(181, 101, 242, 0.4);
+}
+
+/* ---- Loading spinner ---- */
+#perfil-page .perfil-amigos-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  color: var(--texto-secundario);
+  font-size: 14px;
+}
+
+#perfil-page .perfil-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(181, 101, 242, 0.2);
+  border-top-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 480px) {
     #perfil-page .perfil-secao {
         padding: 20px 16px;
