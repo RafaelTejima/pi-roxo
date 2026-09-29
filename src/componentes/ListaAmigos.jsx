@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/lista-amigos.css';
 
@@ -277,16 +278,23 @@ function ListaAmigos() {
               ) : (
                 amigos.map((amigo) => (
                   <div key={amigo.amizade_id} className="amigo-item">
-                    <div className="amigo-avatar">
-                      <img
-                        src={amigo.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
-                        alt={amigo.nome || amigo.nome_usuario}
-                      />
-                    </div>
-                    <div className="amigo-info">
-                      <span className="amigo-nome">{amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}</span>
-                      <span className="amigo-equipe">{amigo.time_usuario || 'Sem equipe'}</span>
-                    </div>
+                    <Link
+                      to={`/perfil/${amigo.id}`}
+                      onClick={() => setIsOpen(false)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+                      title={`Ver perfil de ${amigo.nome_usuario || amigo.nome}`}
+                    >
+                      <div className="amigo-avatar">
+                        <img
+                          src={amigo.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
+                          alt={amigo.nome || amigo.nome_usuario}
+                        />
+                      </div>
+                      <div className="amigo-info">
+                        <span className="amigo-nome">{amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}</span>
+                        <span className="amigo-equipe">{amigo.time_usuario || 'Sem equipe'}</span>
+                      </div>
+                    </Link>
                     <button
                       type="button"
                       className="btn-amigo-acao btn-remover"
@@ -312,16 +320,23 @@ function ListaAmigos() {
             ) : (
               pendentes.map((p) => (
                 <div key={p.id} className="amigo-item amigo-pedido">
-                  <div className="amigo-avatar">
-                    <img
-                      src={p.remetente?.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
-                      alt={p.remetente?.nome || p.remetente?.nome_usuario}
-                    />
-                  </div>
-                  <div className="amigo-info">
-                    <span className="amigo-nome">{p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}</span>
-                    <span className="amigo-equipe">{p.remetente?.time_usuario || 'Sem equipe'}</span>
-                  </div>
+                  <Link
+                    to={`/perfil/${p.remetente?.id}`}
+                    onClick={() => setIsOpen(false)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+                    title={`Ver perfil de ${p.remetente?.nome_usuario || p.remetente?.nome}`}
+                  >
+                    <div className="amigo-avatar">
+                      <img
+                        src={p.remetente?.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
+                        alt={p.remetente?.nome || p.remetente?.nome_usuario}
+                      />
+                    </div>
+                    <div className="amigo-info">
+                      <span className="amigo-nome">{p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}</span>
+                      <span className="amigo-equipe">{p.remetente?.time_usuario || 'Sem equipe'}</span>
+                    </div>
+                  </Link>
                   <div className="pedido-acoes">
                     <button
                       type="button"

@@ -6,72 +6,6 @@ import { useAlerta } from './AlertaModal';
 import AuroraBackground from './AuroraBackground';
 
 // ------------------------------------------------------------------
-// MOCK — perfis públicos pré-configurados (jogadores famosos)
-// ------------------------------------------------------------------
-const MOCK_PERFIS_AMIGOS = {
-  '1': {
-    id: 1, nome: 'Gabriel Toledo', nome_usuario: 'FalleN', time_usuario: 'FURIA Esports',
-    bio: 'Professor do CS brasileiro. Bi-campeão de Major. Capitão, AWP & líder lendário nos servidores.',
-    imagem: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces',
-    registro: '2016-01-15T00:00:00.000Z', status: 'online',
-    discord: 'FalleN#0001', steam: 'https://steamcommunity.com/id/fallen', twitter: '@FalleNCS',
-    stats: { partidas: 1420, torneios: 88, titulos: 24, ganhos: 'R$ 4.250.000,00' }
-  },
-  '2': {
-    id: 2, nome: 'Marcelo David', nome_usuario: 'coldzera', time_usuario: 'RED Canids',
-    bio: '2x Melhor Jogador do Mundo (2016/2017). Eternizado no grafite dos 4 abates saltando na Mirage.',
-    imagem: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces',
-    registro: '2016-03-20T00:00:00.000Z', status: 'offline',
-    discord: 'coldzera#0002', steam: 'https://steamcommunity.com/id/coldzera', twitter: '@coldzera',
-    stats: { partidas: 1290, torneios: 82, titulos: 22, ganhos: 'R$ 3.900.000,00' }
-  },
-  '3': {
-    id: 3, nome: 'Fernando Alvarenga', nome_usuario: 'fer', time_usuario: 'O PLANO',
-    bio: 'A dona morte! Campeão de 2 Majors de CS:GO, agressividade e mira afiada sem medo.',
-    imagem: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&fit=crop&crop=faces',
-    registro: '2016-01-15T00:00:00.000Z', status: 'online',
-    discord: 'fer#0003', steam: 'https://steamcommunity.com/id/fergod', twitter: '@fer',
-    stats: { partidas: 1150, torneios: 75, titulos: 20, ganhos: 'R$ 3.400.000,00' }
-  },
-  '4': {
-    id: 4, nome: 'Epitácio de Melo', nome_usuario: 'TACO', time_usuario: 'Legacy',
-    bio: "Entry fragger histórico, 2x campeão de Major. 'Are you mad? Cuz I'm not'.",
-    imagem: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces',
-    registro: '2016-04-10T00:00:00.000Z', status: 'online',
-    discord: 'TACO#0004', steam: 'https://steamcommunity.com/id/tacocs', twitter: '@TACOCS',
-    stats: { partidas: 1080, torneios: 70, titulos: 19, ganhos: 'R$ 3.100.000,00' }
-  },
-  '5': {
-    id: 5, nome: 'Lincoln Lau', nome_usuario: 'fnx', time_usuario: 'Imperial',
-    bio: 'Sem fnx sem Major! Lenda viva com títulos mundiais no 1.6 e bicampeonato no CS:GO.',
-    imagem: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces',
-    registro: '2015-11-05T00:00:00.000Z', status: 'offline',
-    discord: 'fnx#0005', steam: 'https://steamcommunity.com/id/fnxforever', twitter: '@linfnx',
-    stats: { partidas: 990, torneios: 65, titulos: 21, ganhos: 'R$ 2.800.000,00' }
-  },
-  '6': {
-    id: 6, nome: 'Alexandre Borba', nome_usuario: 'gaules', time_usuario: 'Tribo Gaules',
-    bio: 'A Tribo cuida da Tribo! Ex-jogador profissional, técnico e maior streamer gamer da América Latina.',
-    imagem: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces',
-    registro: '2015-08-01T00:00:00.000Z', status: 'online',
-    discord: 'gaules#0006', steam: 'https://steamcommunity.com/id/gaules', twitter: '@Gaules',
-    stats: { partidas: 850, torneios: 40, titulos: 10, ganhos: 'R$ 1.500.000,00' }
-  }
-};
-
-// ------------------------------------------------------------------
-// POOL LOCAL para busca dinâmica de jogadores (fallback/demo)
-// ------------------------------------------------------------------
-const POOL_LOCAL = [
-  { id: '1', nome: 'Gabriel Toledo', nome_usuario: 'FalleN', time_usuario: 'FURIA Esports', imagem: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces', status: 'online' },
-  { id: '2', nome: 'Marcelo David', nome_usuario: 'coldzera', time_usuario: 'RED Canids', imagem: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces', status: 'offline' },
-  { id: '3', nome: 'Fernando Alvarenga', nome_usuario: 'fer', time_usuario: 'O PLANO', imagem: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&h=200&fit=crop&crop=faces', status: 'online' },
-  { id: '4', nome: 'Epitácio de Melo', nome_usuario: 'TACO', time_usuario: 'Legacy', imagem: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces', status: 'online' },
-  { id: '5', nome: 'Lincoln Lau', nome_usuario: 'fnx', time_usuario: 'Imperial', imagem: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=faces', status: 'offline' },
-  { id: '6', nome: 'Alexandre Borba', nome_usuario: 'gaules', time_usuario: 'Tribo Gaules', imagem: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces', status: 'online' },
-];
-
-// ------------------------------------------------------------------
 // STATUS AMIZADE: PENDENTE | ACEITO | BLOQUEADO
 // ------------------------------------------------------------------
 
@@ -126,23 +60,16 @@ export default function Perfil() {
       if (id && (!userLocal || String(userLocal.id) !== String(id))) {
         // Perfil público de outro usuário
         setIsPublico(true);
+        setLoading(true);
 
-        // 1. Mock pré-configurado
-        if (MOCK_PERFIS_AMIGOS[String(id)]) {
-          if (ativo) {
-            setUsuario(MOCK_PERFIS_AMIGOS[String(id)]);
-            setLoading(false);
-          }
-          return;
-        }
-
-        // 2. Busca no Supabase com JOIN em times_integrantes para obter a equipe atual
+        // Busca no Supabase com JOIN em times_integrantes para obter a equipe atual
         let dadosUsuario = null;
         try {
-          const { data: uComJoin } = await supabase
+          const { data: uComJoin, error: errJoin } = await supabase
             .from('usuarios')
             .select(`
-              id, nome, nome_usuario, bio, imagem, registro,
+              id, nome, nome_usuario, bio, imagem, registro, admin,
+              conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky,
               times_integrantes (
                 id,
                 funcao,
@@ -152,13 +79,16 @@ export default function Perfil() {
             .eq('id', id)
             .maybeSingle();
 
-          if (uComJoin) {
+          if (!errJoin && uComJoin) {
             const ti = uComJoin.times_integrantes?.[0];
             const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
             const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
             dadosUsuario = {
               ...uComJoin,
-              time_usuario: timeNome
+              time_usuario: timeNome,
+              discord: uComJoin.conexao_discord || null,
+              steam: uComJoin.conexao_steam || null,
+              twitter: uComJoin.conexao_twitter || null
             };
           }
         } catch (eJoin) {
@@ -166,40 +96,51 @@ export default function Perfil() {
         }
 
         if (!dadosUsuario) {
-          const { data: uSimples } = await supabase
-            .from('usuarios')
-            .select('id, nome, nome_usuario, bio, imagem, registro')
-            .eq('id', id)
-            .maybeSingle();
-
-          if (uSimples) {
-            const { data: ti } = await supabase
-              .from('times_integrantes')
-              .select('id, id_time, funcao, times ( id, nome, tag )')
-              .eq('id_usuario', id)
+          try {
+            const { data: uSimples } = await supabase
+              .from('usuarios')
+              .select('id, nome, nome_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
+              .eq('id', id)
               .maybeSingle();
 
-            const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
-            const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+            if (uSimples) {
+              const { data: ti } = await supabase
+                .from('times_integrantes')
+                .select('id, id_time, funcao, times ( id, nome, tag )')
+                .eq('id_usuario', id)
+                .maybeSingle();
 
-            dadosUsuario = {
-              ...uSimples,
-              time_usuario: timeNome
-            };
+              const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
+              const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+
+              dadosUsuario = {
+                ...uSimples,
+                time_usuario: timeNome,
+                discord: uSimples.conexao_discord || null,
+                steam: uSimples.conexao_steam || null,
+                twitter: uSimples.conexao_twitter || null
+              };
+            }
+          } catch (eSimples) {
+            console.warn('Tentativa simples no perfil publico falhou:', eSimples);
           }
         }
 
         if (ativo) {
-          setUsuario(dadosUsuario || {
-            id,
-            nome: `Jogador #${id}`,
-            nome_usuario: `jogador_${id}`,
-            time_usuario: 'Sem equipe',
-            bio: 'Perfil público de jogador na plataforma.',
-            imagem: '',
-            registro: new Date().toISOString(),
-            status: 'offline'
-          });
+          if (dadosUsuario) {
+            setUsuario(dadosUsuario);
+          } else {
+            setUsuario({
+              id,
+              nome: `Jogador #${id}`,
+              nome_usuario: `jogador_${id}`,
+              time_usuario: 'Sem equipe',
+              bio: 'Perfil público de jogador na plataforma.',
+              imagem: '',
+              registro: new Date().toISOString(),
+              status: 'offline'
+            });
+          }
           setLoading(false);
         }
         return;
@@ -664,46 +605,59 @@ export default function Perfil() {
       String(usuarioLogado?.id)
     ]);
 
-    // 1. Filtro local
-    const locais = POOL_LOCAL.filter(j => {
-      if (idsRelacionados.has(String(j.id))) return false;
-      return (j.nome && j.nome.toLowerCase().includes(termo)) ||
-             (j.nome_usuario && j.nome_usuario.toLowerCase().includes(termo)) ||
-             (j.time_usuario && j.time_usuario.toLowerCase().includes(termo));
-    });
-
-    setResultadosBusca(locais);
-    setDropdownAmigoAberto(true);
-
-    // 2. Busca Supabase
+    // Busca direta no Supabase com usuários reais cadastrados
     supabase
       .from('usuarios')
       .select('id, nome, nome_usuario, imagem')
       .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
       .limit(8)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!ativo || error) { if (ativo) setBuscandoAmigos(false); return; }
-        const combinados = [...locais];
+        const lista = [];
+        const idsEncontrados = [];
+
         (data || []).forEach((jDb) => {
           if (idsRelacionados.has(String(jDb.id))) return;
-          const jaPresente = combinados.some(item =>
-            String(item.id) === String(jDb.id) ||
-            (item.nome_usuario && jDb.nome_usuario && item.nome_usuario.toLowerCase() === jDb.nome_usuario.toLowerCase())
-          );
-          if (!jaPresente) {
-            combinados.push({
-              id: jDb.id,
-              nome: jDb.nome || jDb.nome_usuario,
-              nome_usuario: jDb.nome_usuario || jDb.nome,
-              time_usuario: jDb.time_usuario || 'Sem equipe',
-              imagem: jDb.imagem || '',
-              status: 'offline'
-            });
-          }
+          lista.push({
+            id: jDb.id,
+            nome: jDb.nome || jDb.nome_usuario,
+            nome_usuario: jDb.nome_usuario || jDb.nome,
+            time_usuario: 'Sem equipe',
+            imagem: jDb.imagem || '',
+            status: 'offline'
+          });
+          idsEncontrados.push(jDb.id);
         });
+
+        // Buscar equipes dos usuários encontrados via times_integrantes
+        if (idsEncontrados.length > 0) {
+          try {
+            const { data: timesData } = await supabase
+              .from('times_integrantes')
+              .select('id_usuario, times(nome, tag)')
+              .in('id_usuario', idsEncontrados);
+
+            if (timesData) {
+              const mapaTimes = {};
+              timesData.forEach((r) => {
+                const t = Array.isArray(r.times) ? r.times[0] : r.times;
+                if (t && !mapaTimes[r.id_usuario]) {
+                  mapaTimes[r.id_usuario] = t.tag ? `[${t.tag}] ${t.nome}` : t.nome;
+                }
+              });
+              lista.forEach((item) => {
+                if (mapaTimes[item.id]) item.time_usuario = mapaTimes[item.id];
+              });
+            }
+          } catch (eT) {
+            console.warn('Erro ao carregar times da busca:', eT);
+          }
+        }
+
         if (ativo) {
-          setResultadosBusca(combinados);
+          setResultadosBusca(lista);
           setBuscandoAmigos(false);
+          setDropdownAmigoAberto(true);
         }
       })
       .catch(() => { if (ativo) setBuscandoAmigos(false); });
@@ -1205,19 +1159,24 @@ export default function Perfil() {
                               <p className="perfil-vazio">Nenhum amigo na sua lista. Use o campo de busca para encontrar e adicionar jogadores!</p>
                             ) : listaAmigos.map((amigo) => (
                               <article className="perfil-amigo" key={amigo.amizade_id}>
-                                <img
-                                  src={amigo.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
-                                  alt={amigo.nome || amigo.nome_usuario}
-                                  style={{ cursor: 'pointer' }}
-                                  onClick={() => navigate(`/perfil/${amigo.id}`)}
-                                />
-                                <div className="perfil-amigo-info">
-                                  <strong style={{ cursor: 'pointer', color: '#e8e0f0' }} onClick={() => navigate(`/perfil/${amigo.id}`)}>
-                                    {amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}
-                                  </strong>
-                                  <span>{amigo.time_usuario || 'Sem equipe'}</span>
-                                  <em style={{ color: 'var(--texto-terciario)' }}>{amigo.nome || ''}</em>
-                                </div>
+                                <Link
+                                  to={`/perfil/${amigo.id}`}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+                                  title={`Ver perfil de ${amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}`}
+                                >
+                                  <img
+                                    src={amigo.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
+                                    alt={amigo.nome || amigo.nome_usuario}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <div className="perfil-amigo-info">
+                                    <strong style={{ color: '#e8e0f0' }}>
+                                      {amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}
+                                    </strong>
+                                    <span>{amigo.time_usuario || 'Sem equipe'}</span>
+                                    <em style={{ color: 'var(--texto-terciario)' }}>{amigo.nome || ''}</em>
+                                  </div>
+                                </Link>
                                 <div className="perfil-amigo-acoes">
                                   <button type="button" onClick={() => removerAmigo(amigo.amizade_id, amigo.nome_usuario || amigo.nome)} title="Remover amigo">Remover</button>
                                   <button type="button" onClick={() => bloquearAmigo(amigo.amizade_id, amigo.id, amigo.nome_usuario || amigo.nome)} title="Bloquear" style={{ color: '#f87171' }}>Bloquear</button>
@@ -1234,19 +1193,24 @@ export default function Perfil() {
                               <p className="perfil-vazio">Nenhum pedido de amizade pendente.</p>
                             ) : pedidosPendentes.map((p) => (
                               <article className="perfil-amigo perfil-amigo-pendente" key={p.id}>
-                                <img
-                                  src={p.remetente?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
-                                  alt={p.remetente?.nome || p.remetente?.nome_usuario}
-                                  style={{ cursor: 'pointer' }}
-                                  onClick={() => navigate(`/perfil/${p.remetente?.id}`)}
-                                />
-                                <div className="perfil-amigo-info">
-                                  <strong style={{ cursor: 'pointer' }} onClick={() => navigate(`/perfil/${p.remetente?.id}`)}>
-                                    {p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}
-                                  </strong>
-                                  <span>{p.remetente?.time_usuario || 'Sem equipe'}</span>
-                                  <em style={{ color: '#c084fc', fontStyle: 'normal', fontSize: '11px' }}>Pedido recebido</em>
-                                </div>
+                                <Link
+                                  to={`/perfil/${p.remetente?.id}`}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+                                  title={`Ver perfil de ${p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}`}
+                                >
+                                  <img
+                                    src={p.remetente?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
+                                    alt={p.remetente?.nome || p.remetente?.nome_usuario}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <div className="perfil-amigo-info">
+                                    <strong style={{ color: '#e8e0f0' }}>
+                                      {p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}
+                                    </strong>
+                                    <span>{p.remetente?.time_usuario || 'Sem equipe'}</span>
+                                    <em style={{ color: '#c084fc', fontStyle: 'normal', fontSize: '11px' }}>Pedido recebido</em>
+                                  </div>
+                                </Link>
                                 <div className="perfil-amigo-acoes">
                                   <button type="button" onClick={() => aceitarPedido(p.id)} style={{ color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)', padding: '6px 12px', borderRadius: '6px', background: 'rgba(74,222,128,0.08)' }}>
                                     ✓ Aceitar
@@ -1265,19 +1229,24 @@ export default function Perfil() {
                               <p className="perfil-vazio">Nenhum pedido de amizade enviado aguardando resposta.</p>
                             ) : pedidosEnviados.map((e) => (
                               <article className="perfil-amigo" key={e.id} style={{ opacity: 0.8 }}>
-                                <img
-                                  src={e.destinatario?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(e.destinatario?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
-                                  alt={e.destinatario?.nome || e.destinatario?.nome_usuario}
-                                  style={{ cursor: 'pointer' }}
-                                  onClick={() => navigate(`/perfil/${e.destinatario?.id}`)}
-                                />
-                                <div className="perfil-amigo-info">
-                                  <strong style={{ cursor: 'pointer' }} onClick={() => navigate(`/perfil/${e.destinatario?.id}`)}>
-                                    {e.destinatario?.nome_usuario ? `@${e.destinatario.nome_usuario}` : e.destinatario?.nome}
-                                  </strong>
-                                  <span>{e.destinatario?.time_usuario || 'Sem equipe'}</span>
-                                  <em style={{ color: '#a78bfa', fontStyle: 'normal', fontSize: '11px' }}>⏳ Aguardando resposta</em>
-                                </div>
+                                <Link
+                                  to={`/perfil/${e.destinatario?.id}`}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+                                  title={`Ver perfil de ${e.destinatario?.nome_usuario ? `@${e.destinatario.nome_usuario}` : e.destinatario?.nome}`}
+                                >
+                                  <img
+                                    src={e.destinatario?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(e.destinatario?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
+                                    alt={e.destinatario?.nome || e.destinatario?.nome_usuario}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <div className="perfil-amigo-info">
+                                    <strong style={{ color: '#e8e0f0' }}>
+                                      {e.destinatario?.nome_usuario ? `@${e.destinatario.nome_usuario}` : e.destinatario?.nome}
+                                    </strong>
+                                    <span>{e.destinatario?.time_usuario || 'Sem equipe'}</span>
+                                    <em style={{ color: '#a78bfa', fontStyle: 'normal', fontSize: '11px' }}>⏳ Aguardando resposta</em>
+                                  </div>
+                                </Link>
                                 <div className="perfil-amigo-acoes">
                                   <button type="button" onClick={() => cancelarPedidoEnviado(e.id)} title="Cancelar pedido">Cancelar</button>
                                 </div>

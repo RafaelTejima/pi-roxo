@@ -15,10 +15,10 @@ export default function Entrar() {
     e.preventDefault();
     setLoading(true);
 
-    // Busca por email ou nome_usuario
+    // Busca por email ou nome_usuario, garantindo explicitamente a coluna admin
     const { data, error } = await supabase
       .from('usuarios')
-      .select('*')
+      .select('id, nome, nome_usuario, email, admin, imagem, bio, registro')
       .or(`email.eq."${identificador}",nome_usuario.eq."${identificador}"`)
       .eq('senha', senha)
       .single();
@@ -33,6 +33,9 @@ export default function Entrar() {
       });
     } else {
       localStorage.setItem('usuarioLogado', JSON.stringify(data));
+      // Notifica instantaneamente o Menu e a aplicação da autenticação do usuário
+      window.dispatchEvent(new Event('authAtualizada'));
+      window.dispatchEvent(new Event('storage'));
       navigate('/');
     }
   };

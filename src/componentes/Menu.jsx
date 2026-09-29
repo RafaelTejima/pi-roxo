@@ -287,6 +287,15 @@ export default function Menu({ children }) {
       carregarAmigosConsolidados(user);
     }
 
+    const sincronizarAuthEAmigos = () => {
+      const u = checarUsuario();
+      if (u?.id) {
+        carregarAmigosConsolidados(u);
+      } else {
+        setAmigosDropdown([]);
+      }
+    };
+
     const onAmigosAtualizados = () => {
       const salvo = localStorage.getItem('usuarioLogado');
       const u = salvo ? JSON.parse(salvo) : null;
@@ -297,19 +306,12 @@ export default function Menu({ children }) {
       }
     };
 
-    const onStorageChange = () => {
-      const u = checarUsuario();
-      if (u?.id) {
-        carregarAmigosConsolidados(u);
-      } else {
-        setAmigosDropdown([]);
-      }
-    };
-
-    window.addEventListener('storage', onStorageChange);
+    window.addEventListener('authAtualizada', sincronizarAuthEAmigos);
+    window.addEventListener('storage', sincronizarAuthEAmigos);
     window.addEventListener('amigosAtualizados', onAmigosAtualizados);
     return () => {
-      window.removeEventListener('storage', onStorageChange);
+      window.removeEventListener('authAtualizada', sincronizarAuthEAmigos);
+      window.removeEventListener('storage', sincronizarAuthEAmigos);
       window.removeEventListener('amigosAtualizados', onAmigosAtualizados);
     };
   }, [checarUsuario, carregarAmigosConsolidados]);
@@ -332,6 +334,7 @@ export default function Menu({ children }) {
     setUsuarioLogado(null);
     setAmigosDropdown([]);
     setMenuAberto(false);
+    window.dispatchEvent(new Event('authAtualizada'));
     window.dispatchEvent(new Event('amigosAtualizados'));
     window.dispatchEvent(new Event('storage'));
   };
@@ -416,7 +419,7 @@ export default function Menu({ children }) {
                 <Link className="item-dropdown" to="/perfil" onClick={() => setMenuAberto(false)}>
                   Perfil do Usuário
                 </Link>
-                {usuarioLogado.admin && (
+                {usuarioLogado?.admin === true && (
                   <Link className="item-dropdown" to="/admin" onClick={() => setMenuAberto(false)}>
                     Painel Admin
                   </Link>
