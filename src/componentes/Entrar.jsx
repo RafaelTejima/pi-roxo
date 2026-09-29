@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import { useAlerta } from './AlertaModal';
+import AuroraBackground from './AuroraBackground';
 
 export default function Entrar() {
   const [identificador, setIdentificador] = useState('');
@@ -37,7 +38,8 @@ export default function Entrar() {
   };
 
   return (
-    <main className="auth-page">
+    <main className="auth-page fundo-aurora-motion">
+      <AuroraBackground />
       <div className="auth-card">
         <h2>Entrar</h2>
         <form className="auth-form" onSubmit={handleLogin}>

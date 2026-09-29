@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import '../css/equipes.css';
 import evaPersonagemImg from '../../imagens/eva-06-1.png';
+import AuroraBackground from './AuroraBackground';
 
 export const TIMES_PADRAO = [
   {
@@ -191,7 +192,8 @@ export default function Equipes() {
     : equipes;
 
   return (
-    <main id="pagina-equipes">
+    <main id="pagina-equipes" className="fundo-aurora-motion">
+      <AuroraBackground />
       <section className="equipes-heading">
         <h1>Equipes &amp; <span>Times.</span></h1>
         <p>Encontre line-ups, acompanhe organizações e desafie outros times no cenário competitivo.</p>

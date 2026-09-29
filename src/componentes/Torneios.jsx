@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import '../css/torneios.css'
 import '../css/bracket.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
+import AuroraBackground from './AuroraBackground'
 
 const TORNEIOS_PADRAO = [
   {
@@ -418,7 +419,8 @@ function TournamentDetails({ tournaments, loading, error }) {
   if (!tournament) return <main className="tournament-page-state"><h1>Torneio não encontrado</h1><Link to="/torneios">Voltar para torneios</Link></main>
 
   return (
-    <main className="tournament-details">
+    <main className="tournament-details fundo-aurora-motion">
+      <AuroraBackground />
       <Link className="back-link" to="/torneios">&lt;- Voltar para torneios</Link>
 
       {/* Hero do Torneio */}
@@ -573,7 +575,8 @@ export default function Torneios() {
   if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={erro} />
 
   return (
-    <main className="tournaments-page">
+    <main className="tournaments-page fundo-aurora-motion">
+      <AuroraBackground />
       <section className="tournaments-heading">
         <div>
           <h1>Escolha seu próximo <span>desafio.</span></h1>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
 import { useAlerta } from './AlertaModal';
+import AuroraBackground from './AuroraBackground';
 
 const AMIGOS_PADRAO = [
   {
@@ -639,7 +640,8 @@ export default function Perfil() {
 
   if (loading) {
     return (
-      <main id="perfil-page" className="perfil-page">
+      <main id="perfil-page" className="perfil-page fundo-aurora-motion">
+        <AuroraBackground />
         <div className="perfil-container" style={{ textAlign: 'center', paddingTop: '100px' }}>
           <h2 style={{ color: 'var(--roxo-claro)' }}>Carregando perfil...</h2>
         </div>
@@ -669,7 +671,8 @@ export default function Perfil() {
   const statsGanhos = usuario.stats ? usuario.stats.ganhos : (privGanhos === 'privado' ? 'Oculto' : 'R$ 0,00');
 
   return (
-    <main id="perfil-page" className="perfil-page">
+    <main id="perfil-page" className="perfil-page fundo-aurora-motion">
+      <AuroraBackground />
       <div className="perfil-container">
         <div className="perfil-cabecalho">
           <div>

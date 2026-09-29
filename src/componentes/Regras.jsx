@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../css/regras.css';
+import AuroraBackground from './AuroraBackground';
 
 const regrasList = [
   {
@@ -90,8 +91,9 @@ export default function Regras() {
   };
 
   return (
-    <main className="conteudo-principal">
-      <div className="container-regras">
+    <main className="conteudo-principal fundo-aurora-motion">
+      <AuroraBackground />
+      <div className="container-regras regras-container">
         <div className="secao-titulo">
           <h1>REGRAS DO COMPETITIVO</h1>
           <p>

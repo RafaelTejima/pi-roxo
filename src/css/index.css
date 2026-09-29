@@ -583,6 +583,139 @@ button:focus-visible {
     }
 }
 
+/* ================= Aurora Motion Gradient Mesh ================= */
+.fundo-aurora-motion {
+    position: relative;
+    background-color: #0b0714 !important;
+    overflow-x: hidden;
+    isolation: isolate;
+}
+
+.aurora-mesh-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    background-color: #0b0714;
+    contain: paint;
+}
+
+.aurora-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(75px) saturate(1.4);
+    -webkit-filter: blur(75px) saturate(1.4);
+    will-change: transform;
+    pointer-events: none;
+    transform: translate3d(0, 0, 0);
+}
+
+/* Ponto 1: Roxo profundo (#1b0b30) - Centro vivo e fluido */
+.aurora-orb-profundo {
+    width: clamp(520px, 62vw, 900px);
+    height: clamp(520px, 62vh, 900px);
+    top: -15%;
+    left: 8%;
+    background: radial-gradient(circle, rgba(74, 25, 125, 0.45) 0%, rgba(27, 11, 48, 0.32) 40%, rgba(27, 11, 48, 0.12) 65%, transparent 75%);
+    animation: auroraMotionProfundo 11s ease-in-out infinite alternate;
+}
+
+/* Ponto 2: Roxo vibrante (#723EC3) - Ondulação rápida e presente */
+.aurora-orb-vibrante {
+    width: clamp(460px, 55vw, 820px);
+    height: clamp(460px, 55vh, 820px);
+    bottom: -10%;
+    right: 5%;
+    background: radial-gradient(circle, rgba(114, 62, 195, 0.48) 0%, rgba(147, 51, 234, 0.30) 42%, rgba(114, 62, 195, 0.12) 65%, transparent 75%);
+    animation: auroraMotionVibrante 9s ease-in-out infinite alternate;
+}
+
+/* Ponto 3: Toque sutil de neon (#b565f2) - Realce dinâmico em 7.5s */
+.aurora-orb-neon {
+    width: clamp(380px, 46vw, 680px);
+    height: clamp(380px, 46vh, 680px);
+    top: 30%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(181, 101, 242, 0.40) 0%, rgba(168, 85, 247, 0.22) 45%, rgba(181, 101, 242, 0.08) 65%, transparent 75%);
+    animation: auroraMotionNeon 7.5s ease-in-out infinite alternate;
+}
+
+/* Fallback autônomo caso a classe .fundo-aurora-motion seja usada sem os orbs */
+.fundo-aurora-motion:not(:has(.aurora-mesh-container))::before {
+    content: "";
+    position: fixed;
+    inset: -15%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(75px) saturate(1.4);
+    -webkit-filter: blur(75px) saturate(1.4);
+    background: 
+        radial-gradient(circle at 25% 20%, rgba(74, 25, 125, 0.42) 0%, transparent 60%),
+        radial-gradient(circle at 80% 75%, rgba(114, 62, 195, 0.45) 0%, transparent 55%),
+        radial-gradient(circle at 15% 65%, rgba(181, 101, 242, 0.38) 0%, transparent 50%);
+    animation: auroraMotionProfundo 10s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+/* Keyframes vivos, fluidos e de alta performance (7s a 11s, amplitudes amplas) */
+@keyframes auroraMotionProfundo {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+        transform: translate3d(16vw, 14vh, 0) scale(1.15);
+    }
+    66% {
+        transform: translate3d(-12vw, 20vh, 0) scale(0.92);
+    }
+    100% {
+        transform: translate3d(10vw, -12vh, 0) scale(1.12);
+    }
+}
+
+@keyframes auroraMotionVibrante {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    35% {
+        transform: translate3d(-18vw, -16vh, 0) scale(1.16);
+    }
+    70% {
+        transform: translate3d(14vw, -10vh, 0) scale(0.88);
+    }
+    100% {
+        transform: translate3d(-10vw, 15vh, 0) scale(1.14);
+    }
+}
+
+@keyframes auroraMotionNeon {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    30% {
+        transform: translate3d(20vw, -15vh, 0) scale(1.20);
+    }
+    70% {
+        transform: translate3d(10vw, 18vh, 0) scale(0.86);
+    }
+    100% {
+        transform: translate3d(-14vw, -8vh, 0) scale(1.15);
+    }
+}
+
+/* Acessibilidade: Desliga movimentação caso o usuário solicite movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+    .aurora-orb,
+    .fundo-aurora-motion:not(:has(.aurora-mesh-container))::before {
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
 /* ================= Auth Pages ================= */
 .auth-page {
     position: relative;
@@ -592,11 +725,8 @@ button:focus-visible {
     justify-content: center;
     overflow: hidden;
     padding: 120px 20px 60px;
-    background: radial-gradient(circle at 50% 20%, rgba(114, 62, 195, 0.25) 0%, transparent 60%),
-                radial-gradient(circle at 85% 15%, rgba(147, 51, 234, 0.16) 0%, transparent 45%),
-                radial-gradient(circle at 15% 75%, rgba(69, 15, 229, 0.15) 0%, transparent 50%),
-                linear-gradient(180deg, #0b0714 0%, #08050e 100%);
-    background-attachment: fixed;
+    background-color: transparent;
+    z-index: 0;
 }
 
 .auth-carousel {

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Gradiente roxo oficial da aba COMPETIR -->
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b565f2" />
+      <stop offset="100%" stop-color="#723EC3" />
+    </linearGradient>
+
+    <!-- Sombra/Glow neon para a aba -->
+    <filter id="neonBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#b565f2" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Fundo escuro fosco com cantos arredondados -->
+  <rect width="64" height="64" rx="14" fill="#0b0714" />
+
+  <!-- Borda externa com brilho roxo sutil -->
+  <rect width="60" height="60" x="2" y="2" rx="12" fill="none" stroke="#723EC3" stroke-width="1.5" stroke-opacity="0.5" />
+
+  <!-- Mira tática de fundo (Crosshair) -->
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#723EC3" stroke-width="2" stroke-dasharray="3 3" opacity="0.4" />
+  <line x1="32" y1="6" x2="32" y2="14" stroke="#b565f2" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+  <line x1="32" y1="50" x2="32" y2="58" stroke="#b565f2" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+  <line x1="6" y1="32" x2="14" y2="32" stroke="#b565f2" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+  <line x1="50" y1="32" x2="58" y2="32" stroke="#b565f2" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+
+  <!-- Monograma CS Estilizado em Tipografia Tática -->
+  <!-- Letra 'C' em Branco Gelo -->
+  <path d="M 28 22 L 18 22 Q 14 22 14 26 L 14 38 Q 14 42 18 42 L 28 42" 
+        fill="none" 
+        stroke="#f1f5f9" 
+        stroke-width="4.5" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- Letra 'S' em Roxo Neon Gradiente (Destaque da marca) -->
+  <path d="M 48 24 L 38 24 Q 34 24 34 28 L 34 30 Q 34 33 38 33 L 44 33 Q 48 33 48 37 L 48 38 Q 48 42 44 42 L 34 42" 
+        fill="none" 
+        stroke="url(#purpleGlow)" 
+        stroke-width="4.5" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        filter="url(#neonBlur)" />
+
+  <!-- Ponto central tático (marcador branco gelo) -->
+  <circle cx="31" cy="32.5" r="1.8" fill="#ffffff" />
+</svg>
