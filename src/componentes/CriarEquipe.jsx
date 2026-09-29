@@ -170,6 +170,17 @@ export default function CriarEquipe() {
       return
     }
 
+    if (equipe.sigla.trim().length > 5) {
+      const msgErro = 'A sigla / TAG da equipe deve ter no máximo 5 caracteres.'
+      setErro(msgErro)
+      mostrarAlerta({
+        titulo: 'TAG Muito Longa',
+        mensagem: msgErro,
+        tipo: 'aviso'
+      })
+      return
+    }
+
     if (!usuario?.id) {
       const msgErro = 'Você precisa estar logado para registrar uma equipe.'
       setErro(msgErro)
@@ -188,170 +199,185 @@ export default function CriarEquipe() {
     const nomeLimpo = equipe.nome.trim()
     const tagLimpa = equipe.sigla.trim().toUpperCase()
     const descLimpa = equipe.descricao.trim()
-    const idGerado = 'team-' + Date.now()
 
-    let timeIdFinal = idGerado
+    try {
+      if (!supabase) {
+        throw new Error('Serviço de banco de dados não configurado ou indisponível.')
+      }
 
-    // 1. Tentar salvar no Supabase na tabela normalizada 'times'
-    if (supabase) {
-      try {
-        let insertPayload = {
-          id: idGerado,
-          nome: nomeLimpo,
-          tag: tagLimpa,
-          descricao: descLimpa,
-          id_capitao: usuario.id,
-          capitao: usuario.nome || usuario.email,
-          registro: new Date().toISOString()
-        }
+      // Passo A: Inserir na tabela 'times' sem passar ID manual (deixando o PostgreSQL gerar a sequence serial)
+      const insertPayload = {
+        nome: nomeLimpo,
+        tag: tagLimpa,
+        logo: null,
+        descricao: descLimpa || null,
+        id_capitao: Number(usuario.id) || usuario.id
+      }
 
-        let { data: timeInserido, error: erroTimes } = await supabase
-          .from('times')
-          .insert(insertPayload)
-          .select()
-          .maybeSingle()
+      const { data: timeInserido, error: erroTimes } = await supabase
+        .from('times')
+        .insert(insertPayload)
+        .select()
+        .single()
 
-        // Caso o banco gere ID automaticamente (UUID/serial) e rejeite string customizada
-        if (erroTimes && (erroTimes.message?.includes('syntax for type') || erroTimes.code === '22P02')) {
-          delete insertPayload.id
-          const retry = await supabase
-            .from('times')
-            .insert(insertPayload)
-            .select()
-            .maybeSingle()
-          timeInserido = retry.data
-          erroTimes = retry.error
-        }
+      if (erroTimes || !timeInserido) {
+        const msgLower = ((erroTimes?.message || '') + ' ' + (erroTimes?.details || '')).toLowerCase()
+        const isUnique =
+          erroTimes?.code === '23505' ||
+          msgLower.includes('duplicate key') ||
+          msgLower.includes('unique constraint') ||
+          msgLower.includes('already exists')
 
-        // Tratamento rigoroso de restrições UNIQUE (23505) e erros de duplicidade
-        if (erroTimes) {
-          const msgLower = (erroTimes.message || '').toLowerCase()
-          const detLower = (erroTimes.details || '').toLowerCase()
-          const isUnique = erroTimes.code === '23505' || msgLower.includes('duplicate key') || msgLower.includes('unique constraint') || msgLower.includes('already exists')
+        setEnviando(false)
 
-          if (isUnique) {
-            setEnviando(false)
-            if (msgLower.includes('tag') || detLower.includes('tag') || msgLower.includes('times_tag_key')) {
-              const msg = 'Esta TAG já está em uso por outra equipe. Escolha outra sigla/TAG.'
-              setErro(msg)
-              mostrarAlerta({
-                titulo: 'TAG Indisponível',
-                mensagem: msg,
-                tipo: 'aviso'
-              })
-              return
-            }
-            if (msgLower.includes('nome') || detLower.includes('nome') || msgLower.includes('times_nome_key')) {
-              const msg = 'Já existe uma equipe cadastrada com este nome. Escolha outro nome.'
-              setErro(msg)
-              mostrarAlerta({
-                titulo: 'Nome Indisponível',
-                mensagem: msg,
-                tipo: 'aviso'
-              })
-              return
-            }
-            const msg = 'Já existe uma equipe cadastrada com este nome ou TAG.'
+        if (isUnique) {
+          if (msgLower.includes('tag') || msgLower.includes('times_tag_key')) {
+            const msg = 'Esta TAG já está em uso por outra equipe. Escolha outra sigla/TAG.'
             setErro(msg)
             mostrarAlerta({
-              titulo: 'Equipe Já Existente',
+              titulo: 'TAG Indisponível',
               mensagem: msg,
               tipo: 'aviso'
             })
             return
           }
-
-          console.warn('Erro ao inserir em times no Supabase:', erroTimes)
-        } else if (timeInserido) {
-          timeIdFinal = timeInserido.id || idGerado
-
-          // Inserir capitão e jogadores na tabela normalizada times_integrantes
-          try {
-            const todosMembros = [
-              { id_time: timeIdFinal, id_usuario: usuario.id, funcao: 'capitao' },
-              ...jogadores.map((j) => ({ id_time: timeIdFinal, id_usuario: j.id, funcao: 'jogador' }))
-            ]
-            const { error: erroMembros } = await supabase.from('times_integrantes').insert(todosMembros)
-            if (erroMembros) {
-              // Fallback para apenas o capitão caso algum convidado seja mock com ID inexistente no banco
-              await supabase.from('times_integrantes').insert([
-                { id_time: timeIdFinal, id_usuario: usuario.id, funcao: 'capitao' }
-              ]).catch(() => {})
-            }
-          } catch (errMembros) {
-            console.warn('Erro ao vincular membros em times_integrantes:', errMembros)
+          if (msgLower.includes('nome') || msgLower.includes('times_nome_key')) {
+            const msg = 'Já existe uma equipe cadastrada com este nome. Escolha outro nome.'
+            setErro(msg)
+            mostrarAlerta({
+              titulo: 'Nome Indisponível',
+              mensagem: msg,
+              tipo: 'aviso'
+            })
+            return
           }
-        }
-      } catch (err) {
-        console.warn('Falha na comunicação com Supabase:', err)
-      }
-
-      // 2. Tabela legada 'teams' (fallback de compatibilidade)
-      try {
-        const { data: novaEquipeDb, error: erroEquipe } = await supabase
-          .from('teams')
-          .insert({
-            name: nomeLimpo,
-            tag: tagLimpa,
-            description: descLimpa,
-            captain_id: usuario.id,
-            avatar_url: 'https://placehold.co/96x96/723EC3/FFFFFF?text=TEAM'
+          const msg = 'Já existe uma equipe cadastrada com este nome ou TAG.'
+          setErro(msg)
+          mostrarAlerta({
+            titulo: 'Equipe Já Existente',
+            mensagem: msg,
+            tipo: 'aviso'
           })
-          .select()
-          .maybeSingle()
-
-        if (!erroEquipe && novaEquipeDb) {
-          const membros = [
-            { team_id: novaEquipeDb.id, user_id: usuario.id, role: 'captain' },
-            ...jogadores.map((j) => ({ team_id: novaEquipeDb.id, user_id: j.id, role: 'player' }))
-          ]
-          await supabase.from('team_members').insert(membros).catch(() => {})
+          return
         }
-      } catch (err) {
-        // Tabela teams opcional
+
+        if (erroTimes?.code === '22001' || msgLower.includes('value too long')) {
+          const msg = 'A sigla/TAG da equipe deve ter no máximo 5 caracteres.'
+          setErro(msg)
+          mostrarAlerta({
+            titulo: 'TAG Inválida',
+            mensagem: msg,
+            tipo: 'aviso'
+          })
+          return
+        }
+
+        // Outros erros de banco
+        const msg = erroTimes?.message || 'Falha ao salvar a equipe no banco de dados.'
+        setErro(msg)
+        mostrarAlerta({
+          titulo: 'Erro no Cadastro',
+          mensagem: msg,
+          tipo: 'erro'
+        })
+        return
       }
-    }
 
-    // Salvar no localStorage para que a lista em /equipes exiba imediatamente
-    const novaEquipeObj = {
-      id: timeIdFinal,
-      nome: nomeLimpo,
-      tag: tagLimpa,
-      descricao: descLimpa,
-      capitao: usuario.nome || usuario.email,
-      id_capitao: usuario.id,
-      capitaoNome: usuario.nome || usuario.email,
-      totalIntegrantes: jogadores.length + 1,
-      jogadoresCount: `${jogadores.length + 1}/5`,
-      jogadores: [
-        { id: usuario.id, nome: usuario.nome || usuario.email, funcao: 'capitao', role: 'captain' },
-        ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, funcao: 'jogador', role: 'player' }))
-      ],
-      createdAt: new Date().toISOString()
-    }
+      const novoIdTime = timeInserido.id
 
-    try {
-      const salvas = localStorage.getItem('equipesCadastradas')
-      const lista = salvas ? JSON.parse(salvas) : []
-      lista.unshift(novaEquipeObj)
-      localStorage.setItem('equipesCadastradas', JSON.stringify(lista))
+      // Passo B: Imediatamente após a confirmação do Passo A, inserir capitão na tabela 'times_integrantes'
+      const { error: erroCapitao } = await supabase
+        .from('times_integrantes')
+        .insert({
+          id_time: novoIdTime,
+          id_usuario: Number(usuario.id) || usuario.id,
+          funcao: 'capitao'
+        })
+
+      if (erroCapitao) {
+        // Rollback para integridade transacional: remove o time recém-criado
+        await supabase.from('times').delete().eq('id', novoIdTime).catch(() => {})
+        setEnviando(false)
+        const msg = `Falha ao registrar capitão na equipe: ${erroCapitao.message || 'Erro de integridade'}`
+        setErro(msg)
+        mostrarAlerta({
+          titulo: 'Erro ao Vincular Capitão',
+          mensagem: msg,
+          tipo: 'erro'
+        })
+        return
+      }
+
+      // Inserir jogadores convidados que possuam ID de usuário válido no banco
+      const convidadosValidos = jogadores
+        .filter((j) => typeof j.id === 'number' || (!isNaN(Number(j.id)) && Number(j.id) > 0 && !String(j.id).startsWith('usr-')))
+        .map((j) => ({
+          id_time: novoIdTime,
+          id_usuario: Number(j.id),
+          funcao: 'jogador'
+        }))
+
+      if (convidadosValidos.length > 0) {
+        for (const convidado of convidadosValidos) {
+          await supabase.from('times_integrantes').insert(convidado).catch((err) => {
+            console.warn('Convidado não pôde ser vinculado ao time no banco:', convidado, err)
+          })
+        }
+      }
+
+      // Passo C: APENAS se ambas as operações no Supabase forem concluídas com sucesso irrefutável, atualiza o localStorage e emite eventos globais
+      const novaEquipeObj = {
+        id: novoIdTime,
+        nome: nomeLimpo,
+        tag: tagLimpa,
+        descricao: descLimpa,
+        capitao: usuario.nome || usuario.email,
+        id_capitao: usuario.id,
+        capitaoNome: usuario.nome || usuario.email,
+        totalIntegrantes: jogadores.length + 1,
+        jogadoresCount: `${jogadores.length + 1}/5`,
+        jogadores: [
+          { id: usuario.id, nome: usuario.nome || usuario.email, funcao: 'capitao', role: 'captain' },
+          ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, funcao: 'jogador', role: 'player' }))
+        ],
+        createdAt: timeInserido.registro || new Date().toISOString()
+      }
+
+      try {
+        const salvas = localStorage.getItem('equipesCadastradas')
+        const lista = salvas ? JSON.parse(salvas) : []
+        const filtrada = lista.filter((t) => String(t.id) !== String(novoIdTime))
+        filtrada.unshift(novaEquipeObj)
+        localStorage.setItem('equipesCadastradas', JSON.stringify(filtrada))
+      } catch (errStorage) {
+        console.error('Erro ao salvar no localStorage:', errStorage)
+      }
+
+      window.dispatchEvent(new Event('equipesAtualizadas'))
+      window.dispatchEvent(new Event('storage'))
+
+      setEnviando(false)
+      setSucesso('Equipe criada com sucesso!')
+      mostrarAlerta({
+        titulo: 'Equipe Registrada!',
+        mensagem: `A equipe "${nomeLimpo}" [${tagLimpa}] foi cadastrada com sucesso!`,
+        tipo: 'sucesso',
+        botaoTexto: 'Ver Equipes',
+        onConfirmar: () => navigate('/equipes')
+      })
+      setTimeout(() => navigate('/equipes'), 1500)
     } catch (err) {
-      console.error('Erro ao salvar no localStorage:', err)
+      // Passo D: Tratamento robusto de exceções e bloqueio de persistência
+      console.error('Erro inesperado no cadastro de equipe:', err)
+      setEnviando(false)
+      const msg = err.message || 'Ocorreu um erro inesperado ao cadastrar a equipe. Tente novamente.'
+      setErro(msg)
+      mostrarAlerta({
+        titulo: 'Falha no Cadastro',
+        mensagem: msg,
+        tipo: 'erro'
+      })
     }
-
-    window.dispatchEvent(new Event('equipesAtualizadas'))
-    window.dispatchEvent(new Event('storage'))
-
-    setEnviando(false)
-    setSucesso('Equipe criada com sucesso!')
-    mostrarAlerta({
-      titulo: 'Equipe Registrada!',
-      mensagem: `A equipe "${nomeLimpo}" [${tagLimpa}] foi cadastrada com sucesso!`,
-      tipo: 'sucesso',
-      botaoTexto: 'Ver Equipes',
-      onConfirmar: () => navigate('/equipes')
-    })
-    setTimeout(() => navigate('/equipes'), 1500)
   }
 
   if (!usuario) return null

@@ -21,13 +21,36 @@ async function loadTournaments() {
 
   let torneiosSupabase = []
   try {
-    const { data, error } = await supabase
+    let res = await supabase
       .from('torneios')
       .select('*')
-      .order('data_inicio', { ascending: true })
+      .order('registro', { ascending: false })
 
-    if (!error && data) {
-      torneiosSupabase = data
+    if (res.error) {
+      res = await supabase.from('torneios').select('*').order('id', { ascending: false })
+    }
+
+    if (!res.error && res.data) {
+      torneiosSupabase = res.data.map((t) => {
+        const local = torneiosLocais.find((l) => String(l.id) === String(t.id))
+        return {
+          id: t.id,
+          nome: t.nome,
+          status: t.status ?? true,
+          registro: t.registro,
+          descricao: local?.descricao || 'Torneio oficial da plataforma CS:GO Tournaments.',
+          jogo: local?.jogo || 'CS2',
+          formato: local?.formato || 'Eliminação Simples',
+          data_inicio: local?.data_inicio || t.registro || new Date().toISOString(),
+          dinheiro: local?.dinheiro || 5000,
+          mapa: local?.mapa || 'Mirage',
+          ...local,
+          id: t.id,
+          nome: t.nome,
+          status: t.status ?? true,
+          registro: t.registro || local?.registro
+        }
+      })
     }
   } catch (err) {
     console.warn('Falha na consulta Supabase torneios:', err)
@@ -36,14 +59,14 @@ async function loadTournaments() {
   const combinados = []
   const idsVistos = new Set()
 
-  torneiosLocais.forEach((t) => {
+  torneiosSupabase.forEach((t) => {
     if (t && t.id && !idsVistos.has(String(t.id))) {
       idsVistos.add(String(t.id))
       combinados.push(t)
     }
   })
 
-  torneiosSupabase.forEach((t) => {
+  torneiosLocais.forEach((t) => {
     if (t && t.id && !idsVistos.has(String(t.id))) {
       idsVistos.add(String(t.id))
       combinados.push(t)
@@ -504,13 +527,36 @@ export default function Torneios() {
   const { id } = useParams()
 
   useEffect(() => {
-    loadTournaments()
-      .then((data) => {
-        setTournaments(data)
-        setErro('')
-      })
-      .catch(() => setErro('Não foi possível carregar os torneios. Tente novamente mais tarde.'))
-      .finally(() => setLoading(false))
+    let ativo = true
+
+    const recarregar = () => {
+      loadTournaments()
+        .then((data) => {
+          if (ativo) {
+            setTournaments(data)
+            setErro('')
+          }
+        })
+        .catch(() => {
+          if (ativo) setErro('Não foi possível carregar os torneios. Tente novamente mais tarde.')
+        })
+        .finally(() => {
+          if (ativo) setLoading(false)
+        })
+    }
+
+    recarregar()
+
+    window.addEventListener('torneiosAtualizados', recarregar)
+    window.addEventListener('storage', recarregar)
+    window.addEventListener('focus', recarregar)
+
+    return () => {
+      ativo = false
+      window.removeEventListener('torneiosAtualizados', recarregar)
+      window.removeEventListener('storage', recarregar)
+      window.removeEventListener('focus', recarregar)
+    }
   }, [])
 
   const torneiosFiltrados = useMemo(() => {

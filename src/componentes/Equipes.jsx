@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import '../css/equipes.css';
@@ -89,6 +89,7 @@ export default function Equipes() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
+  const montadoRef = useRef(true);
 
   const carregarEquipes = useCallback(async () => {
     setCarregando(true);
@@ -243,28 +244,37 @@ export default function Equipes() {
       }
     });
 
-    if (isMountedCheck && !isMountedCheck()) return;
+    if (!montadoRef.current) return;
 
     setEquipes(todas);
     setCarregando(false);
   }, []);
 
   useEffect(() => {
-    let montado = true;
-    const isMountedCheck = () => montado;
-
-    carregarEquipes(isMountedCheck);
+    montadoRef.current = true;
+    carregarEquipes();
 
     const onUpdate = () => {
-      if (montado) carregarEquipes(isMountedCheck);
+      if (montadoRef.current) {
+        carregarEquipes();
+      }
+    };
+
+    const onFocus = () => {
+      if (montadoRef.current) {
+        carregarEquipes();
+      }
     };
 
     window.addEventListener('storage', onUpdate);
     window.addEventListener('equipesAtualizadas', onUpdate);
+    window.addEventListener('focus', onFocus);
+
     return () => {
-      montado = false;
+      montadoRef.current = false;
       window.removeEventListener('storage', onUpdate);
       window.removeEventListener('equipesAtualizadas', onUpdate);
+      window.removeEventListener('focus', onFocus);
     };
   }, [carregarEquipes]);
 

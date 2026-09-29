@@ -48,17 +48,84 @@ function SecaoTabela({ tabela, usuarioLogado }) {
     async function buscarDados() {
       setLoading(true);
       setErro('');
-      const { data, error } = await supabase.from(tabela.nome).select('*').limit(200);
-      if (error) {
-        if (error.code === '42P01') {
-          setErro('TABELA_INEXISTENTE');
+      try {
+        let res;
+        if (tabela.nome === 'partidas') {
+          // Busca partidas com dados relacionais dos times participantes
+          res = await supabase
+            .from('partidas')
+            .select('*, time1:time1_id(id, nome, tag), time2:time2_id(id, nome, tag)')
+            .order('id', { ascending: false })
+            .limit(200);
+
+          if (res.error) {
+            console.warn('Fallback para busca simples de partidas sem join:', res.error);
+            res = await supabase.from('partidas').select('*').order('id', { ascending: false }).limit(200);
+          }
+        } else if (tabela.nome === 'inscricoes') {
+          // Busca inscrições com dados relacionais de torneio, time e usuário
+          res = await supabase
+            .from('inscricoes')
+            .select('*, torneio:id_torneio(id, nome), time:id_time(id, nome, tag), usuario:id_usuario_inscritor(id, nome, nome_usuario)')
+            .order('id', { ascending: false })
+            .limit(200);
+
+          if (res.error) {
+            console.warn('Fallback para busca simples de inscricoes sem join:', res.error);
+            res = await supabase.from('inscricoes').select('*').order('id', { ascending: false }).limit(200);
+          }
         } else {
-          setErro(error.message);
+          res = await supabase.from(tabela.nome).select('*').limit(200);
         }
-      } else {
-        setDados(data || []);
+
+        const { data, error } = res;
+        if (error) {
+          if (error.code === '42P01') {
+            setErro('TABELA_INEXISTENTE');
+          } else {
+            setErro(error.message);
+          }
+        } else {
+          if (tabela.nome === 'partidas' && Array.isArray(data)) {
+            const partidasFormatadas = data.map((p) => {
+              const t1 = p.time1
+                ? `[${p.time1.tag || 'TAG'}] ${p.time1.nome || ''}`.trim()
+                : (p.time1_id ? `Time #${p.time1_id}` : '-');
+              const t2 = p.time2
+                ? `[${p.time2.tag || 'TAG'}] ${p.time2.nome || ''}`.trim()
+                : (p.time2_id ? `Time #${p.time2_id}` : '-');
+              const { time1, time2, ...resto } = p;
+              return {
+                ...resto,
+                time_1: t1,
+                time_2: t2
+              };
+            });
+            setDados(partidasFormatadas);
+          } else if (tabela.nome === 'inscricoes' && Array.isArray(data)) {
+            const inscricoesFormatadas = data.map((i) => {
+              const tor = i.torneio?.nome || (i.id_torneio ? `Torneio #${i.id_torneio}` : '-');
+              const tm = i.time ? `[${i.time.tag || 'TAG'}] ${i.time.nome || ''}`.trim() : (i.id_time ? `Time #${i.id_time}` : '-');
+              const usr = i.usuario?.nome_usuario || i.usuario?.nome || (i.id_usuario_inscritor ? `Usuário #${i.id_usuario_inscritor}` : '-');
+              const { torneio, time, usuario, ...resto } = i;
+              return {
+                ...resto,
+                torneio_nome: tor,
+                time_nome: tm,
+                usuario_nome: usr
+              };
+            });
+            setDados(inscricoesFormatadas);
+          } else {
+            setDados(data || []);
+          }
+        }
+      } catch (err) {
+        console.error(`Erro ao carregar tabela ${tabela.nome}:`, err);
+        setErro(err.message || 'Erro inesperado ao carregar dados');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     buscarDados();
   }, [tabela.nome]);
@@ -95,8 +162,26 @@ function SecaoTabela({ tabela, usuarioLogado }) {
     setSalvando(true);
     
     const payload = { ...camposEdicao };
+    // Remover propriedades computadas/virtuais antes de enviar ao banco
+    delete payload.time_1;
+    delete payload.time_2;
+    delete payload.time1;
+    delete payload.time2;
+    delete payload.torneio_nome;
+    delete payload.time_nome;
+    delete payload.usuario_nome;
+    delete payload.torneio;
+    delete payload.time;
+    delete payload.usuario;
+
     Object.keys(payload).forEach(key => {
-      if (payload[key] === '') payload[key] = null;
+      if (payload[key] === '') {
+        payload[key] = null;
+      } else if (key.endsWith('_id') || key.startsWith('id_') || key === 'dinheiro') {
+        if (!isNaN(Number(payload[key])) && payload[key] !== null) {
+          payload[key] = Number(payload[key]);
+        }
+      }
     });
 
     const { error } = await supabase
@@ -271,7 +356,11 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                           {colunas.map((col) => (
                             <td key={col}>
                               {estaEditando && col !== 'id' ? (
-                                col === 'admin' || col.toLowerCase().includes('status') ? (
+                                (col === 'time_1' || col === 'time_2' || col === 'torneio_nome' || col === 'time_nome' || col === 'usuario_nome') ? (
+                                  <span className="admin-badge admin-badge--count" title="Calculado via chave estrangeira relacional">
+                                    {linha[col] || '-'}
+                                  </span>
+                                ) : col === 'admin' || col.toLowerCase().includes('status') ? (
                                   <label className="admin-switch">
                                     <input
                                       type="checkbox"

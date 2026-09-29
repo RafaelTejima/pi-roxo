@@ -108,41 +108,94 @@ export default function SelecaoMapas() {
     const mapaNome = mapaSelecionado ? mapaSelecionado.nome : 'Mirage'
     const descricaoComMapa = `${dadosTorneio.descricao || ''}\n- Mapa oficial: ${mapaNome}`
 
-    const { error } = await supabase.from('torneios').insert({
-      nome: dadosTorneio.nome,
-      descricao: descricaoComMapa,
-      jogo: dadosTorneio.jogo,
-      formato: dadosTorneio.formato,
-      data_inicio: dadosTorneio.data_inicio,
-      status: dadosTorneio.status,
-      id_criador: dadosTorneio.id_criador,
-      dinheiro: dadosTorneio.dinheiro,
-    })
+    try {
+      if (!supabase) {
+        throw new Error('Cliente Supabase não inicializado ou indisponível.')
+      }
 
-    setEnviando(false)
+      // Schema estrito da tabela 'torneios': [id, nome, status, registro]
+      const payloadBanco = {
+        nome: dadosTorneio.nome?.trim(),
+        status: typeof dadosTorneio.status === 'boolean' ? dadosTorneio.status : true,
+      }
 
-    if (error) {
-      console.error(error)
-      const msg = 'Não foi possível salvar o torneio no banco de dados. Tente novamente.'
+      const { data: torneioCriado, error } = await supabase
+        .from('torneios')
+        .insert(payloadBanco)
+        .select()
+        .single()
+
+      setEnviando(false)
+
+      if (error) {
+        console.error('Erro detalhado no PostgreSQL ao publicar torneio:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        const msgErro = error.message || 'Não foi possível salvar o torneio no banco de dados. Tente novamente.'
+        setErro(msgErro)
+        mostrarAlerta({
+          titulo: 'Erro ao Publicar',
+          mensagem: `Não foi possível salvar o torneio no banco de dados. Motivo: ${error.message} (${error.code || 'DB_ERROR'})`,
+          tipo: 'erro'
+        })
+        return
+      }
+
+      const torneioIdGerado = torneioCriado?.id
+
+      // Persistência no localStorage dos metadados completos enriquecidos para exibição no frontend
+      const novoTorneioCompleto = {
+        id: torneioIdGerado,
+        nome: dadosTorneio.nome?.trim(),
+        descricao: descricaoComMapa,
+        jogo: dadosTorneio.jogo || 'CS2',
+        formato: dadosTorneio.formato || 'Eliminação Simples',
+        data_inicio: dadosTorneio.data_inicio || new Date().toISOString(),
+        status: torneioCriado?.status ?? true,
+        id_criador: dadosTorneio.id_criador,
+        dinheiro: Number(dadosTorneio.dinheiro) || 0,
+        mapa: mapaNome,
+        registro: torneioCriado?.registro || new Date().toISOString(),
+      }
+
+      try {
+        const salvas = localStorage.getItem('torneiosCadastrados')
+        const lista = salvas ? JSON.parse(salvas) : []
+        const filtrada = lista.filter((t) => String(t.id) !== String(torneioIdGerado))
+        filtrada.unshift(novoTorneioCompleto)
+        localStorage.setItem('torneiosCadastrados', JSON.stringify(filtrada))
+      } catch (errLocal) {
+        console.warn('Erro ao atualizar torneiosCadastrados no localStorage:', errLocal)
+      }
+
+      localStorage.removeItem('dadosTorneioEmCriacao')
+      setConfirmado(false)
+
+      window.dispatchEvent(new Event('torneiosAtualizados'))
+      window.dispatchEvent(new Event('storage'))
+
+      mostrarAlerta({
+        titulo: 'Torneio Publicado!',
+        mensagem: `O campeonato "${dadosTorneio.nome}" com mapa oficial ${mapaNome} foi cadastrado com sucesso!`,
+        tipo: 'sucesso',
+        botaoTexto: 'Ver Torneios',
+        onConfirmar: () => navigate('/torneios')
+      })
+      setTimeout(() => navigate('/torneios'), 1500)
+    } catch (err) {
+      console.error('Exceção ao publicar torneio no Supabase:', err)
+      setEnviando(false)
+      const msg = err.message || 'Ocorreu um erro inesperado ao publicar o torneio.'
       setErro(msg)
       mostrarAlerta({
         titulo: 'Erro ao Publicar',
         mensagem: msg,
         tipo: 'erro'
       })
-      return
     }
-
-    localStorage.removeItem('dadosTorneioEmCriacao')
-    setConfirmado(false)
-    mostrarAlerta({
-      titulo: 'Torneio Publicado!',
-      mensagem: `O campeonato "${dadosTorneio.nome}" com mapa oficial ${mapaNome} foi cadastrado com sucesso!`,
-      tipo: 'sucesso',
-      botaoTexto: 'Ver Torneios',
-      onConfirmar: () => navigate('/torneios')
-    })
-    setTimeout(() => navigate('/torneios'), 1500)
   }
 
   const mapasFiltrados = useMemo(() => {
