@@ -11,7 +11,7 @@ import AuroraBackground from './AuroraBackground';
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { nome_usuario } = useParams();
   const { mostrarAlerta } = useAlerta();
 
   const [usuario, setUsuario] = useState(null);
@@ -57,7 +57,7 @@ export default function Perfil() {
       if (!ativo) return;
       setUsuarioLogado(userLocal);
 
-      if (id && (!userLocal || String(userLocal.id) !== String(id))) {
+      if (nome_usuario && (!userLocal || String(userLocal.nome_usuario) !== String(nome_usuario))) {
         // Perfil público de outro usuário
         setIsPublico(true);
         setLoading(true);
@@ -76,7 +76,7 @@ export default function Perfil() {
                 times ( id, nome, tag, logo )
               )
             `)
-            .eq('id', id)
+            .eq('nome_usuario', nome_usuario)
             .maybeSingle();
 
           if (!errJoin && uComJoin) {
@@ -100,7 +100,7 @@ export default function Perfil() {
             const { data: uSimples } = await supabase
               .from('usuarios')
               .select('id, nome, nome_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
-              .eq('id', id)
+              .eq('nome_usuario', nome_usuario)
               .maybeSingle();
 
             if (uSimples) {
@@ -131,9 +131,9 @@ export default function Perfil() {
             setUsuario(dadosUsuario);
           } else {
             setUsuario({
-              id,
-              nome: `Jogador #${id}`,
-              nome_usuario: `jogador_${id}`,
+              id: 0,
+              nome: `Jogador ${nome_usuario}`,
+              nome_usuario: nome_usuario,
               time_usuario: 'Sem equipe',
               bio: 'Perfil público de jogador na plataforma.',
               imagem: '',
@@ -214,7 +214,7 @@ export default function Perfil() {
     return () => {
       ativo = false;
     };
-  }, [id, navigate]);
+  }, [nome_usuario, navigate]);
 
   // ------------------------------------------------------------------
   // CARREGAR AMIZADES DO SUPABASE COM VALIDAÇÃO CRUZADA (perfil próprio)
@@ -440,11 +440,12 @@ export default function Perfil() {
     let ativo = true;
 
     async function verificarAmizade() {
-      if (!isPublico || !usuarioLogado?.id || !id) return;
+      if (!isPublico || !usuarioLogado?.id || !usuario?.id) return;
+      const targetId = usuario.id;
       const { data } = await supabase
         .from('amizades')
         .select('id, status, id_usuario1, id_usuario2')
-        .or(`and(id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${id}),and(id_usuario1.eq.${id},id_usuario2.eq.${usuarioLogado.id})`)
+        .or(`and(id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${targetId}),and(id_usuario1.eq.${targetId},id_usuario2.eq.${usuarioLogado.id})`)
         .maybeSingle();
 
       if (!ativo) return;
@@ -461,16 +462,16 @@ export default function Perfil() {
     return () => {
       ativo = false;
     };
-  }, [isPublico, usuarioLogado?.id, id]);
+  }, [isPublico, usuarioLogado?.id, usuario?.id]);
 
   // ------------------------------------------------------------------
   // AÇÕES DE AMIZADE — PERFIL PÚBLICO
   // ------------------------------------------------------------------
   async function enviarPedidoAmizade() {
-    if (!usuarioLogado?.id || !id) return;
+    if (!usuarioLogado?.id || !usuario?.id) return;
     const { error } = await supabase.from('amizades').insert({
       id_usuario1: usuarioLogado.id,
-      id_usuario2: id,
+      id_usuario2: usuario.id,
       status: 'PENDENTE'
     });
     if (error) {
@@ -478,6 +479,8 @@ export default function Perfil() {
     } else {
       setStatusAmizade('PENDENTE_ENVIADO');
       mostrarAlerta({ titulo: 'Pedido enviado!', mensagem: `Seu pedido foi enviado para ${usuario?.nome_usuario || usuario?.nome}.`, tipo: 'sucesso' });
+      window.dispatchEvent(new Event('amigosAtualizados'));
+      window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -500,11 +503,11 @@ export default function Perfil() {
   }
 
   async function bloquearUsuario() {
-    if (!usuarioLogado?.id || !id) return;
+    if (!usuarioLogado?.id || !usuario?.id) return;
     if (amizadeId) {
-      await supabase.from('amizades').update({ status: 'BLOQUEADO', id_usuario1: usuarioLogado.id, id_usuario2: id }).eq('id', amizadeId);
+      await supabase.from('amizades').update({ status: 'BLOQUEADO', id_usuario1: usuarioLogado.id, id_usuario2: usuario.id }).eq('id', amizadeId);
     } else {
-      await supabase.from('amizades').insert({ id_usuario1: usuarioLogado.id, id_usuario2: id, status: 'BLOQUEADO' });
+      await supabase.from('amizades').insert({ id_usuario1: usuarioLogado.id, id_usuario2: usuario.id, status: 'BLOQUEADO' });
     }
     setStatusAmizade('BLOQUEADO');
     window.dispatchEvent(new Event('amigosAtualizados'));
@@ -527,6 +530,20 @@ export default function Perfil() {
   async function aceitarPedido(amizade_id) {
     const { error } = await supabase.from('amizades').update({ status: 'ACEITO' }).eq('id', amizade_id);
     if (!error) {
+      const pedido = pedidosPendentes.find(p => p.id === amizade_id);
+      if (pedido) {
+        setPedidosPendentes(prev => prev.filter(p => p.id !== amizade_id));
+        setListaAmigos(prev => [...prev, {
+           id: pedido.remetente.id,
+           amizade_id: amizade_id,
+           nome: pedido.remetente.nome,
+           nome_usuario: pedido.remetente.nome_usuario,
+           imagem: pedido.remetente.imagem,
+           status: pedido.remetente.status || 'offline',
+           time_usuario: pedido.remetente.time_usuario,
+           game: 'CS2'
+        }]);
+      }
       mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Pedido de amizade aceito com sucesso.', tipo: 'sucesso' });
       carregarAmizades();
       window.dispatchEvent(new Event('amigosAtualizados'));
@@ -778,9 +795,9 @@ export default function Perfil() {
   const twitch  = isPublico ? null : usuario.conexao_twitch;
   const bluesky = isPublico ? null : usuario.conexao_bluesky;
 
-  const privNome   = isPublico ? 'publico' : (localStorage.getItem(`priv_nome_${usuario.id}`)   || 'publico');
-  const privGanhos = isPublico ? (usuario.stats ? 'publico' : 'privado') : (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico');
-  const privAmigos = isPublico ? 'publico' : (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico');
+  const privNome   = isPublico ? (localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico') : 'publico';
+  const privGanhos = isPublico ? (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico') : 'publico';
+  const privAmigos = isPublico ? (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico') : 'publico';
 
   const statsPartidas = usuario.stats?.partidas ?? 0;
   const statsTorneios = usuario.stats?.torneios ?? 0;
@@ -794,7 +811,7 @@ export default function Perfil() {
   // ------------------------------------------------------------------
   function renderBotaoAmizade() {
     if (!usuarioLogado) return null;
-    if (String(usuarioLogado.id) === String(id)) return null;
+    if (String(usuarioLogado.id) === String(usuario?.id)) return null;
 
     if (statusAmizade === 'ACEITO') {
       return (
@@ -960,7 +977,7 @@ export default function Perfil() {
                     <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Conexões (Redes)</h3>
                     <div className="perfil-detalhes-grid">
                       {[
-                        { key: 'discord', label: 'Discord', placeholder: 'Usuário#0000' },
+                        { key: 'discord', label: 'Discord', placeholder: '@Usuário' },
                         { key: 'steam', label: 'Steam URL', placeholder: 'https://steamcommunity.com/id/...' },
                         { key: 'twitter', label: 'Twitter / X', placeholder: '@seu_twitter' },
                         { key: 'youtube', label: 'YouTube', placeholder: '@seucanal' },
@@ -1010,7 +1027,7 @@ export default function Perfil() {
                   <div className="perfil-secao-titulo">
                     <div><span className="perfil-kicker">Sobre</span><h2>Biografia</h2></div>
                   </div>
-                  <p style={{ color: 'var(--texto-secundario)', lineHeight: '1.6' }}>
+                  <p style={{ color: 'var(--texto-secundario)', lineHeight: '1.6', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {usuario.bio || 'Este jogador ainda não escreveu nenhuma biografia.'}
                   </p>
 
@@ -1160,7 +1177,7 @@ export default function Perfil() {
                             ) : listaAmigos.map((amigo) => (
                               <article className="perfil-amigo" key={amigo.amizade_id}>
                                 <Link
-                                  to={`/perfil/${amigo.id}`}
+                                  to={`/perfil/${amigo.nome_usuario}`}
                                   style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
                                   title={`Ver perfil de ${amigo.nome_usuario ? `@${amigo.nome_usuario}` : amigo.nome}`}
                                 >
@@ -1194,7 +1211,7 @@ export default function Perfil() {
                             ) : pedidosPendentes.map((p) => (
                               <article className="perfil-amigo perfil-amigo-pendente" key={p.id}>
                                 <Link
-                                  to={`/perfil/${p.remetente?.id}`}
+                                  to={`/perfil/${p.remetente?.nome_usuario}`}
                                   style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
                                   title={`Ver perfil de ${p.remetente?.nome_usuario ? `@${p.remetente.nome_usuario}` : p.remetente?.nome}`}
                                 >
@@ -1230,7 +1247,7 @@ export default function Perfil() {
                             ) : pedidosEnviados.map((e) => (
                               <article className="perfil-amigo" key={e.id} style={{ opacity: 0.8 }}>
                                 <Link
-                                  to={`/perfil/${e.destinatario?.id}`}
+                                  to={`/perfil/${e.destinatario?.nome_usuario}`}
                                   style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
                                   title={`Ver perfil de ${e.destinatario?.nome_usuario ? `@${e.destinatario.nome_usuario}` : e.destinatario?.nome}`}
                                 >

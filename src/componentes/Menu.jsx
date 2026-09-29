@@ -493,7 +493,7 @@ export default function Menu({ children }) {
                       amigosFiltrados.map((amigo) => (
                         <div key={amigo.id} className="dropdown-amigo-item">
                           <Link 
-                            to={`/perfil/${amigo.id}`} 
+                            to={`/perfil/${amigo.nome_usuario}`} 
                             className="dropdown-amigo-perfil-link"
                             onClick={() => setMenuAberto(false)}
                             title={`Ver perfil de ${amigo.name}`}
