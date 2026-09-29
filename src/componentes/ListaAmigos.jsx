@@ -279,7 +279,7 @@ function ListaAmigos() {
                 amigos.map((amigo) => (
                   <div key={amigo.amizade_id} className="amigo-item">
                     <Link
-                      to={`/perfil/${amigo.id}`}
+                      to={`/perfil/${amigo.nome_usuario}`}
                       onClick={() => setIsOpen(false)}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
                       title={`Ver perfil de ${amigo.nome_usuario || amigo.nome}`}
@@ -321,7 +321,7 @@ function ListaAmigos() {
               pendentes.map((p) => (
                 <div key={p.id} className="amigo-item amigo-pedido">
                   <Link
-                    to={`/perfil/${p.remetente?.id}`}
+                    to={`/perfil/${p.remetente?.nome_usuario}`}
                     onClick={() => setIsOpen(false)}
                     style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
                     title={`Ver perfil de ${p.remetente?.nome_usuario || p.remetente?.nome}`}

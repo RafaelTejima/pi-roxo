@@ -48,7 +48,7 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/perfil" element={<Perfil />} />
-          <Route path="/perfil/:id" element={<Perfil />} />
+          <Route path="/perfil/:nome_usuario" element={<Perfil />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </Menu>
