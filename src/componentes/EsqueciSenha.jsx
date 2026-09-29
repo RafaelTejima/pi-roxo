@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import AuroraBackground from './AuroraBackground';
 
 export default function EsqueciSenha() {
   return (
-    <main className="auth-page">
+    <main className="auth-page fundo-aurora-motion">
+      <AuroraBackground />
       <div className="auth-card">
         <h2>Recuperar Senha</h2>
         <form className="auth-form" onSubmit={(e) => e.preventDefault()}>

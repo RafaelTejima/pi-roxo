@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Suporte from './Suporte';
 import '../css/faq.css';
+import AuroraBackground from './AuroraBackground';
 
 const faqCategories = [
   {
@@ -104,8 +105,9 @@ export default function Faq() {
   };
 
   return (
-    <main className="conteudo-principal">
-      <div className="container-faq">
+    <main className="conteudo-principal fundo-aurora-motion">
+      <AuroraBackground />
+      <div className="container-faq faq-container">
         <div className="secao-titulo">
           <h1>PERGUNTAS FREQUENTES</h1>
           <p>

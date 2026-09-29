@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import { useAlerta } from './AlertaModal';
+import AuroraBackground from './AuroraBackground';
 
 export default function Cadastrar() {
   const [nome, setNome] = useState('');
@@ -67,7 +68,8 @@ export default function Cadastrar() {
   };
 
   return (
-    <main className="auth-page">
+    <main className="auth-page fundo-aurora-motion">
+      <AuroraBackground />
       <div className="auth-card">
         <h2>Cadastrar</h2>
         <form className="auth-form" onSubmit={handleCadastrar}>
