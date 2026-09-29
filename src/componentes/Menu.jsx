@@ -1,111 +1,320 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAlerta } from './AlertaModal';
+import { supabase } from '../supabase';
 
 import './menu.css';
-
-const MOCK_AMIGOS = [
-  { id: 1, name: "FalleN", status: "online", game: "CS2" },
-  { id: 2, name: "coldzera", status: "offline" },
-  { id: 3, name: "fer", status: "online", game: "CS2" },
-  { id: 4, name: "TACO", status: "online" },
-  { id: 5, name: "fnx", status: "offline" },
-  { id: 6, name: "gaules", status: "online", game: "Streaming" },
-];
 
 export default function Menu({ children }) {
   const location = useLocation();
   const { mostrarAlerta } = useAlerta();
-  const [usuarioLogado, setUsuarioLogado] = useState(null);
-  const [menuAberto, setMenuAberto] = useState(false);
-  const [buscaAmigo, setBuscaAmigo] = useState('');
-  const [amigos, setAmigos] = useState(() => {
+  const [usuarioLogado, setUsuarioLogado] = useState(() => {
     try {
-      const salvas = localStorage.getItem('listaAmigosUsuario');
-      return salvas ? JSON.parse(salvas) : MOCK_AMIGOS;
+      const salvo = localStorage.getItem('usuarioLogado');
+      return salvo ? JSON.parse(salvo) : null;
     } catch {
-      return MOCK_AMIGOS;
+      return null;
     }
   });
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [buscaAmigo, setBuscaAmigo] = useState('');
+  const [amigosDropdown, setAmigosDropdown] = useState(() => {
+    try {
+      const salvas = localStorage.getItem('listaAmigosUsuario');
+      return salvas ? JSON.parse(salvas) : [];
+    } catch {
+      return [];
+    }
+  });
+  const amigos = amigosDropdown;
+  const setAmigos = setAmigosDropdown;
+
+  const isBuscandoAmigosRef = useRef(false);
+
+  // Busca consolidada e validação cruzada rigorosa contra a tabela 'usuarios' do Supabase
+  const carregarAmigosConsolidados = useCallback(async (usuarioAtual) => {
+    const salvo = localStorage.getItem('usuarioLogado');
+    const user = usuarioAtual || (salvo ? JSON.parse(salvo) : null);
+    if (!user?.id || !supabase) {
+      setAmigosDropdown([]);
+      return;
+    }
+
+    if (isBuscandoAmigosRef.current) return;
+    isBuscandoAmigosRef.current = true;
+
+    try {
+      // 1. Buscar todas as amizades do usuário no Supabase
+      const { data: aceitas, error: errAceitas } = await supabase
+        .from('amizades')
+        .select('id, status, id_usuario1, id_usuario2')
+        .or(`id_usuario1.eq.${user.id},id_usuario2.eq.${user.id}`);
+
+      if (errAceitas) throw errAceitas;
+
+      const relacoesAceitas = (aceitas || []).filter(
+        (a) => String(a.status).toUpperCase() === 'ACEITO'
+      );
+
+      // Extrair IDs de amigos reais confirmados na tabela amizades
+      const idsAmigosBanco = [
+        ...new Set(
+          relacoesAceitas.map((a) =>
+            String(a.id_usuario1) === String(user.id) ? String(a.id_usuario2) : String(a.id_usuario1)
+          )
+        )
+      ].filter(Boolean);
+
+      // Ler cache local existente para validação cruzada
+      let amigosStorage = [];
+      try {
+        const salvas = localStorage.getItem('listaAmigosUsuario');
+        if (salvas) amigosStorage = JSON.parse(salvas);
+      } catch {}
+
+      const idsParaValidar = [
+        ...new Set([
+          ...idsAmigosBanco,
+          ...amigosStorage.map((a) => String(a.id))
+        ])
+      ].filter(Boolean);
+
+      // Se não há nenhum amigo válido no banco nem no cache
+      if (idsParaValidar.length === 0 || idsAmigosBanco.length === 0) {
+        setAmigosDropdown([]);
+        localStorage.setItem('listaAmigosUsuario', JSON.stringify([]));
+        localStorage.setItem('listaAmigosPerfil', JSON.stringify([]));
+        return;
+      }
+
+      // 2. Validação cruzada estrita na tabela 'usuarios' (sem time_usuario)
+      const { data: usuariosAtivos, error: errVal } = await supabase
+        .from('usuarios')
+        .select('id, nome, nome_usuario, imagem, status')
+        .in('id', idsParaValidar);
+
+      if (errVal) throw errVal;
+
+      // Buscar equipes dos amigos via times_integrantes
+      const mapaTimes = new Map();
+      try {
+        const { data: membrosTimes } = await supabase
+          .from('times_integrantes')
+          .select(`
+            id_usuario,
+            funcao,
+            times ( id, nome, tag )
+          `)
+          .in('id_usuario', idsParaValidar);
+
+        (membrosTimes || []).forEach((m) => {
+          const t = Array.isArray(m.times) ? m.times[0] : m.times;
+          if (t) {
+            const rotulo = t.tag ? `[${t.tag}] ${t.nome}` : t.nome;
+            mapaTimes.set(String(m.id_usuario), rotulo);
+          }
+        });
+      } catch (eTimes) {
+        console.warn('Erro ao carregar times dos amigos no Menu:', eTimes);
+      }
+
+      const mapaAtivos = new Map((usuariosAtivos || []).map((u) => [String(u.id), u]));
+      const amigosValidados = [];
+      const idsVistos = new Set();
+
+      for (const rel of relacoesAceitas) {
+        const amigoId = String(rel.id_usuario1) === String(user.id)
+          ? String(rel.id_usuario2)
+          : String(rel.id_usuario1);
+
+        if (mapaAtivos.has(amigoId) && !idsVistos.has(amigoId)) {
+          idsVistos.add(amigoId);
+          const u = mapaAtivos.get(amigoId);
+          amigosValidados.push({
+            id: u.id,
+            amizade_id: rel.id,
+            name: u.nome_usuario || u.nome || 'Jogador',
+            nome: u.nome || u.nome_usuario,
+            nome_usuario: u.nome_usuario || u.nome,
+            time_usuario: mapaTimes.get(amigoId) || 'Sem equipe',
+            imagem: u.imagem || '',
+            status: u.status || 'online',
+            game: 'CS2'
+          });
+        } else if (!mapaAtivos.has(amigoId)) {
+          // Amigo foi deletado da tabela usuarios: expurga imediatamente o registro órfão
+          if (rel.id) {
+            supabase.from('amizades').delete().eq('id', rel.id).catch(() => {});
+          }
+        }
+      }
+
+      // 3. Forçar imediatamente a atualização do estado local do dropdown e sobrescrever o localStorage
+      setAmigosDropdown(amigosValidados);
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(amigosValidados));
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(amigosValidados));
+    } catch (err) {
+      console.warn('Erro ao carregar e validar amigos no Menu:', err);
+    } finally {
+      isBuscandoAmigosRef.current = false;
+    }
+  }, []);
+
+  const checarUsuario = useCallback(() => {
+    try {
+      const salvo = localStorage.getItem('usuarioLogado');
+      const user = salvo ? JSON.parse(salvo) : null;
+      setUsuarioLogado((prev) => {
+        if (!user && !prev) return null;
+        if (
+          user &&
+          prev &&
+          String(user.id) === String(prev.id) &&
+          user.nome === prev.nome &&
+          user.email === prev.email &&
+          user.imagem === prev.imagem &&
+          user.admin === prev.admin
+        ) {
+          return prev;
+        }
+        return user;
+      });
+      return user;
+    } catch {
+      setUsuarioLogado(null);
+      return null;
+    }
+  }, []);
 
   const amigosFiltrados = useMemo(() => {
     const termo = buscaAmigo.trim().toLowerCase();
-    if (!termo) return amigos;
+    if (!termo) return amigosDropdown;
 
-    return amigos.filter((amigo) => {
-      const nome = (amigo.name || amigo.nome || '').toLowerCase();
+    return amigosDropdown.filter((amigo) => {
+      const nome = (amigo.name || amigo.nome || amigo.nome_usuario || '').toLowerCase();
       const jogo = (amigo.game || '').toLowerCase();
       return nome.includes(termo) || jogo.includes(termo);
     });
-  }, [amigos, buscaAmigo]);
+  }, [amigosDropdown, buscaAmigo]);
 
+  // Revalidação sob demanda ao abrir o dropdown
   useEffect(() => {
     if (!menuAberto) {
       setBuscaAmigo('');
+    } else {
+      const salvo = localStorage.getItem('usuarioLogado');
+      const user = salvo ? JSON.parse(salvo) : null;
+      if (user?.id) {
+        carregarAmigosConsolidados(user);
+      }
     }
-  }, [menuAberto]);
+  }, [menuAberto, carregarAmigosConsolidados]);
 
-  const handleRemoverAmigo = (e, amigo) => {
+  const handleRemoverAmigo = async (e, amigo) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const novaLista = amigos.filter((a) => a.id !== amigo.id);
-    setAmigos(novaLista);
+    const novaLista = amigosDropdown.filter((a) => a.id !== amigo.id);
+    setAmigosDropdown(novaLista);
     try {
       localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('amigosAtualizados'));
+      window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error(err);
     }
 
+    if (amigo.amizade_id && supabase) {
+      try {
+        await supabase.from('amizades').delete().eq('id', amigo.amizade_id);
+      } catch (err) {
+        console.warn('Erro ao remover amizade do Supabase:', err);
+      }
+    }
+
     mostrarAlerta({
       titulo: 'Amizade Removida',
-      mensagem: `${amigo.name} foi removido da sua lista de amigos.`,
+      mensagem: `${amigo.name || amigo.nome || 'Jogador'} foi removido da sua lista de amigos.`,
       tipo: 'aviso'
     });
   };
 
-  const handleBloquearAmigo = (e, amigo) => {
+  const handleBloquearAmigo = async (e, amigo) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const novaLista = amigos.filter((a) => a.id !== amigo.id);
-    setAmigos(novaLista);
+    const novaLista = amigosDropdown.filter((a) => a.id !== amigo.id);
+    setAmigosDropdown(novaLista);
     try {
       localStorage.setItem('listaAmigosUsuario', JSON.stringify(novaLista));
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(novaLista));
       const bloqueados = JSON.parse(localStorage.getItem('amigosBloqueados') || '[]');
       if (!bloqueados.includes(amigo.id)) {
         bloqueados.push(amigo.id);
         localStorage.setItem('amigosBloqueados', JSON.stringify(bloqueados));
       }
+      window.dispatchEvent(new Event('amigosAtualizados'));
+      window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error(err);
     }
 
+    if (amigo.amizade_id && supabase) {
+      try {
+        const salvo = localStorage.getItem('usuarioLogado');
+        const user = salvo ? JSON.parse(salvo) : null;
+        await supabase
+          .from('amizades')
+          .update({ status: 'BLOQUEADO', id_usuario1: user?.id, id_usuario2: amigo.id })
+          .eq('id', amigo.amizade_id);
+      } catch (err) {
+        console.warn('Erro ao bloquear amigo no Supabase:', err);
+      }
+    }
+
     mostrarAlerta({
       titulo: 'Jogador Bloqueado',
-      mensagem: `${amigo.name} foi bloqueado com sucesso.`,
+      mensagem: `${amigo.name || amigo.nome || 'Jogador'} foi bloqueado com sucesso.`,
       tipo: 'erro'
     });
   };
 
+  // Ciclo de vida global: montagem única com listeners protegidos e sem dependência de location.pathname
   useEffect(() => {
-    const checarUsuario = () => {
-      try {
-        const salvo = localStorage.getItem('usuarioLogado');
-        setUsuarioLogado(salvo ? JSON.parse(salvo) : null);
-      } catch (error) {
-        console.error('Erro ao fazer parse do usuarioLogado:', error);
-        setUsuarioLogado(null);
+    const user = checarUsuario();
+    if (user?.id) {
+      carregarAmigosConsolidados(user);
+    }
+
+    const onAmigosAtualizados = () => {
+      const salvo = localStorage.getItem('usuarioLogado');
+      const u = salvo ? JSON.parse(salvo) : null;
+      if (u?.id) {
+        carregarAmigosConsolidados(u);
+      } else {
+        setAmigosDropdown([]);
       }
     };
 
-    checarUsuario();
+    const onStorageChange = () => {
+      const u = checarUsuario();
+      if (u?.id) {
+        carregarAmigosConsolidados(u);
+      } else {
+        setAmigosDropdown([]);
+      }
+    };
 
-    window.addEventListener('storage', checarUsuario);
-    return () => window.removeEventListener('storage', checarUsuario);
-  }, [location.pathname]);
+    window.addEventListener('storage', onStorageChange);
+    window.addEventListener('amigosAtualizados', onAmigosAtualizados);
+    return () => {
+      window.removeEventListener('storage', onStorageChange);
+      window.removeEventListener('amigosAtualizados', onAmigosAtualizados);
+    };
+  }, [checarUsuario, carregarAmigosConsolidados]);
 
-  // Fechar o menu dropdown ao clicar fora
+  // Fechar o menu dropdown ao clicar fora com cleanup obrigatório
   useEffect(() => {
     const fecharAoClicarFora = (e) => {
       if (!e.target.closest('.menu-usuario-container')) {
@@ -118,8 +327,13 @@ export default function Menu({ children }) {
 
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogado');
+    localStorage.removeItem('listaAmigosUsuario');
+    localStorage.removeItem('listaAmigosPerfil');
     setUsuarioLogado(null);
+    setAmigosDropdown([]);
     setMenuAberto(false);
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
   };
 
   return (

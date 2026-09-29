@@ -4,7 +4,9 @@
 
 #pagina-equipes {
   max-width: 1200px;
-  margin: 160px auto 110px;
+  min-height: calc(100vh - 280px);
+  min-height: 750px;
+  margin: 160px auto 80px;
   padding: 0 20px;
   position: relative;
   overflow: visible;
@@ -226,14 +228,14 @@
   z-index: 10;
 }
 
-/* --- Camada Intermediária: Agente EVA-06 (sobre o rodapé e sobre o brilho, atrás dos cards) --- */
+/* --- Camada Intermediária: Agente EVA-06 (sobre o brilho, atrás dos cards) --- */
 .equipes-personagem-wrap {
   position: absolute;
   top: 180px;
   right: -420px;
   left: auto;
   bottom: auto;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
   width: clamp(430px, 35vw, 540px);
   display: flex;
@@ -242,6 +244,8 @@
   opacity: 0.95;
   filter: drop-shadow(0 14px 35px rgba(0, 0, 0, 0.85));
   transition: all 0.3s ease;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 58%, rgba(0, 0, 0, 0) 98%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 58%, rgba(0, 0, 0, 0) 98%);
 }
 
 .equipes-personagem-img {
@@ -250,12 +254,14 @@
   object-fit: contain;
   display: block;
   pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 58%, rgba(0, 0, 0, 0) 98%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 58%, rgba(0, 0, 0, 0) 98%);
 }
 
-/* --- Camada Mais Baixa: Rodapé Global (atrás da personagem) --- */
+/* --- Rodapé Global: Sempre na camada superior e perfeitamente visível --- */
 .rodape-global {
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 /* --- Responsividade --- */

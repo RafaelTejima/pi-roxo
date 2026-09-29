@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import '../css/equipes.css';
@@ -90,12 +90,129 @@ export default function Equipes() {
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
 
-  useEffect(() => {
-    async function carregarEquipes() {
-      setCarregando(true);
-      setErro('');
+  const carregarEquipes = useCallback(async () => {
+    setCarregando(true);
+    setErro('');
 
-      // 1. Carregar equipes criadas no localStorage
+    let equipesSupabase = [];
+    let carregouDoBanco = false;
+
+    // 1. Sempre buscar a lista mais atualizada diretamente do Supabase via JOIN com times_integrantes
+    try {
+      if (supabase) {
+        let timesData = null;
+        let buscaJoinSucesso = false;
+
+        try {
+          const { data: timesComJoin, error: erroJoin } = await supabase
+            .from('times')
+            .select(`
+              *,
+              times_integrantes (
+                id,
+                id_usuario,
+                funcao,
+                usuarios ( id, nome, nome_usuario )
+              )
+            `)
+            .order('registro', { ascending: false });
+
+          if (!erroJoin && timesComJoin) {
+            timesData = timesComJoin;
+            buscaJoinSucesso = true;
+          }
+        } catch (errJoin) {
+          console.warn('Tentativa com join em times_integrantes falhou, tentando fallback relacional:', errJoin);
+        }
+
+        if (buscaJoinSucesso && timesData) {
+          carregouDoBanco = true;
+          equipesSupabase = timesData.map((time) => {
+            const integrantesArray = time.times_integrantes || [];
+            const capitaoObj = integrantesArray.find((ti) => ti.funcao === 'capitao');
+            const capUser = Array.isArray(capitaoObj?.usuarios) ? capitaoObj.usuarios[0] : capitaoObj?.usuarios;
+            const capitaoNome = capUser?.nome_usuario || capUser?.nome || time.capitao || 'Não informado';
+
+            return {
+              ...time,
+              capitaoNome,
+              totalIntegrantes: integrantesArray.length || 1,
+              jogadores: integrantesArray.map((ti) => {
+                const u = Array.isArray(ti.usuarios) ? ti.usuarios[0] : ti.usuarios;
+                return {
+                  id: ti.id_usuario,
+                  nome: u?.nome_usuario || u?.nome || 'Jogador',
+                  funcao: ti.funcao
+                };
+              })
+            };
+          });
+        } else {
+          // Fallback estruturado com times_integrantes
+          const { data: times, error } = await supabase
+            .from('times')
+            .select('*')
+            .order('registro', { ascending: false });
+
+          if (!error && times !== null) {
+            carregouDoBanco = true;
+            if (times.length > 0) {
+              const idsTimes = times.map((t) => t.id);
+
+              const { data: integrantes } = await supabase
+                .from('times_integrantes')
+                .select(`
+                  id,
+                  id_time,
+                  id_usuario,
+                  funcao,
+                  usuarios ( id, nome, nome_usuario )
+                `)
+                .in('id_time', idsTimes);
+
+              equipesSupabase = times.map((time) => {
+                const membrosDesteTime = (integrantes || []).filter(
+                  (i) => String(i.id_time) === String(time.id)
+                );
+                const cap = membrosDesteTime.find((m) => m.funcao === 'capitao');
+                const u = Array.isArray(cap?.usuarios) ? cap.usuarios[0] : cap?.usuarios;
+                const capitaoNome = u?.nome_usuario || u?.nome || time.capitao || 'Não informado';
+
+                return {
+                  ...time,
+                  capitaoNome,
+                  totalIntegrantes: membrosDesteTime.length || 1
+                };
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Falha na consulta Supabase, utilizando dados locais como fallback:', err);
+    }
+
+    const todas = [];
+    const idsVistos = new Set();
+
+    if (carregouDoBanco) {
+      // 2. O localStorage é IMEDIATAMENTE sobrescrito com os dados frescos do banco,
+      // garantindo que times deletados desapareçam da interface e do cache.
+      try {
+        localStorage.setItem('equipesCadastradas', JSON.stringify(equipesSupabase));
+      } catch (err) {
+        console.warn('Erro ao atualizar localStorage de equipes:', err);
+      }
+
+      // Renderiza estritamente as equipes ativas do banco
+      equipesSupabase.forEach((eq) => {
+        if (eq && eq.id && !idsVistos.has(String(eq.id))) {
+          idsVistos.add(String(eq.id));
+          todas.push(eq);
+        }
+      });
+    } else {
+      // Fallback offline estrito caso o banco esteja inacessível
       let equipesLocais = [];
       try {
         const salvas = localStorage.getItem('equipesCadastradas');
@@ -106,81 +223,50 @@ export default function Equipes() {
         console.warn('Erro ao ler equipes do localStorage:', err);
       }
 
-      // 2. Carregar equipes do Supabase (se disponível)
-      let equipesSupabase = [];
-      try {
-        if (supabase) {
-          const { data: times, error } = await supabase
-            .from('times')
-            .select('*')
-            .order('registro', { ascending: false });
-
-          if (!error && times && times.length > 0) {
-            const idsCapitaes = [...new Set(times.map((t) => t.id_capitao).filter(Boolean))];
-            const idsTimes = times.map((t) => t.id);
-
-            const [{ data: capitaes }, { data: integrantes }] = await Promise.all([
-              idsCapitaes.length
-                ? supabase.from('usuarios').select('id, nome, nome_usuario').in('id', idsCapitaes)
-                : Promise.resolve({ data: [] }),
-              idsTimes.length
-                ? supabase.from('times_integrantes').select('id_time').in('id_time', idsTimes)
-                : Promise.resolve({ data: [] })
-            ]);
-
-            equipesSupabase = times.map((time) => {
-              const capitao = capitaes?.find((c) => c.id === time.id_capitao);
-              const totalIntegrantes = integrantes?.filter((i) => i.id_time === time.id).length || 0;
-              return {
-                ...time,
-                capitaoNome: capitao?.nome_usuario || capitao?.nome || 'Não informado',
-                totalIntegrantes
-              };
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Falha na consulta Supabase, utilizando dados locais:', err);
-      }
-
-      // 3. Consolidar lista unificada: LocalStorage + Supabase + Times Padrão
-      const todas = [];
-      const idsVistos = new Set();
-
-      // Equipes criadas pelo usuário
       equipesLocais.forEach((eq) => {
         if (eq && eq.id && !idsVistos.has(String(eq.id))) {
           idsVistos.add(String(eq.id));
           todas.push({
             ...eq,
             capitaoNome: eq.capitao || eq.capitaoNome || 'Não informado',
-            totalIntegrantes: eq.jogadores?.length || 1
+            totalIntegrantes: eq.jogadores?.length || eq.totalIntegrantes || 1
           });
         }
       });
-
-      // Equipes do Supabase
-      equipesSupabase.forEach((eq) => {
-        if (eq && eq.id && !idsVistos.has(String(eq.id))) {
-          idsVistos.add(String(eq.id));
-          todas.push(eq);
-        }
-      });
-
-      // Times Padrão
-      TIMES_PADRAO.forEach((eq) => {
-        if (eq && eq.id && !idsVistos.has(String(eq.id))) {
-          idsVistos.add(String(eq.id));
-          todas.push(eq);
-        }
-      });
-
-      setEquipes(todas);
-      setCarregando(false);
     }
 
-    carregarEquipes();
+    // 3. Adiciona Times Padrão de demonstração (caso não existam no banco)
+    TIMES_PADRAO.forEach((eq) => {
+      if (eq && eq.id && !idsVistos.has(String(eq.id))) {
+        idsVistos.add(String(eq.id));
+        todas.push(eq);
+      }
+    });
+
+    if (isMountedCheck && !isMountedCheck()) return;
+
+    setEquipes(todas);
+    setCarregando(false);
   }, []);
+
+  useEffect(() => {
+    let montado = true;
+    const isMountedCheck = () => montado;
+
+    carregarEquipes(isMountedCheck);
+
+    const onUpdate = () => {
+      if (montado) carregarEquipes(isMountedCheck);
+    };
+
+    window.addEventListener('storage', onUpdate);
+    window.addEventListener('equipesAtualizadas', onUpdate);
+    return () => {
+      montado = false;
+      window.removeEventListener('storage', onUpdate);
+      window.removeEventListener('equipesAtualizadas', onUpdate);
+    };
+  }, [carregarEquipes]);
 
   const termoBusca = busca.trim().toLowerCase();
   const equipesFiltradas = termoBusca

@@ -170,25 +170,166 @@ export default function CriarEquipe() {
       return
     }
 
+    if (!usuario?.id) {
+      const msgErro = 'Você precisa estar logado para registrar uma equipe.'
+      setErro(msgErro)
+      mostrarAlerta({
+        titulo: 'Autenticação Necessária',
+        mensagem: msgErro,
+        tipo: 'aviso',
+        botaoTexto: 'Fazer Login',
+        onConfirmar: () => navigate('/login')
+      })
+      return
+    }
+
     setEnviando(true)
 
+    const nomeLimpo = equipe.nome.trim()
+    const tagLimpa = equipe.sigla.trim().toUpperCase()
+    const descLimpa = equipe.descricao.trim()
+    const idGerado = 'team-' + Date.now()
+
+    let timeIdFinal = idGerado
+
+    // 1. Tentar salvar no Supabase na tabela normalizada 'times'
+    if (supabase) {
+      try {
+        let insertPayload = {
+          id: idGerado,
+          nome: nomeLimpo,
+          tag: tagLimpa,
+          descricao: descLimpa,
+          id_capitao: usuario.id,
+          capitao: usuario.nome || usuario.email,
+          registro: new Date().toISOString()
+        }
+
+        let { data: timeInserido, error: erroTimes } = await supabase
+          .from('times')
+          .insert(insertPayload)
+          .select()
+          .maybeSingle()
+
+        // Caso o banco gere ID automaticamente (UUID/serial) e rejeite string customizada
+        if (erroTimes && (erroTimes.message?.includes('syntax for type') || erroTimes.code === '22P02')) {
+          delete insertPayload.id
+          const retry = await supabase
+            .from('times')
+            .insert(insertPayload)
+            .select()
+            .maybeSingle()
+          timeInserido = retry.data
+          erroTimes = retry.error
+        }
+
+        // Tratamento rigoroso de restrições UNIQUE (23505) e erros de duplicidade
+        if (erroTimes) {
+          const msgLower = (erroTimes.message || '').toLowerCase()
+          const detLower = (erroTimes.details || '').toLowerCase()
+          const isUnique = erroTimes.code === '23505' || msgLower.includes('duplicate key') || msgLower.includes('unique constraint') || msgLower.includes('already exists')
+
+          if (isUnique) {
+            setEnviando(false)
+            if (msgLower.includes('tag') || detLower.includes('tag') || msgLower.includes('times_tag_key')) {
+              const msg = 'Esta TAG já está em uso por outra equipe. Escolha outra sigla/TAG.'
+              setErro(msg)
+              mostrarAlerta({
+                titulo: 'TAG Indisponível',
+                mensagem: msg,
+                tipo: 'aviso'
+              })
+              return
+            }
+            if (msgLower.includes('nome') || detLower.includes('nome') || msgLower.includes('times_nome_key')) {
+              const msg = 'Já existe uma equipe cadastrada com este nome. Escolha outro nome.'
+              setErro(msg)
+              mostrarAlerta({
+                titulo: 'Nome Indisponível',
+                mensagem: msg,
+                tipo: 'aviso'
+              })
+              return
+            }
+            const msg = 'Já existe uma equipe cadastrada com este nome ou TAG.'
+            setErro(msg)
+            mostrarAlerta({
+              titulo: 'Equipe Já Existente',
+              mensagem: msg,
+              tipo: 'aviso'
+            })
+            return
+          }
+
+          console.warn('Erro ao inserir em times no Supabase:', erroTimes)
+        } else if (timeInserido) {
+          timeIdFinal = timeInserido.id || idGerado
+
+          // Inserir capitão e jogadores na tabela normalizada times_integrantes
+          try {
+            const todosMembros = [
+              { id_time: timeIdFinal, id_usuario: usuario.id, funcao: 'capitao' },
+              ...jogadores.map((j) => ({ id_time: timeIdFinal, id_usuario: j.id, funcao: 'jogador' }))
+            ]
+            const { error: erroMembros } = await supabase.from('times_integrantes').insert(todosMembros)
+            if (erroMembros) {
+              // Fallback para apenas o capitão caso algum convidado seja mock com ID inexistente no banco
+              await supabase.from('times_integrantes').insert([
+                { id_time: timeIdFinal, id_usuario: usuario.id, funcao: 'capitao' }
+              ]).catch(() => {})
+            }
+          } catch (errMembros) {
+            console.warn('Erro ao vincular membros em times_integrantes:', errMembros)
+          }
+        }
+      } catch (err) {
+        console.warn('Falha na comunicação com Supabase:', err)
+      }
+
+      // 2. Tabela legada 'teams' (fallback de compatibilidade)
+      try {
+        const { data: novaEquipeDb, error: erroEquipe } = await supabase
+          .from('teams')
+          .insert({
+            name: nomeLimpo,
+            tag: tagLimpa,
+            description: descLimpa,
+            captain_id: usuario.id,
+            avatar_url: 'https://placehold.co/96x96/723EC3/FFFFFF?text=TEAM'
+          })
+          .select()
+          .maybeSingle()
+
+        if (!erroEquipe && novaEquipeDb) {
+          const membros = [
+            { team_id: novaEquipeDb.id, user_id: usuario.id, role: 'captain' },
+            ...jogadores.map((j) => ({ team_id: novaEquipeDb.id, user_id: j.id, role: 'player' }))
+          ]
+          await supabase.from('team_members').insert(membros).catch(() => {})
+        }
+      } catch (err) {
+        // Tabela teams opcional
+      }
+    }
+
+    // Salvar no localStorage para que a lista em /equipes exiba imediatamente
     const novaEquipeObj = {
-      id: 'team-' + Date.now(),
-      nome: equipe.nome.trim(),
-      tag: equipe.sigla.trim().toUpperCase(),
-      descricao: equipe.descricao.trim(),
+      id: timeIdFinal,
+      nome: nomeLimpo,
+      tag: tagLimpa,
+      descricao: descLimpa,
       capitao: usuario.nome || usuario.email,
       id_capitao: usuario.id,
+      capitaoNome: usuario.nome || usuario.email,
       totalIntegrantes: jogadores.length + 1,
       jogadoresCount: `${jogadores.length + 1}/5`,
       jogadores: [
-        { id: usuario.id, nome: usuario.nome || usuario.email, role: 'captain' },
-        ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, role: 'player' }))
+        { id: usuario.id, nome: usuario.nome || usuario.email, funcao: 'capitao', role: 'captain' },
+        ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, funcao: 'jogador', role: 'player' }))
       ],
       createdAt: new Date().toISOString()
     }
 
-    // Salvar no localStorage para que a lista em /equipes exiba imediatamente
     try {
       const salvas = localStorage.getItem('equipesCadastradas')
       const lista = salvas ? JSON.parse(salvas) : []
@@ -198,36 +339,14 @@ export default function CriarEquipe() {
       console.error('Erro ao salvar no localStorage:', err)
     }
 
-    // Integração Supabase opcional
-    try {
-      const { data: novaEquipeDb, error: erroEquipe } = await supabase
-        .from('teams')
-        .insert({
-          name: equipe.nome.trim(),
-          tag: equipe.sigla.trim().toUpperCase(),
-          description: equipe.descricao.trim(),
-          captain_id: usuario.id,
-          avatar_url: 'https://placehold.co/96x96/723EC3/FFFFFF?text=TEAM'
-        })
-        .select()
-        .single()
-
-      if (!erroEquipe && novaEquipeDb) {
-        const membros = [
-          { team_id: novaEquipeDb.id, user_id: usuario.id, role: 'captain' },
-          ...jogadores.map((j) => ({ team_id: novaEquipeDb.id, user_id: j.id, role: 'player' }))
-        ]
-        await supabase.from('team_members').insert(membros)
-      }
-    } catch (err) {
-      console.warn('Integração Supabase opcional:', err)
-    }
+    window.dispatchEvent(new Event('equipesAtualizadas'))
+    window.dispatchEvent(new Event('storage'))
 
     setEnviando(false)
     setSucesso('Equipe criada com sucesso!')
     mostrarAlerta({
       titulo: 'Equipe Registrada!',
-      mensagem: `A equipe "${equipe.nome.trim()}" [${equipe.sigla.trim().toUpperCase()}] foi cadastrada com sucesso!`,
+      mensagem: `A equipe "${nomeLimpo}" [${tagLimpa}] foi cadastrada com sucesso!`,
       tipo: 'sucesso',
       botaoTexto: 'Ver Equipes',
       onConfirmar: () => navigate('/equipes')

@@ -111,12 +111,16 @@ export default function Perfil() {
   const buscarAmigoRef = useRef(null);
 
   // ------------------------------------------------------------------
+  // ------------------------------------------------------------------
   // CARREGAMENTO DO PERFIL
   // ------------------------------------------------------------------
   useEffect(() => {
+    let ativo = true;
+
     async function carregarPerfil() {
       const salvo = localStorage.getItem('usuarioLogado');
       const userLocal = salvo ? JSON.parse(salvo) : null;
+      if (!ativo) return;
       setUsuarioLogado(userLocal);
 
       if (id && (!userLocal || String(userLocal.id) !== String(id))) {
@@ -125,29 +129,79 @@ export default function Perfil() {
 
         // 1. Mock pré-configurado
         if (MOCK_PERFIS_AMIGOS[String(id)]) {
-          setUsuario(MOCK_PERFIS_AMIGOS[String(id)]);
-          setLoading(false);
+          if (ativo) {
+            setUsuario(MOCK_PERFIS_AMIGOS[String(id)]);
+            setLoading(false);
+          }
           return;
         }
 
-        // 2. Busca no Supabase
-        const { data } = await supabase
-          .from('usuarios')
-          .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro')
-          .eq('id', id)
-          .single();
+        // 2. Busca no Supabase com JOIN em times_integrantes para obter a equipe atual
+        let dadosUsuario = null;
+        try {
+          const { data: uComJoin } = await supabase
+            .from('usuarios')
+            .select(`
+              id, nome, nome_usuario, bio, imagem, registro,
+              times_integrantes (
+                id,
+                funcao,
+                times ( id, nome, tag, logo )
+              )
+            `)
+            .eq('id', id)
+            .maybeSingle();
 
-        setUsuario(data || {
-          id,
-          nome: `Jogador #${id}`,
-          nome_usuario: `jogador_${id}`,
-          time_usuario: 'Sem equipe',
-          bio: 'Perfil público de jogador na plataforma.',
-          imagem: '',
-          registro: new Date().toISOString(),
-          status: 'offline'
-        });
-        setLoading(false);
+          if (uComJoin) {
+            const ti = uComJoin.times_integrantes?.[0];
+            const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
+            const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+            dadosUsuario = {
+              ...uComJoin,
+              time_usuario: timeNome
+            };
+          }
+        } catch (eJoin) {
+          console.warn('Tentativa com join em times_integrantes falhou no perfil publico:', eJoin);
+        }
+
+        if (!dadosUsuario) {
+          const { data: uSimples } = await supabase
+            .from('usuarios')
+            .select('id, nome, nome_usuario, bio, imagem, registro')
+            .eq('id', id)
+            .maybeSingle();
+
+          if (uSimples) {
+            const { data: ti } = await supabase
+              .from('times_integrantes')
+              .select('id, id_time, funcao, times ( id, nome, tag )')
+              .eq('id_usuario', id)
+              .maybeSingle();
+
+            const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
+            const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+
+            dadosUsuario = {
+              ...uSimples,
+              time_usuario: timeNome
+            };
+          }
+        }
+
+        if (ativo) {
+          setUsuario(dadosUsuario || {
+            id,
+            nome: `Jogador #${id}`,
+            nome_usuario: `jogador_${id}`,
+            time_usuario: 'Sem equipe',
+            bio: 'Perfil público de jogador na plataforma.',
+            imagem: '',
+            registro: new Date().toISOString(),
+            status: 'offline'
+          });
+          setLoading(false);
+        }
         return;
       }
 
@@ -155,85 +209,295 @@ export default function Perfil() {
       setIsPublico(false);
       if (!userLocal?.id) { navigate('/login'); return; }
 
-      const { data } = await supabase
-        .from('usuarios')
-        .select('id, nome, nome_usuario, time_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
-        .eq('id', userLocal.id)
-        .single();
+      let dadosUsuarioProprio = null;
+      try {
+        const { data: uComJoin } = await supabase
+          .from('usuarios')
+          .select(`
+            id, nome, nome_usuario, bio, imagem, registro, admin,
+            conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky,
+            times_integrantes (
+              id,
+              funcao,
+              times ( id, nome, tag, logo )
+            )
+          `)
+          .eq('id', userLocal.id)
+          .maybeSingle();
 
-      setUsuario(data || userLocal);
-      setLoading(false);
+        if (uComJoin) {
+          const ti = uComJoin.times_integrantes?.[0];
+          const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
+          const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+
+          dadosUsuarioProprio = {
+            ...uComJoin,
+            time_usuario: timeNome
+          };
+        }
+      } catch (eJoin) {
+        console.warn('Tentativa com join no perfil proprio falhou:', eJoin);
+      }
+
+      if (!dadosUsuarioProprio) {
+        const { data: uSimples } = await supabase
+          .from('usuarios')
+          .select('id, nome, nome_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
+          .eq('id', userLocal.id)
+          .maybeSingle();
+
+        if (uSimples) {
+          const { data: ti } = await supabase
+            .from('times_integrantes')
+            .select('id, id_time, funcao, times ( id, nome, tag )')
+            .eq('id_usuario', userLocal.id)
+            .maybeSingle();
+
+          const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
+          const timeNome = timeObj ? (timeObj.tag ? `[${timeObj.tag}] ${timeObj.nome}` : timeObj.nome) : 'Sem equipe';
+
+          dadosUsuarioProprio = {
+            ...uSimples,
+            time_usuario: timeNome
+          };
+        }
+      }
+
+      if (ativo) {
+        setUsuario(dadosUsuarioProprio || userLocal);
+        setLoading(false);
+      }
     }
     carregarPerfil();
+
+    return () => {
+      ativo = false;
+    };
   }, [id, navigate]);
 
   // ------------------------------------------------------------------
-  // CARREGAR AMIZADES DO SUPABASE (perfil próprio)
+  // CARREGAR AMIZADES DO SUPABASE COM VALIDAÇÃO CRUZADA (perfil próprio)
   // ------------------------------------------------------------------
-  const carregarAmizades = useCallback(async () => {
+  const isCarregandoAmizadesRef = useRef(false);
+
+  const carregarAmizades = useCallback(async (isMountedCheck) => {
     if (!usuarioLogado?.id) return;
+    if (isCarregandoAmizadesRef.current) return;
+    isCarregandoAmizadesRef.current = true;
+
     setCarregandoAmigos(true);
     try {
-      // Amizades aceitas
-      const { data: aceitas } = await supabase
+      // 1. Amizades aceitas
+      const { data: aceitas, error: errAceitas } = await supabase
         .from('amizades')
-        .select(`
-          id, status, registro,
-          usuario1:id_usuario1 ( id, nome, nome_usuario, imagem, time_usuario ),
-          usuario2:id_usuario2 ( id, nome, nome_usuario, imagem, time_usuario )
-        `)
-        .eq('status', 'ACEITO')
+        .select('id, status, registro, id_usuario1, id_usuario2')
         .or(`id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${usuarioLogado.id}`);
 
-      if (aceitas) {
-        const lista = aceitas.map((a) => {
-          const u1 = Array.isArray(a.usuario1) ? a.usuario1[0] : a.usuario1;
-          const u2 = Array.isArray(a.usuario2) ? a.usuario2[0] : a.usuario2;
-          const amigo = String(u1?.id) === String(usuarioLogado.id) ? u2 : u1;
-          if (!amigo) return null;
-          return { ...amigo, amizade_id: a.id };
-        }).filter(Boolean);
-        setListaAmigos(lista);
-      }
+      if (errAceitas) throw errAceitas;
 
-      // Pedidos recebidos (eu = usuario2)
+      const relacoesAceitas = (aceitas || []).filter(
+        (a) => String(a.status).toUpperCase() === 'ACEITO'
+      );
+
+      // 2. Pedidos recebidos (eu = usuario2)
       const { data: recebidos } = await supabase
         .from('amizades')
-        .select(`id, registro, remetente:id_usuario1 ( id, nome, nome_usuario, imagem, time_usuario )`)
+        .select('id, status, registro, id_usuario1, id_usuario2')
         .eq('id_usuario2', usuarioLogado.id)
-        .eq('status', 'PENDENTE');
+        .ilike('status', 'PENDENTE');
 
-      setPedidosPendentes((recebidos || []).map(p => ({
-        ...p,
-        remetente: Array.isArray(p.remetente) ? p.remetente[0] : p.remetente
-      })));
-
-      // Pedidos enviados (eu = usuario1)
+      // 3. Pedidos enviados (eu = usuario1)
       const { data: enviados } = await supabase
         .from('amizades')
-        .select(`id, registro, destinatario:id_usuario2 ( id, nome, nome_usuario, imagem, time_usuario )`)
+        .select('id, status, registro, id_usuario1, id_usuario2')
         .eq('id_usuario1', usuarioLogado.id)
-        .eq('status', 'PENDENTE');
+        .ilike('status', 'PENDENTE');
 
-      setPedidosEnviados((enviados || []).map(e => ({
-        ...e,
-        destinatario: Array.isArray(e.destinatario) ? e.destinatario[0] : e.destinatario
-      })));
+      // 4. Extrair candidatos brutos
+      const amigosBrutos = relacoesAceitas.map((a) => {
+        const amigoId = String(a.id_usuario1) === String(usuarioLogado.id) ? a.id_usuario2 : a.id_usuario1;
+        return {
+          amizade_id: a.id,
+          id: amigoId
+        };
+      }).filter((item) => Boolean(item.id));
 
+      const pedidosPendentesBrutos = (recebidos || []).map((p) => ({
+        id: p.id,
+        registro: p.registro,
+        remetenteId: p.id_usuario1
+      })).filter((item) => Boolean(item.remetenteId));
+
+      const pedidosEnviadosBrutos = (enviados || []).map((e) => ({
+        id: e.id,
+        registro: e.registro,
+        destinatarioId: e.id_usuario2
+      })).filter((item) => Boolean(item.destinatarioId));
+
+      // 5. Coletar todos os IDs para validação cruzada no banco
+      let amigosStorage = [];
+      try {
+        const salvas = localStorage.getItem('listaAmigosUsuario');
+        if (salvas) amigosStorage = JSON.parse(salvas);
+      } catch {}
+
+      const idsParaValidar = [...new Set([
+        ...amigosBrutos.map((a) => String(a.id)),
+        ...pedidosPendentesBrutos.map((p) => String(p.remetenteId)),
+        ...pedidosEnviadosBrutos.map((e) => String(e.destinatarioId)),
+        ...amigosStorage.map((s) => String(s.id))
+      ])].filter(Boolean);
+
+      if (idsParaValidar.length > 0) {
+        // Validação cruzada estrita na tabela 'usuarios' do Supabase (sem a coluna descontinuada time_usuario)
+        const { data: usuariosAtivos, error: errVal } = await supabase
+          .from('usuarios')
+          .select('id, nome, nome_usuario, imagem, status')
+          .in('id', idsParaValidar);
+
+        // Busca equipes dos jogadores via tabela normalizada times_integrantes
+        const mapaTimes = new Map();
+        try {
+          const { data: membrosTimes } = await supabase
+            .from('times_integrantes')
+            .select(`
+              id_usuario,
+              funcao,
+              times ( id, nome, tag )
+            `)
+            .in('id_usuario', idsParaValidar);
+
+          (membrosTimes || []).forEach((m) => {
+            const t = Array.isArray(m.times) ? m.times[0] : m.times;
+            if (t) {
+              const rotulo = t.tag ? `[${t.tag}] ${t.nome}` : t.nome;
+              mapaTimes.set(String(m.id_usuario), rotulo);
+            }
+          });
+        } catch (eTimes) {
+          console.warn('Erro ao carregar times dos amigos via times_integrantes:', eTimes);
+        }
+
+        if (!errVal && usuariosAtivos) {
+          const mapaAtivos = new Map(usuariosAtivos.map((u) => [String(u.id), u]));
+          const amigosValidados = [];
+          const idsVistos = new Set();
+
+          for (const item of amigosBrutos) {
+            const idStr = String(item.id);
+            if (mapaAtivos.has(idStr) && !idsVistos.has(idStr)) {
+              idsVistos.add(idStr);
+              const u = mapaAtivos.get(idStr);
+              amigosValidados.push({
+                id: u.id,
+                amizade_id: item.amizade_id,
+                nome: u.nome || u.nome_usuario,
+                nome_usuario: u.nome_usuario || u.nome,
+                name: u.nome_usuario || u.nome,
+                time_usuario: mapaTimes.get(idStr) || 'Sem equipe',
+                imagem: u.imagem || '',
+                status: u.status || 'online',
+                game: 'CS2'
+              });
+            } else if (!mapaAtivos.has(idStr)) {
+              // Amigo excluído do sistema: remove relação órfã da tabela amizades
+              if (item.amizade_id) {
+                supabase.from('amizades').delete().eq('id', item.amizade_id).catch(() => {});
+              }
+            }
+          }
+
+          if (isMountedCheck && !isMountedCheck()) return;
+
+          setListaAmigos(amigosValidados);
+          // Limpa referências órfãs no localStorage imediatamente
+          localStorage.setItem('listaAmigosUsuario', JSON.stringify(amigosValidados));
+          localStorage.setItem('listaAmigosPerfil', JSON.stringify(amigosValidados));
+          // NOTA DE DESEMPENHO: NÃO emitir amigosAtualizados dentro do leitor para evitar loop infinito
+
+          // Validar pedidos pendentes recebidos
+          const pendentesValidados = [];
+          for (const p of pedidosPendentesBrutos) {
+            const idStr = String(p.remetenteId);
+            if (mapaAtivos.has(idStr)) {
+              pendentesValidados.push({
+                id: p.id,
+                registro: p.registro,
+                remetente: {
+                  ...mapaAtivos.get(idStr),
+                  time_usuario: mapaTimes.get(idStr) || 'Sem equipe'
+                }
+              });
+            } else {
+              if (p.id) supabase.from('amizades').delete().eq('id', p.id).catch(() => {});
+            }
+          }
+          setPedidosPendentes(pendentesValidados);
+
+          // Validar pedidos enviados
+          const enviadosValidados = [];
+          for (const e of pedidosEnviadosBrutos) {
+            const idStr = String(e.destinatarioId);
+            if (mapaAtivos.has(idStr)) {
+              enviadosValidados.push({
+                id: e.id,
+                registro: e.registro,
+                destinatario: {
+                  ...mapaAtivos.get(idStr),
+                  time_usuario: mapaTimes.get(idStr) || 'Sem equipe'
+                }
+              });
+            } else {
+              if (e.id) supabase.from('amizades').delete().eq('id', e.id).catch(() => {});
+            }
+          }
+          setPedidosEnviados(enviadosValidados);
+        }
+      } else {
+        if (isMountedCheck && !isMountedCheck()) return;
+        setListaAmigos([]);
+        setPedidosPendentes([]);
+        setPedidosEnviados([]);
+        localStorage.setItem('listaAmigosUsuario', JSON.stringify([]));
+        localStorage.setItem('listaAmigosPerfil', JSON.stringify([]));
+      }
     } catch (err) {
       console.error('Erro ao carregar amizades:', err);
+    } finally {
+      isCarregandoAmizadesRef.current = false;
+      if (!isMountedCheck || isMountedCheck()) {
+        setCarregandoAmigos(false);
+      }
     }
-    setCarregandoAmigos(false);
   }, [usuarioLogado?.id]);
 
   useEffect(() => {
-    if (usuarioLogado?.id && !isPublico) carregarAmizades();
+    let montado = true;
+    const isMountedCheck = () => montado;
+
+    if (usuarioLogado?.id && !isPublico) {
+      carregarAmizades(isMountedCheck);
+
+      const onUpdate = () => {
+        if (montado) carregarAmizades(isMountedCheck);
+      };
+
+      window.addEventListener('amigosAtualizados', onUpdate);
+      window.addEventListener('storage', onUpdate);
+      return () => {
+        montado = false;
+        window.removeEventListener('amigosAtualizados', onUpdate);
+        window.removeEventListener('storage', onUpdate);
+      };
+    }
   }, [usuarioLogado?.id, isPublico, carregarAmizades]);
 
   // ------------------------------------------------------------------
   // STATUS AMIZADE (perfil público)
   // ------------------------------------------------------------------
   useEffect(() => {
+    let ativo = true;
+
     async function verificarAmizade() {
       if (!isPublico || !usuarioLogado?.id || !id) return;
       const { data } = await supabase
@@ -242,6 +506,7 @@ export default function Perfil() {
         .or(`and(id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${id}),and(id_usuario1.eq.${id},id_usuario2.eq.${usuarioLogado.id})`)
         .maybeSingle();
 
+      if (!ativo) return;
       if (!data) { setStatusAmizade(null); setAmizadeId(null); return; }
       setAmizadeId(data.id);
       if (data.status === 'ACEITO') setStatusAmizade('ACEITO');
@@ -251,6 +516,10 @@ export default function Perfil() {
       }
     }
     verificarAmizade();
+
+    return () => {
+      ativo = false;
+    };
   }, [isPublico, usuarioLogado?.id, id]);
 
   // ------------------------------------------------------------------
@@ -275,6 +544,8 @@ export default function Perfil() {
     if (!amizadeId) return;
     await supabase.from('amizades').update({ status: 'ACEITO' }).eq('id', amizadeId);
     setStatusAmizade('ACEITO');
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Vocês agora são amigos.', tipo: 'sucesso' });
   }
 
@@ -282,6 +553,8 @@ export default function Perfil() {
     if (!amizadeId) return;
     await supabase.from('amizades').delete().eq('id', amizadeId);
     setStatusAmizade(null); setAmizadeId(null);
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade removida', mensagem: 'Amizade removida com sucesso.', tipo: 'aviso' });
   }
 
@@ -293,6 +566,8 @@ export default function Perfil() {
       await supabase.from('amizades').insert({ id_usuario1: usuarioLogado.id, id_usuario2: id, status: 'BLOQUEADO' });
     }
     setStatusAmizade('BLOQUEADO');
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Usuário bloqueado', mensagem: `${usuario?.nome_usuario || usuario?.nome} foi bloqueado.`, tipo: 'aviso' });
   }
 
@@ -300,6 +575,8 @@ export default function Perfil() {
     if (!amizadeId) return;
     await supabase.from('amizades').delete().eq('id', amizadeId);
     setStatusAmizade(null); setAmizadeId(null);
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Desbloqueado', mensagem: 'Usuário desbloqueado com sucesso.', tipo: 'sucesso' });
   }
 
@@ -311,6 +588,8 @@ export default function Perfil() {
     if (!error) {
       mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Pedido de amizade aceito com sucesso.', tipo: 'sucesso' });
       carregarAmizades();
+      window.dispatchEvent(new Event('amigosAtualizados'));
+      window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -318,17 +597,28 @@ export default function Perfil() {
     await supabase.from('amizades').delete().eq('id', amizade_id);
     setPedidosPendentes(prev => prev.filter(p => p.id !== amizade_id));
     mostrarAlerta({ titulo: 'Pedido rejeitado', mensagem: 'Pedido de amizade rejeitado.', tipo: 'aviso' });
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
   }
 
   async function cancelarPedidoEnviado(amizade_id) {
     await supabase.from('amizades').delete().eq('id', amizade_id);
     setPedidosEnviados(prev => prev.filter(e => e.id !== amizade_id));
     mostrarAlerta({ titulo: 'Pedido cancelado', mensagem: 'Seu pedido de amizade foi cancelado.', tipo: 'aviso' });
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
   }
 
   async function removerAmigo(amizade_id, nome) {
     await supabase.from('amizades').delete().eq('id', amizade_id);
-    setListaAmigos(prev => prev.filter(a => a.amizade_id !== amizade_id));
+    setListaAmigos((prev) => {
+      const nova = prev.filter((a) => a.amizade_id !== amizade_id);
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(nova));
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(nova));
+      return nova;
+    });
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade Removida', mensagem: `${nome} foi removido da sua lista de amigos.`, tipo: 'aviso' });
   }
 
@@ -336,7 +626,14 @@ export default function Perfil() {
     await supabase.from('amizades')
       .update({ status: 'BLOQUEADO', id_usuario1: usuarioLogado.id, id_usuario2: amigo_id })
       .eq('id', amizade_id);
-    setListaAmigos(prev => prev.filter(a => a.amizade_id !== amizade_id));
+    setListaAmigos((prev) => {
+      const nova = prev.filter((a) => a.amizade_id !== amizade_id);
+      localStorage.setItem('listaAmigosUsuario', JSON.stringify(nova));
+      localStorage.setItem('listaAmigosPerfil', JSON.stringify(nova));
+      return nova;
+    });
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Usuário bloqueado', mensagem: `${nome} foi bloqueado.`, tipo: 'aviso' });
   }
 
@@ -381,7 +678,7 @@ export default function Perfil() {
     // 2. Busca Supabase
     supabase
       .from('usuarios')
-      .select('id, nome, nome_usuario, time_usuario, imagem')
+      .select('id, nome, nome_usuario, imagem')
       .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
       .limit(8)
       .then(({ data, error }) => {
@@ -437,6 +734,8 @@ export default function Perfil() {
       tipo: 'sucesso'
     });
     carregarAmizades();
+    window.dispatchEvent(new Event('amigosAtualizados'));
+    window.dispatchEvent(new Event('storage'));
   }
 
   // ------------------------------------------------------------------

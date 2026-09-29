@@ -108,32 +108,43 @@ export default function DetalhesTime() {
         return
       }
 
-      // 3. Procurar no Supabase
+      // 3. Procurar no Supabase utilizando JOIN com times_integrantes
       try {
         if (supabase) {
-          const { data: timeEncontrado, error: erroTime } = await supabase
-            .from('times')
-            .select('*')
-            .eq('id', id)
-            .maybeSingle()
+          let timeEncontrado = null
+          let carregouComJoin = false
 
-          if (!erroTime && timeEncontrado) {
-            const { data: linhas } = await supabase
-              .from('times_integrantes')
-              .select('id, id_usuario, funcao')
-              .eq('id_time', id)
+          try {
+            const { data: comJoin, error: erroJoin } = await supabase
+              .from('times')
+              .select(`
+                *,
+                times_integrantes (
+                  id,
+                  id_usuario,
+                  funcao,
+                  usuarios ( id, nome, nome_usuario, imagem )
+                )
+              `)
+              .eq('id', id)
+              .maybeSingle()
 
-            const idsUsuarios = [...new Set((linhas || []).map((l) => l.id_usuario))]
-            const { data: usuariosEncontrados } = idsUsuarios.length
-              ? await supabase.from('usuarios').select('id, nome, nome_usuario').in('id', idsUsuarios)
-              : { data: [] }
+            if (!erroJoin && comJoin) {
+              timeEncontrado = comJoin
+              carregouComJoin = true
+            }
+          } catch (errJoin) {
+            console.warn('Tentativa com join em times_integrantes falhou em DetalhesTime, usando fallback:', errJoin)
+          }
 
-            const integrantesCompletos = (linhas || []).map((linha) => {
-              const usuarioDoTime = usuariosEncontrados?.find((u) => u.id === linha.id_usuario)
+          if (carregouComJoin && timeEncontrado) {
+            const integrantesCompletos = (timeEncontrado.times_integrantes || []).map((linha) => {
+              const u = Array.isArray(linha.usuarios) ? linha.usuarios[0] : linha.usuarios
               return {
                 id: linha.id,
+                idUsuario: linha.id_usuario,
                 funcao: linha.funcao,
-                nome: usuarioDoTime?.nome_usuario || usuarioDoTime?.nome || 'Jogador desconhecido'
+                nome: u?.nome_usuario || u?.nome || 'Jogador desconhecido'
               }
             })
 
@@ -141,6 +152,40 @@ export default function DetalhesTime() {
             setIntegrantes(integrantesCompletos)
             setCarregando(false)
             return
+          } else {
+            // Fallback manual relacional com times_integrantes
+            const { data: timeSimples, error: erroTime } = await supabase
+              .from('times')
+              .select('*')
+              .eq('id', id)
+              .maybeSingle()
+
+            if (!erroTime && timeSimples) {
+              const { data: linhas } = await supabase
+                .from('times_integrantes')
+                .select(`
+                  id,
+                  id_usuario,
+                  funcao,
+                  usuarios ( id, nome, nome_usuario )
+                `)
+                .eq('id_time', id)
+
+              const integrantesCompletos = (linhas || []).map((linha) => {
+                const u = Array.isArray(linha.usuarios) ? linha.usuarios[0] : linha.usuarios
+                return {
+                  id: linha.id,
+                  idUsuario: linha.id_usuario,
+                  funcao: linha.funcao,
+                  nome: u?.nome_usuario || u?.nome || 'Jogador desconhecido'
+                }
+              })
+
+              setTime(timeSimples)
+              setIntegrantes(integrantesCompletos)
+              setCarregando(false)
+              return
+            }
           }
         }
       } catch (err) {

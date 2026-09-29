@@ -6,48 +6,7 @@ import '../css/bracket.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
 
-const TORNEIOS_PADRAO = [
-  {
-    id: 'torneio-blast',
-    nome: 'BLAST Premier Fall Final',
-    jogo: 'CS2',
-    formato: 'Eliminação Simples',
-    data_inicio: '2026-10-15T18:00:00',
-    dinheiro: 150000,
-    status: true,
-    descricao: 'As 8 melhores equipes do circuito global disputam a glória máxima e vaga direta na World Final.'
-  },
-  {
-    id: 'torneio-pgl',
-    nome: 'PGL Major Copenhagen',
-    jogo: 'CS2',
-    formato: 'Eliminação Simples',
-    data_inicio: '2026-11-02T14:30:00',
-    dinheiro: 500000,
-    status: true,
-    descricao: 'O campeonato mais prestigiado do Counter-Strike mundial reunindo os maiores times do planeta.'
-  },
-  {
-    id: 'torneio-iem',
-    nome: 'IEM Katowice Championship',
-    jogo: 'CS2',
-    formato: 'Eliminação Simples',
-    data_inicio: '2026-11-20T16:00:00',
-    dinheiro: 250000,
-    status: true,
-    descricao: 'A lendária Spodek Arena recebe o confronto épico das lendas dos esportes eletrônicos.'
-  },
-  {
-    id: 'torneio-esl',
-    nome: 'ESL Pro League Season 20',
-    jogo: 'CS2',
-    formato: 'Eliminação Dupla',
-    data_inicio: '2026-12-05T19:00:00',
-    dinheiro: 100000,
-    status: false,
-    descricao: 'Fase de grupos intensa e playoffs eliminatórios valendo pontos vitais no ranking mundial.'
-  }
-]
+
 
 async function loadTournaments() {
   let torneiosLocais = []

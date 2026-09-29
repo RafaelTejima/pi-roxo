@@ -51,9 +51,38 @@ export default function Cadastrar() {
     setLoading(false);
 
     if (error) {
+      const msgLower = (error.message || '').toLowerCase();
+      const detLower = (error.details || '').toLowerCase();
+      const isUnique = error.code === '23505' || msgLower.includes('duplicate key') || msgLower.includes('unique constraint') || msgLower.includes('already exists');
+
+      if (isUnique) {
+        if (msgLower.includes('email') || detLower.includes('email') || msgLower.includes('usuarios_email_key')) {
+          mostrarAlerta({
+            titulo: "E-mail Já Cadastrado",
+            mensagem: "Este e-mail já está cadastrado no sistema. Tente fazer login ou utilize outro endereço.",
+            tipo: "aviso"
+          });
+          return;
+        }
+        if (msgLower.includes('nome_usuario') || detLower.includes('nome_usuario') || msgLower.includes('usuarios_nome_usuario_key') || msgLower.includes('nick')) {
+          mostrarAlerta({
+            titulo: "Nome de Usuário Indisponível",
+            mensagem: "Este nome de usuário (nick) já está em uso por outro jogador. Escolha outro nick.",
+            tipo: "aviso"
+          });
+          return;
+        }
+        mostrarAlerta({
+          titulo: "Dados Já Cadastrados",
+          mensagem: "Já existe uma conta cadastrada com esses dados (e-mail ou nome de usuário).",
+          tipo: "aviso"
+        });
+        return;
+      }
+
       mostrarAlerta({
         titulo: "Erro no Cadastro",
-        mensagem: "Não foi possível concluir seu cadastro: " + error.message,
+        mensagem: "Não foi possível concluir seu cadastro. Verifique as informações fornecidas e tente novamente.",
         tipo: "erro"
       });
     } else {

@@ -7,11 +7,12 @@ import { useAlerta } from './AlertaModal';
 // Tabelas conhecidas do projeto, com nome amigável e colunas relevantes
 const TABELAS_CONHECIDAS = [
   { nome: 'usuarios',    label: 'Usuários',    icone: 'U', descricao: 'Contas cadastradas na plataforma' },
-  { nome: 'times',       label: 'Times',       icone: 'T', descricao: 'Times registrados pelos usuários' },
-  { nome: 'torneios',    label: 'Torneios',    icone: 'C', descricao: 'Campeonatos criados na plataforma' },
-  { nome: 'mapas',       label: 'Mapas',       icone: 'M', descricao: 'Mapas de CS2 disponiveis' },
-  { nome: 'partidas',    label: 'Partidas',    icone: 'P', descricao: 'Partidas e confrontos do bracket' },
-  { nome: 'inscricoes',  label: 'Inscrições',  icone: 'I', descricao: 'Inscrições de times em torneios' },
+  { nome: 'times',             label: 'Times',               icone: 'T',  descricao: 'Times registrados pelos usuários' },
+  { nome: 'times_integrantes', label: 'Integrantes de Times',icone: 'TI', descricao: 'Roster e funções dos jogadores em cada time' },
+  { nome: 'torneios',          label: 'Torneios',            icone: 'C',  descricao: 'Campeonatos criados na plataforma' },
+  { nome: 'mapas',             label: 'Mapas',               icone: 'M',  descricao: 'Mapas de CS2 disponiveis' },
+  { nome: 'partidas',          label: 'Partidas',            icone: 'P',  descricao: 'Partidas e confrontos do bracket' },
+  { nome: 'inscricoes',        label: 'Inscrições',          icone: 'I',  descricao: 'Inscrições de times em torneios' },
 ];
 
 // Colunas que nunca devem ser exibidas por segurança
@@ -150,6 +151,38 @@ function SecaoTabela({ tabela, usuarioLogado }) {
       });
     } else {
       setDados((prev) => prev.filter((l) => l.id !== linha.id));
+
+      if (tabela.nome === 'times') {
+        try {
+          const salvas = localStorage.getItem('equipesCadastradas');
+          if (salvas) {
+            const lista = JSON.parse(salvas);
+            localStorage.setItem('equipesCadastradas', JSON.stringify(lista.filter((t) => String(t.id) !== String(linha.id))));
+          }
+        } catch {}
+        window.dispatchEvent(new Event('equipesAtualizadas'));
+        window.dispatchEvent(new Event('storage'));
+      }
+
+      if (tabela.nome === 'usuarios') {
+        try {
+          const salvas = localStorage.getItem('listaAmigosUsuario');
+          if (salvas) {
+            const lista = JSON.parse(salvas);
+            localStorage.setItem('listaAmigosUsuario', JSON.stringify(lista.filter((a) => String(a.id) !== String(linha.id))));
+          }
+          const salvasP = localStorage.getItem('listaAmigosPerfil');
+          if (salvasP) {
+            const listaP = JSON.parse(salvasP);
+            localStorage.setItem('listaAmigosPerfil', JSON.stringify(listaP.filter((a) => String(a.id) !== String(linha.id))));
+          }
+        } catch {}
+        // Limpa amizades órfãs no Supabase vinculadas ao usuário deletado
+        supabase.from('amizades').delete().or(`id_usuario1.eq.${linha.id},id_usuario2.eq.${linha.id}`).then(() => {}).catch(() => {});
+        window.dispatchEvent(new Event('amigosAtualizados'));
+        window.dispatchEvent(new Event('storage'));
+      }
+
       mostrarAlerta({
         titulo: 'Registro Removido',
         mensagem: 'O registro foi excluído com sucesso.',
