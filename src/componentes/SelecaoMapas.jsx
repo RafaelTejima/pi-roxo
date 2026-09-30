@@ -121,7 +121,6 @@ export default function SelecaoMapas() {
       const payloadBanco = {
         nome: dadosTorneio.nome?.trim(),
         descricao: descricaoComMapa,
-        jogo: dadosTorneio.jogo,
         formato: dadosTorneio.formato,
         data_inicio: dadosTorneio.data_inicio,
         status: typeof dadosTorneio.status === 'boolean' ? dadosTorneio.status : true,

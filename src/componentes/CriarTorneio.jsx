@@ -11,9 +11,8 @@ import { useAlerta } from './AlertaModal'
 const HORAS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const MINUTOS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
-// Campos fixos exigidos pela tabela `torneios` que ainda nao tem selecao propria na tela
-const JOGO_PADRAO = 'CS2'
-const FORMATO_PADRAO = 'Eliminação Simples'
+// Formatos de partida padrao do CS2 (melhor de X mapas)
+const FORMATOS = ['Fase de Grupos']
 
 export default function CriarTorneio() {
   const navigate = useNavigate()
@@ -34,6 +33,7 @@ export default function CriarTorneio() {
   const [data, setData] = useState('')
   const [hora, setHora] = useState('')
   const [minuto, setMinuto] = useState('')
+  const [formato, setFormato] = useState('')
   const [premio, setPremio] = useState('')
   const [regras, setRegras] = useState([])
   const [novaRegra, setNovaRegra] = useState('')
@@ -71,7 +71,7 @@ export default function CriarTorneio() {
       return
     }
 
-    if (!nome.trim() || !data || !hora || !minuto || !premio) {
+    if (!nome.trim() || !data || !hora || !minuto || !formato || !premio) {
       const msg = 'Preencha todos os campos do torneio antes de prosseguir.'
       setErro(msg)
       mostrarAlerta({
@@ -99,8 +99,7 @@ export default function CriarTorneio() {
     const formData = {
       nome: nome.trim(),
       descricao: regras.map((regra) => `- ${regra}`).join('\n'),
-      jogo: JOGO_PADRAO,
-      formato: FORMATO_PADRAO,
+      formato,
       data_inicio: dataHora,
       status: true,
       id_criador: usuario.id,
@@ -171,6 +170,20 @@ export default function CriarTorneio() {
         </div>
 
         <div className="campo-form">
+          <label htmlFor="formato-torneio">Formato da partida</label>
+          <select
+            id="formato-torneio"
+            value={formato}
+            onChange={(e) => setFormato(e.target.value)}
+          >
+            <option value="">Selecione o formato</option>
+            {FORMATOS.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="campo-form">
           <label htmlFor="premio-torneio">Valor do prêmio (R$)</label>
           <input
             id="premio-torneio"
@@ -207,7 +220,7 @@ export default function CriarTorneio() {
                       handleAdicionarRegra()
                     }
                   }}
-                  placeholder="Ex: Formato Single Elimination"
+                  placeholder="Ex: Melhor de 3"
                 />
                 <button type="button" onClick={handleAdicionarRegra}>Adicionar</button>
               </div>

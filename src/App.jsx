@@ -15,6 +15,7 @@ import Perfil from './componentes/Perfil';
 import Equipes from './componentes/Equipes';
 import DetalhesTime from './componentes/DetalhesTime';
 import SelecaoMapas from './componentes/SelecaoMapas';
+import DetalhesTorneio from './componentes/DetalhesTorneio';
 import { AlertaProvider } from './componentes/AlertaModal';
 
 function App() {
@@ -37,7 +38,7 @@ function App() {
           <Route path="/torneios/criar" element={<CriarTorneio />} />
           <Route path="/torneios/:id/mapa" element={<SelecaoMapas />} />
           <Route path="/selecao-mapas" element={<SelecaoMapas />} />
-          <Route path="/torneios/:id" element={<Torneios />} />
+          <Route path="/torneios/:id" element={<DetalhesTorneio />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/suporte" element={<Suporte />} />
           <Route path="/login" element={<Entrar />} />

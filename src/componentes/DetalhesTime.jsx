@@ -153,10 +153,27 @@ export default function DetalhesTime() {
       .select('id, nome, nome_usuario, email')
       .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%,email.ilike.%${termo}%`)
       .limit(5)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!ativo || error || !data) return
-        const filtrados = data
-          .filter((u) => !integrantes.some((item) => item.idUsuario === u.id))
+
+        const candidatos = data.filter((u) => !integrantes.some((item) => item.idUsuario === u.id))
+        if (candidatos.length === 0) {
+          setResultados([])
+          setDropdownAberto(true)
+          return
+        }
+
+        // Exclui quem ja faz parte de qualquer time (deste ou de outro)
+        const { data: vinculos } = await supabase
+          .from('times_integrantes')
+          .select('id_usuario')
+          .in('id_usuario', candidatos.map((u) => u.id))
+
+        if (!ativo) return
+
+        const idsOcupados = new Set((vinculos || []).map((v) => v.id_usuario))
+        const filtrados = candidatos
+          .filter((u) => !idsOcupados.has(u.id))
           .map((u) => ({ id: u.id, nome: u.nome_usuario || u.nome, email: u.email }))
         setResultados(filtrados)
         setDropdownAberto(true)
@@ -251,6 +268,19 @@ export default function DetalhesTime() {
     }
 
     setProcessandoId(jogador.id)
+
+    // Revalida no banco (evita corrida caso o jogador tenha entrado em outro time nesse meio tempo)
+    const { data: vinculoExistente } = await supabase
+      .from('times_integrantes')
+      .select('id_time')
+      .eq('id_usuario', jogador.id)
+      .limit(1)
+
+    if (vinculoExistente && vinculoExistente.length > 0) {
+      setProcessandoId(null)
+      setErroJogadores('Este jogador já faz parte de outra equipe.')
+      return
+    }
 
     const { data: novaLinha, error: erroInsert } = await supabase
       .from('times_integrantes')
