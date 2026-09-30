@@ -22,12 +22,47 @@ export default function CriarEquipe() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
+  const [verificandoTime, setVerificandoTime] = useState(true)
+  const [jaTemTime, setJaTemTime] = useState(false)
 
   useEffect(() => {
     if (!usuario) {
       navigate('/login')
     }
   }, [navigate, usuario])
+
+  // Bloqueia a criacao de uma nova equipe se o usuario ja fizer parte de algum time (capitao ou jogador)
+  useEffect(() => {
+    if (!usuario) return
+    let ativo = true
+
+    supabase
+      .from('times_integrantes')
+      .select('id_time')
+      .eq('id_usuario', usuario.id)
+      .limit(1)
+      .then(({ data, error }) => {
+        if (!ativo) return
+        if (!error && data && data.length > 0) {
+          setJaTemTime(true)
+          mostrarAlerta({
+            titulo: 'Você Já Tem um Time',
+            mensagem: 'Você já faz parte de uma equipe e não pode criar outra enquanto estiver nela.',
+            tipo: 'aviso',
+            botaoTexto: 'Ver Minha Equipe',
+            onConfirmar: () => navigate(`/equipes/${data[0].id_time}`)
+          })
+        }
+        setVerificandoTime(false)
+      })
+      .catch(() => {
+        if (ativo) setVerificandoTime(false)
+      })
+
+    return () => {
+      ativo = false
+    }
+  }, [usuario, navigate, mostrarAlerta])
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -59,15 +94,32 @@ export default function CriarEquipe() {
       .select('id, nome, nome_usuario, email')
       .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%,email.ilike.%${termo}%`)
       .limit(5)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!ativo) return
         if (error) {
           setErro('Não foi possível buscar jogadores cadastrados.')
           return
         }
-        setResultados((data || []).filter(
+
+        const candidatos = (data || []).filter(
           (jogador) => jogador.id !== usuario?.id && !jogadores.some((item) => item.id === jogador.id)
-        ))
+        )
+
+        if (candidatos.length === 0) {
+          setResultados([])
+          return
+        }
+
+        // Exclui quem ja faz parte de qualquer time, independente do torneio
+        const { data: vinculos } = await supabase
+          .from('times_integrantes')
+          .select('id_usuario')
+          .in('id_usuario', candidatos.map((jogador) => jogador.id))
+
+        if (!ativo) return
+
+        const idsOcupados = new Set((vinculos || []).map((v) => v.id_usuario))
+        setResultados(candidatos.filter((jogador) => !idsOcupados.has(jogador.id)))
       })
       .catch(() => {
         if (ativo) setErro('Não foi possível buscar jogadores cadastrados.')
@@ -155,6 +207,24 @@ export default function CriarEquipe() {
         tipo: 'aviso',
         botaoTexto: 'Fazer Login',
         onConfirmar: () => navigate('/login')
+      })
+      return
+    }
+
+    // Revalida no banco (evita corrida caso o usuario tenha entrado em outro time nesse meio tempo)
+    const { data: vinculoExistente } = await supabase
+      .from('times_integrantes')
+      .select('id_time')
+      .eq('id_usuario', usuario.id)
+      .limit(1)
+
+    if (vinculoExistente && vinculoExistente.length > 0) {
+      const msgErro = 'Você já faz parte de uma equipe e não pode criar outra.'
+      setErro(msgErro)
+      mostrarAlerta({
+        titulo: 'Você Já Tem um Time',
+        mensagem: msgErro,
+        tipo: 'aviso'
       })
       return
     }
@@ -326,6 +396,18 @@ export default function CriarEquipe() {
   }
 
   if (!usuario) return null
+  if (verificandoTime) return <main id="pagina-criar-equipe"><p className="criar-equipe-overline">Verificando...</p></main>
+  if (jaTemTime) {
+    return (
+      <main id="pagina-criar-equipe">
+        <section className="criar-equipe-heading">
+          <h1>Você já faz parte de uma <span>equipe.</span></h1>
+          <p>Não é possível criar uma nova equipe enquanto você estiver em outra. Saia da sua equipe atual para criar uma nova.</p>
+        </section>
+        <Link to="/equipes">Ver Equipes</Link>
+      </main>
+    )
+  }
 
   return (
     <main id="pagina-criar-equipe">

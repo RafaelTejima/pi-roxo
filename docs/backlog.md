@@ -50,6 +50,8 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Formulario responsivo com nome, sigla, descricao e busca de jogadores por nome ou e-mail.
 - Usuario autenticado pelo `localStorage` `usuarioLogado` entra automaticamente como capitao; usuarios nao autenticados sao direcionados para `/login`.
 - **Atualizado:** nao busca mais torneios (a selecao de torneio na criacao de equipe foi removida/nunca foi finalizada); ver secao "Integracao da Criacao de Equipe com o banco (tabela `times`)" para o fluxo real e atual de persistencia.
+- **Regra "um time por usuario":** ao montar a pagina, consulta `times_integrantes` filtrando `id_usuario === usuario.id`; se encontrar qualquer linha (usuario ja e capitao ou jogador de algum time), bloqueia a criacao e exibe uma tela informando que o usuario ja faz parte de uma equipe (com link para `/equipes`), alem de um alerta com atalho para `/equipes/:id` do time atual. Antes de inserir no banco, `enviarEquipe` refaz essa mesma checagem (evita corrida caso o usuario entre em outro time enquanto preenchia o formulario).
+- A busca de jogadores para adicionar na nova equipe (`buscaJogador`) tambem exclui quem ja pertence a qualquer time: apos filtrar por nome/usuario/e-mail, consulta `times_integrantes` com `.in('id_usuario', ids)` e remove da lista de resultados quem ja tiver vinculo. O mesmo filtro foi aplicado em `DetalhesTime.jsx` (secao "Adicionar/Remover jogadores"), incluindo uma revalidacao no banco dentro de `adicionarJogador` antes do insert, para impedir que um jogador seja colocado em dois times.
 
 ## Lista de Amigos
 - **Componente:** `src/componentes/ListaAmigos.jsx`
