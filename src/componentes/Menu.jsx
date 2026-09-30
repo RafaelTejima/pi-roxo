@@ -383,7 +383,7 @@ export default function Menu({ children }) {
       <header className="cabecalho">
         <div className="logo">
           <Link to="/" className="titulo-animado-container" style={{ color: 'inherit', textDecoration: 'none' }}>
-            {"CS:GO TOURNAMENTS".split("").map((char, index) => (
+            {"CS:GO Tournaments".split("").map((char, index) => (
               <span
                 key={index}
                 className={`letra-animada${index >= 6 ? ' roxo' : ''}`}
@@ -470,7 +470,7 @@ export default function Menu({ children }) {
                 : <span>{iniciaisUsuario}</span>}
             </div>
           </div>
-
+                <hr className="social-line"/>
           {/* Ícones do time */}
           {timesUsuario.slice(0, 3).map((time) => (
             <div key={time.id} className="social-compact-item">
@@ -481,6 +481,8 @@ export default function Menu({ children }) {
               </div>
             </div>
           ))}
+
+          <hr className="social-line" />
 
           {/* Ícones dos amigos */}
           {amigosDropdown.slice(0, 8).map((amigo) => (

@@ -887,7 +887,7 @@ export default function Perfil() {
               Voltar
             </button>
           ) : (
-            <Link to="/torneios" className="perfil-link-voltar">Ver torneios</Link>
+            <Link to="/" className="perfil-link-voltar">Voltar</Link>
           )}
         </div>
 
