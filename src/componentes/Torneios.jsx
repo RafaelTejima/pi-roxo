@@ -18,7 +18,22 @@ async function loadTournaments() {
   }
 
   if (error) throw error
-  return data || []
+
+  const tournaments = data || []
+  if (tournaments.length === 0) return tournaments
+
+  // Conta quantos times estao inscritos em cada torneio para calcular o premio acumulado (taxa * inscritos)
+  const { data: inscricoes } = await supabase
+    .from('inscricoes')
+    .select('id_torneio')
+    .in('id_torneio', tournaments.map((t) => t.id))
+
+  const contagemPorTorneio = {}
+  for (const linha of inscricoes || []) {
+    contagemPorTorneio[linha.id_torneio] = (contagemPorTorneio[linha.id_torneio] || 0) + 1
+  }
+
+  return tournaments.map((t) => ({ ...t, totalInscritos: contagemPorTorneio[t.id] || 0 }))
 }
 
 function formatDate(value) {
@@ -46,6 +61,7 @@ function tournamentStatus(status) {
 function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
   const info = tournamentStatus(tournament.status)
+  const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
 
   return (
     <article className="tournament-card">
@@ -59,7 +75,8 @@ function TournamentCard({ tournament, index }) {
           <h2>{tournament.nome}</h2>
           <p className="tournament-date">{formatDate(tournament.data_inicio)}</p>
           <div className="tournament-meta">
-            <span><small>PRÊMIO</small>{formatPrize(tournament.dinheiro)}</span>
+            <span><small>PRÊMIO ACUMULADO</small>{formatPrize(premioAcumulado)}</span>
+            <span><small>TAXA DE INSCRIÇÃO</small>{formatPrize(tournament.dinheiro)}</span>
             <span><small>FORMATO</small>{tournament.formato || 'Não informado'}</span>
           </div>
         </div>

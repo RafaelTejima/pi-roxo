@@ -143,6 +143,24 @@ export default function SelecaoMapas() {
           details: error.details,
           hint: error.hint,
         })
+
+        const msgLower = ((error.message || '') + ' ' + (error.details || '')).toLowerCase()
+        const isNomeDuplicado =
+          error.code === '23505' && (msgLower.includes('nome') || msgLower.includes('torneios_nome_key'))
+
+        if (isNomeDuplicado) {
+          const msg = 'Já existe um torneio cadastrado com este nome. Volte e escolha outro nome.'
+          setErro(msg)
+          mostrarAlerta({
+            titulo: 'Nome Indisponível',
+            mensagem: msg,
+            tipo: 'aviso',
+            botaoTexto: 'Editar Torneio',
+            onConfirmar: () => navigate('/torneios/criar')
+          })
+          return
+        }
+
         const msgErro = error.message || 'Não foi possível salvar o torneio no banco de dados. Tente novamente.'
         setErro(msgErro)
         mostrarAlerta({

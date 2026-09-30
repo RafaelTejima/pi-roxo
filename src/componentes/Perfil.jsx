@@ -25,6 +25,39 @@ export default function Perfil() {
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
 
+  // ---- Carteira ----
+  const [sacando, setSacando] = useState(false);
+
+  async function handleSacar() {
+    if (!usuario?.id || !usuario?.saldo) return;
+
+    setSacando(true);
+
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ saldo: 0 })
+      .eq('id', usuario.id);
+
+    setSacando(false);
+
+    if (error) {
+      mostrarAlerta({
+        titulo: 'Erro ao Sacar',
+        mensagem: 'Não foi possível processar o saque. Tente novamente.',
+        tipo: 'erro'
+      });
+      return;
+    }
+
+    const valorSacado = usuario.saldo;
+    setUsuario((atual) => ({ ...atual, saldo: 0 }));
+    mostrarAlerta({
+      titulo: 'Saque Confirmado',
+      mensagem: `Seu saque de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorSacado)} foi solicitado com sucesso.`,
+      tipo: 'sucesso'
+    });
+  }
+
   useEffect(() => {
     if (location.hash === '#editar' && !isPublico && usuario && !editando) {
       setEditando(true);
@@ -161,7 +194,7 @@ export default function Perfil() {
         const { data: uComJoin } = await supabase
           .from('usuarios')
           .select(`
-            id, nome, nome_usuario, bio, imagem, registro, admin,
+            id, nome, nome_usuario, bio, imagem, registro, admin, saldo,
             conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky,
             times_integrantes (
               id,
@@ -189,7 +222,7 @@ export default function Perfil() {
       if (!dadosUsuarioProprio) {
         const { data: uSimples } = await supabase
           .from('usuarios')
-          .select('id, nome, nome_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
+          .select('id, nome, nome_usuario, bio, imagem, registro, admin, saldo, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky')
           .eq('id', userLocal.id)
           .maybeSingle();
 
@@ -1018,6 +1051,32 @@ export default function Perfil() {
                   </p>
 
                 </section>
+
+                {/* ---- CARTEIRA (perfil próprio) ---- */}
+                {!isPublico && (
+                  <section className="perfil-secao" style={{ marginTop: '24px' }}>
+                    <div className="perfil-secao-titulo">
+                      <div><span className="perfil-kicker">Financeiro</span><h2>Carteira</h2></div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                      <div>
+                        <p style={{ margin: 0, color: 'var(--texto-secundario)', fontSize: '13px' }}>Saldo disponível</p>
+                        <strong style={{ fontSize: '28px', color: 'var(--roxo-claro)' }}>
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(usuario.saldo || 0)}
+                        </strong>
+                      </div>
+                      <button
+                        type="button"
+                        className="perfil-botao perfil-botao-principal"
+                        style={{ maxWidth: '160px' }}
+                        onClick={handleSacar}
+                        disabled={sacando || !usuario.saldo}
+                      >
+                        {sacando ? 'Sacando...' : 'Sacar'}
+                      </button>
+                    </div>
+                  </section>
+                )}
 
                 {/* ---- CONEXÕES VINCULADAS ---- */}
                 <section className="perfil-secao" style={{ marginTop: '24px' }}>

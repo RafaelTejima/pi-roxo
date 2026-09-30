@@ -550,6 +550,17 @@
   white-space: pre-line;
 }
 
+.details-campeao {
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+.details-campeao h2 {
+  background: linear-gradient(120deg, #ffd700, #fff3b0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* --- Fase de Grupos --- */
 .details-grupo h3 {
   font-size: 1rem;
@@ -569,6 +580,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: space-between;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(157, 78, 221, 0.18);
   border-radius: 10px;
@@ -585,6 +597,32 @@
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.5px;
+}
+
+.details-grupo-lista li > span:nth-child(2) {
+  flex: 1;
+}
+
+.details-grupo-declarar-btn {
+  border: 1px solid rgba(157, 78, 221, 0.4);
+  background: transparent;
+  color: #e9d5ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease;
+}
+
+.details-grupo-declarar-btn:hover {
+  background: rgba(157, 78, 221, 0.2);
+}
+
+.details-grupo-declarar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- Estados de Carregamento, Vazio e Erro --- */

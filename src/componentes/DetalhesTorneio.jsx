@@ -53,6 +53,9 @@ export default function DetalhesTorneio() {
   const [timesGrupo, setTimesGrupo] = useState([])
   const [carregandoGrupo, setCarregandoGrupo] = useState(true)
 
+  // Declaracao de vencedor (visivel para o criador do torneio ou admin)
+  const [declarandoVencedorId, setDeclarandoVencedorId] = useState(null)
+
   useEffect(() => {
     let ativo = true
 
@@ -216,19 +219,54 @@ export default function DetalhesTorneio() {
     setEnviandoInscricao(true)
 
     try {
+      const taxaInscricao = Number(tournament.dinheiro) || 0
+
+      // Confere o saldo atual do capitao direto no banco (localStorage pode estar desatualizado)
+      const { data: usuarioAtual, error: erroSaldo } = await supabase
+        .from('usuarios')
+        .select('saldo')
+        .eq('id', usuario.id)
+        .maybeSingle()
+
+      if (erroSaldo) throw erroSaldo
+
+      const saldoAtual = Number(usuarioAtual?.saldo) || 0
+
+      if (saldoAtual < taxaInscricao) {
+        mostrarAlerta({
+          titulo: 'Saldo Insuficiente',
+          mensagem: `Você precisa de ${formatPrize(taxaInscricao)} na carteira para pagar a taxa de inscrição. Seu saldo atual é ${formatPrize(saldoAtual)}.`,
+          tipo: 'aviso'
+        })
+        setEnviandoInscricao(false)
+        return
+      }
+
+      // Debita a taxa da carteira do capitao; o premio acumulado e sempre recalculado (taxa x times inscritos)
+      const { error: erroDebito } = await supabase
+        .from('usuarios')
+        .update({ saldo: saldoAtual - taxaInscricao })
+        .eq('id', usuario.id)
+
+      if (erroDebito) throw erroDebito
+
       const { error } = await supabase.from('inscricoes').insert({
         id_torneio: id,
         id_time: timeCapitaneado.id,
         id_usuario_inscritor: usuario.id,
       })
 
-      if (error) throw error
+      if (error) {
+        // Rollback do debito caso a inscricao falhe
+        await supabase.from('usuarios').update({ saldo: saldoAtual }).eq('id', usuario.id)
+        throw error
+      }
 
       setJaInscrito(true)
       await carregarTimesGrupo()
       mostrarAlerta({
         titulo: 'Inscrição Confirmada',
-        mensagem: `O time ${timeCapitaneado.nome} foi inscrito com sucesso neste torneio.`,
+        mensagem: `O time ${timeCapitaneado.nome} pagou a taxa de ${formatPrize(taxaInscricao)} e foi inscrito com sucesso neste torneio.`,
         tipo: 'sucesso'
       })
     } catch (err) {
@@ -240,6 +278,67 @@ export default function DetalhesTorneio() {
       })
     } finally {
       setEnviandoInscricao(false)
+    }
+  }
+
+  // Distribui o premio acumulado entre os 5 integrantes do time vencedor e encerra o torneio
+  async function handleDeclararVencedor(time) {
+    setDeclarandoVencedorId(time.id)
+
+    try {
+      const { data: integrantes, error: erroIntegrantes } = await supabase
+        .from('times_integrantes')
+        .select('id_usuario')
+        .eq('id_time', time.id)
+
+      if (erroIntegrantes) throw erroIntegrantes
+      if (!integrantes || integrantes.length === 0) {
+        throw new Error('Não foi possível encontrar os integrantes deste time.')
+      }
+
+      const premioTotal = (Number(tournament.dinheiro) || 0) * timesGrupo.length
+      const premioPorJogador = premioTotal / integrantes.length
+
+      for (const integrante of integrantes) {
+        const { data: jogadorAtual, error: erroBusca } = await supabase
+          .from('usuarios')
+          .select('saldo')
+          .eq('id', integrante.id_usuario)
+          .maybeSingle()
+
+        if (erroBusca) throw erroBusca
+
+        const novoSaldo = (Number(jogadorAtual?.saldo) || 0) + premioPorJogador
+        const { error: erroCredito } = await supabase
+          .from('usuarios')
+          .update({ saldo: novoSaldo })
+          .eq('id', integrante.id_usuario)
+
+        if (erroCredito) throw erroCredito
+      }
+
+      const { error: erroTorneio } = await supabase
+        .from('torneios')
+        .update({ status: false, id_time_vencedor: time.id })
+        .eq('id', id)
+
+      if (erroTorneio) throw erroTorneio
+
+      setTournament((atual) => ({ ...atual, status: false, id_time_vencedor: time.id }))
+      mostrarAlerta({
+        titulo: 'Torneio Encerrado',
+        mensagem: `O time ${time.nome} foi declarado campeão e ${formatPrize(premioTotal)} foram divididos entre os ${integrantes.length} integrantes.`,
+        tipo: 'sucesso'
+      })
+    } catch (err) {
+      console.error('Erro ao declarar vencedor do torneio:', err)
+      mostrarAlerta({
+        titulo: 'Erro ao Declarar Vencedor',
+        mensagem: err.message || 'Não foi possível declarar o vencedor. Tente novamente.',
+        tipo: 'erro'
+      })
+    } finally {
+      setDeclarandoVencedorId(null)
     }
   }
 
@@ -255,6 +354,8 @@ export default function DetalhesTorneio() {
   else if (enviandoInscricao) textoBotao = 'Inscrevendo...'
 
   const botaoDesabilitado = !inscricoesAbertas || jaInscrito || enviandoInscricao || carregandoInscricao || (usuario && !timeCapitaneado) || Boolean(torneioConflito)
+  const podeDeclararVencedor = inscricoesAbertas && usuario && (usuario.id === tournament.id_criador || usuario.admin)
+  const premioAcumulado = (Number(tournament.dinheiro) || 0) * timesGrupo.length
 
   return (
     <main className="tournament-details fundo-aurora-motion">
@@ -272,9 +373,16 @@ export default function DetalhesTorneio() {
         </div>
       </div>
       <div className="details-grid">
-        <div><small>VALOR DO PRÊMIO</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
+        <div><small>TAXA DE INSCRIÇÃO (POR TIME)</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
+        <div><small>PRÊMIO ACUMULADO</small><strong>{formatPrize(premioAcumulado)}</strong></div>
         <div><small>FORMATO</small><strong>{tournament.formato || 'Não informado'}</strong></div>
       </div>
+      {tournament.id_time_vencedor && (
+        <section className="details-rules details-campeao">
+          <h2>Campeão</h2>
+          <p>{timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.nome || `Time #${tournament.id_time_vencedor}`} venceu este torneio e o prêmio já foi dividido entre os integrantes.</p>
+        </section>
+      )}
       <section className="details-rules details-inscricao">
         <button
           type="button"
@@ -311,6 +419,16 @@ export default function DetalhesTorneio() {
                 <li key={time.id}>
                   <span className="details-grupo-tag">{time.tag || 'TAG'}</span>
                   <span>{time.nome}</span>
+                  {podeDeclararVencedor && (
+                    <button
+                      type="button"
+                      className="details-grupo-declarar-btn"
+                      onClick={() => handleDeclararVencedor(time)}
+                      disabled={declarandoVencedorId !== null}
+                    >
+                      {declarandoVencedorId === time.id ? 'Processando...' : 'Declarar Vencedor'}
+                    </button>
+                  )}
                 </li>
               ))}
             </ol>

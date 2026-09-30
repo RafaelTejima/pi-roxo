@@ -184,7 +184,7 @@ export default function CriarTorneio() {
         </div>
 
         <div className="campo-form">
-          <label htmlFor="premio-torneio">Valor do prêmio (R$)</label>
+          <label htmlFor="premio-torneio">Taxa de inscrição (R$)</label>
           <input
             id="premio-torneio"
             type="number"
@@ -192,7 +192,7 @@ export default function CriarTorneio() {
             step="1"
             value={premio}
             onChange={(e) => setPremio(e.target.value)}
-            placeholder="Ex: 5000"
+            placeholder="Ex: 50"
           />
         </div>
 
