@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
 import { useAlerta } from './AlertaModal';
@@ -12,6 +12,7 @@ import AuroraBackground from './AuroraBackground';
 export default function Perfil() {
   const navigate = useNavigate();
   const { nome_usuario } = useParams();
+  const location = useLocation();
   const { mostrarAlerta } = useAlerta();
 
   const [usuario, setUsuario] = useState(null);
@@ -23,6 +24,24 @@ export default function Perfil() {
   const [editando, setEditando] = useState(false);
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.editar && !isPublico && usuario && !editando) {
+      setEditando(true);
+      setForm({
+        nome_usuario: usuario.nome_usuario || '',
+        bio: usuario.bio || '',
+        imagem: usuario.imagem || '',
+        conexao_discord: usuario.conexao_discord || '',
+        conexao_steam: usuario.conexao_steam || '',
+        conexao_twitter: usuario.conexao_twitter || '',
+        conexao_youtube: usuario.conexao_youtube || '',
+        conexao_twitch: usuario.conexao_twitch || '',
+        conexao_bluesky: usuario.conexao_bluesky || ''
+      });
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, isPublico, usuario, editando, navigate, location.pathname]);
 
   // ---- Amizades (Supabase) ----
   const [listaAmigos, setListaAmigos] = useState([]);

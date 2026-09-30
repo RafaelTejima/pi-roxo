@@ -61,15 +61,11 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - Validacao nativa de obrigatoriedade, e-mail e URL. O envio monta uma mensagem para `suporte@csgotournaments.com` e abre o aplicativo de e-mail configurado; a pessoa precisa concluir o envio por esse aplicativo.
 - Adicionado o formulario ao final da FAQ, com atalho de navegacao na categoria Suporte; a rota `/suporte` e o link do rodape continuam disponiveis.
 - O formulario ainda nao persiste chamados no Supabase nem aceita upload de arquivos; schema, permissoes e armazenamento continuam pendentes conforme `docs/pagina_suporte.md`.
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-
 ## Pagina de Perfil do Usuario
 - **Componente:** `src/componentes/Perfil.jsx` (rota `/perfil`)
 - **CSS:** `src/css/perfil.css` (escopado por `#perfil-page`)
 - **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
 - **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
-<<<<<<< Updated upstream
 - **Conexoes:** Discord, Steam e Twitter sao editados no perfil e salvos na tabela `usuarios`. Os controles de privacidade que eram persistidos somente no `localStorage` foram removidos enquanto nao houver suporte no schema.
 
 ## Integracao da Criacao de Equipe com o banco (tabela `times`)
@@ -112,3 +108,18 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Correcao:** `handleLogout` agora chama `navigate('/', { replace: true })` (via `useNavigate` do `react-router-dom`) logo apos limpar o `localStorage` e os estados locais, forcando o desmonte das paginas restritas e o retorno para a Home.
 - O botao "Sair da conta" dentro do proprio `Perfil.jsx` (`sair()`) ja fazia `navigate('/')` corretamente e nao precisou de alteracao.
 - Nao foi criado um sistema central de rotas protegidas (`ProtectedRoute`) porque cada pagina restrita ja possui sua propria checagem de `usuarioLogado` ao montar e redireciona corretamente quando acessada diretamente sem sessao; o problema era exclusivamente a falta de navegacao apos o logout.
+
+## Painel Social estilo Valorant (Menu do Usuario)
+- **Componente:** `src/componentes/Menu.jsx` (componente global, renderizado em todas as rotas via App.jsx)
+- **CSS:** `src/componentes/menu.css` (classes prefixadas com `social-`)
+- O antigo dropdown de usuario foi completamente substituido por um painel lateral fixo inspirado no menu Social do Valorant.
+- **Trigger na navbar:** pilula com avatar circular com moldura roxa gradiente, nome do usuario e seta indicadora. O painel abre/fecha via onMouseEnter/onMouseLeave com delay de 220ms.
+- **Painel:** fixo na lateral direita, comecando abaixo da navbar (top: 80px). Anima com translateX(100%) para translateX(0). Nao sobrepoe a navbar (z-index 999).
+- **Estrutura do painel:** Header SOCIAL > Perfil do usuario > Time afiliado > Lista de amigos > Rodape com botoes.
+- **Perfil:** avatar grande com moldura roxa animada (pulsarMoldura keyframe), nome e label Meu Perfil. Navega para /perfil.
+- **Time afiliado:** busca via times_integrantes + times no Supabase. Exibe logo/iniciais com moldura roxa, nome, tag e funcao. Se sem equipe, exibe link Criar time.
+- **Lista de amigos:** carregamento consolidado (amizades ACEITO + validacao cruzada em usuarios). Campo de busca por nome. Lista scrollavel. Avatares com moldura roxa, nome, time e status online/offline.
+- **Acoes no hover do amigo:** botoes Remover (vermelho) e Bloquear (amarelo) com animacao de entrada.
+- **Rodape do painel:** botoes Config (engrenagem, /perfil), Admin (escudo, /admin, apenas para admin=true) e Sair (logout).
+- **Molduras roxas:** todos os avatares usam ::before com gradient roxo (inset: -2px) para borda gradiente.
+- **CSS obsoleto removido:** dropdown-usuario, item-dropdown, dropdown-amigo-*, btn-acao-amigo, botao-admin, botao-logout, usuario-nome, botao-perfil-trigger.
