@@ -17,14 +17,54 @@ export default function Menu({ children }) {
       return null;
     }
   });
-  const [menuAberto, setMenuAberto] = useState(false);
+
+  // Estado do painel social: aberto via hover
+  const [painelAberto, setPainelAberto] = useState(false);
+  const painelRef = useRef(null);
+  const triggerRef = useRef(null);
+  const hoverTimeoutRef = useRef(null);
+
   const [buscaAmigo, setBuscaAmigo] = useState('');
   const [amigosDropdown, setAmigosDropdown] = useState([]);
+  const [timesUsuario, setTimesUsuario] = useState([]);
+  const [carregandoTimes, setCarregandoTimes] = useState(false);
   const amigos = amigosDropdown;
 
   const isBuscandoAmigosRef = useRef(false);
 
-  // Busca consolidada e validação cruzada rigorosa contra a tabela 'usuarios' do Supabase
+  // Carrega o time do usuario logado
+  const carregarTimeUsuario = useCallback(async (usuarioAtual) => {
+    const salvo = localStorage.getItem('usuarioLogado');
+    const user = usuarioAtual || (salvo ? JSON.parse(salvo) : null);
+    if (!user?.id || !supabase) {
+      setTimesUsuario([]);
+      return;
+    }
+    setCarregandoTimes(true);
+    try {
+      const { data } = await supabase
+        .from('times_integrantes')
+        .select('funcao, times(id, nome, tag, logo)')
+        .eq('id_usuario', user.id);
+
+      if (data && data.length > 0) {
+        const times = data.map((m) => {
+          const t = Array.isArray(m.times) ? m.times[0] : m.times;
+          return t ? { ...t, funcao: m.funcao } : null;
+        }).filter(Boolean);
+        setTimesUsuario(times);
+      } else {
+        setTimesUsuario([]);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar time do usuario no painel social:', e);
+      setTimesUsuario([]);
+    } finally {
+      setCarregandoTimes(false);
+    }
+  }, []);
+
+  // Busca consolidada e validacao cruzada rigorosa contra a tabela 'usuarios' do Supabase
   const carregarAmigosConsolidados = useCallback(async (usuarioAtual) => {
     const salvo = localStorage.getItem('usuarioLogado');
     const user = usuarioAtual || (salvo ? JSON.parse(salvo) : null);
@@ -37,7 +77,6 @@ export default function Menu({ children }) {
     isBuscandoAmigosRef.current = true;
 
     try {
-      // 1. Buscar todas as amizades do usuário no Supabase
       const { data: aceitas, error: errAceitas } = await supabase
         .from('amizades')
         .select('id, status, id_usuario1, id_usuario2')
@@ -57,7 +96,6 @@ export default function Menu({ children }) {
         )
       ].filter(Boolean);
 
-      // Ler cache local existente para validação cruzada
       let amigosStorage = [];
       try {
         const salvas = localStorage.getItem('listaAmigosUsuario');
@@ -71,7 +109,6 @@ export default function Menu({ children }) {
         ])
       ].filter(Boolean);
 
-      // Se não há nenhum amigo válido no banco nem no cache
       if (idsParaValidar.length === 0 || idsAmigosBanco.length === 0) {
         setAmigosDropdown([]);
         localStorage.setItem('listaAmigosUsuario', JSON.stringify([]));
@@ -79,7 +116,6 @@ export default function Menu({ children }) {
         return;
       }
 
-      // 2. Validação cruzada estrita na tabela 'usuarios' (sem time_usuario)
       const { data: usuariosAtivos, error: errVal } = await supabase
         .from('usuarios')
         .select('id, nome, nome_usuario, imagem, status')
@@ -87,16 +123,11 @@ export default function Menu({ children }) {
 
       if (errVal) throw errVal;
 
-      // Buscar equipes dos amigos via times_integrantes
       const mapaTimes = new Map();
       try {
         const { data: membrosTimes } = await supabase
           .from('times_integrantes')
-          .select(`
-            id_usuario,
-            funcao,
-            times ( id, nome, tag )
-          `)
+          .select('id_usuario, funcao, times ( id, nome, tag )')
           .in('id_usuario', idsParaValidar);
 
         (membrosTimes || []).forEach((m) => {
@@ -133,14 +164,12 @@ export default function Menu({ children }) {
             status: u.status
           });
         } else if (!mapaAtivos.has(amigoId)) {
-          // Amigo foi deletado da tabela usuarios: expurga imediatamente o registro órfão
           if (rel.id) {
             supabase.from('amizades').delete().eq('id', rel.id).then(() => {}).catch(() => {});
           }
         }
       }
 
-      // 3. Forçar imediatamente a atualização do estado local do dropdown e sobrescrever o localStorage
       setAmigosDropdown(amigosValidados);
       localStorage.setItem('listaAmigosUsuario', JSON.stringify(amigosValidados));
       localStorage.setItem('listaAmigosPerfil', JSON.stringify(amigosValidados));
@@ -181,30 +210,28 @@ export default function Menu({ children }) {
   const amigosFiltrados = useMemo(() => {
     const termo = buscaAmigo.trim().toLowerCase();
     if (!termo) return amigosDropdown;
-
     return amigosDropdown.filter((amigo) => {
       const nome = (amigo.name || amigo.nome || amigo.nome_usuario || '').toLowerCase();
       return nome.includes(termo);
     });
   }, [amigosDropdown, buscaAmigo]);
 
-  // Revalidação sob demanda ao abrir o dropdown
   useEffect(() => {
-    if (!menuAberto) {
+    if (!painelAberto) {
       setBuscaAmigo('');
     } else {
       const salvo = localStorage.getItem('usuarioLogado');
       const user = salvo ? JSON.parse(salvo) : null;
       if (user?.id) {
         carregarAmigosConsolidados(user);
+        carregarTimeUsuario(user);
       }
     }
-  }, [menuAberto, carregarAmigosConsolidados]);
+  }, [painelAberto, carregarAmigosConsolidados, carregarTimeUsuario]);
 
   const handleRemoverAmigo = async (e, amigo) => {
     e.stopPropagation();
     e.preventDefault();
-
     const novaLista = amigosDropdown.filter((a) => a.id !== amigo.id);
     setAmigosDropdown(novaLista);
     try {
@@ -215,7 +242,6 @@ export default function Menu({ children }) {
     } catch (err) {
       console.error(err);
     }
-
     if (amigo.amizade_id && supabase) {
       try {
         await supabase.from('amizades').delete().eq('id', amigo.amizade_id);
@@ -223,7 +249,6 @@ export default function Menu({ children }) {
         console.warn('Erro ao remover amizade do Supabase:', err);
       }
     }
-
     mostrarAlerta({
       titulo: 'Amizade Removida',
       mensagem: `${amigo.name || amigo.nome || 'Jogador'} foi removido da sua lista de amigos.`,
@@ -234,7 +259,6 @@ export default function Menu({ children }) {
   const handleBloquearAmigo = async (e, amigo) => {
     e.stopPropagation();
     e.preventDefault();
-
     const novaLista = amigosDropdown.filter((a) => a.id !== amigo.id);
     setAmigosDropdown(novaLista);
     try {
@@ -250,7 +274,6 @@ export default function Menu({ children }) {
     } catch (err) {
       console.error(err);
     }
-
     if (amigo.amizade_id && supabase) {
       try {
         const salvo = localStorage.getItem('usuarioLogado');
@@ -263,7 +286,6 @@ export default function Menu({ children }) {
         console.warn('Erro ao bloquear amigo no Supabase:', err);
       }
     }
-
     mostrarAlerta({
       titulo: 'Jogador Bloqueado',
       mensagem: `${amigo.name || amigo.nome || 'Jogador'} foi bloqueado com sucesso.`,
@@ -271,19 +293,21 @@ export default function Menu({ children }) {
     });
   };
 
-  // Ciclo de vida global: montagem única com listeners protegidos e sem dependência de location.pathname
   useEffect(() => {
     const user = checarUsuario();
     if (user?.id) {
       carregarAmigosConsolidados(user);
+      carregarTimeUsuario(user);
     }
 
     const sincronizarAuthEAmigos = () => {
       const u = checarUsuario();
       if (u?.id) {
         carregarAmigosConsolidados(u);
+        carregarTimeUsuario(u);
       } else {
         setAmigosDropdown([]);
+        setTimesUsuario([]);
       }
     };
 
@@ -305,18 +329,28 @@ export default function Menu({ children }) {
       window.removeEventListener('storage', sincronizarAuthEAmigos);
       window.removeEventListener('amigosAtualizados', onAmigosAtualizados);
     };
-  }, [checarUsuario, carregarAmigosConsolidados]);
+  }, [checarUsuario, carregarAmigosConsolidados, carregarTimeUsuario]);
 
-  // Fechar o menu dropdown ao clicar fora com cleanup obrigatório
-  useEffect(() => {
-    const fecharAoClicarFora = (e) => {
-      if (!e.target.closest('.menu-usuario-container')) {
-        setMenuAberto(false);
-      }
-    };
-    document.addEventListener('click', fecharAoClicarFora);
-    return () => document.removeEventListener('click', fecharAoClicarFora);
-  }, []);
+  const handleTriggerMouseEnter = () => {
+    clearTimeout(hoverTimeoutRef.current);
+    setPainelAberto(true);
+  };
+
+  const handleTriggerMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setPainelAberto(false);
+    }, 220);
+  };
+
+  const handlePainelMouseEnter = () => {
+    clearTimeout(hoverTimeoutRef.current);
+  };
+
+  const handlePainelMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setPainelAberto(false);
+    }, 220);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogado');
@@ -324,17 +358,27 @@ export default function Menu({ children }) {
     localStorage.removeItem('listaAmigosPerfil');
     setUsuarioLogado(null);
     setAmigosDropdown([]);
-    setMenuAberto(false);
+    setTimesUsuario([]);
+    setPainelAberto(false);
     window.dispatchEvent(new Event('authAtualizada'));
     window.dispatchEvent(new Event('amigosAtualizados'));
     window.dispatchEvent(new Event('storage'));
-    // Garante que paginas restritas (perfil, admin, criacao) nao continuem visiveis apos sair
     navigate('/', { replace: true });
   };
 
+  const iniciaisUsuario = usuarioLogado
+    ? (usuarioLogado.nome_usuario || usuarioLogado.nome || 'U').substring(0, 2).toUpperCase()
+    : 'U';
+
+  const nomeExibicao = usuarioLogado
+    ? (usuarioLogado.nome_usuario || usuarioLogado.nome || usuarioLogado.email || 'Usuario')
+    : '';
+
+  const amigosOnline = amigos.filter((a) => a.status === 'online').length;
+
   return (
     <div>
-      {/* Cabeçalho Fixo com Efeito Glass */}
+      {/* Cabecalho Fixo com Efeito Glass */}
       <header className="cabecalho">
         <div className="logo">
           <Link to="/" className="titulo-animado-container" style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -359,7 +403,7 @@ export default function Menu({ children }) {
             className={({ isActive }) => `nav-link ${isActive ? 'ativo nav-item-ativo' : ''}`}
           >
             <div className="play-bg"></div>
-            <span className="play-text">INÍCIO</span>
+            <span className="play-text">INICIO</span>
             <span className="diamond indicador-losango" aria-hidden="true"></span>
           </NavLink>
           <NavLink
@@ -396,164 +440,21 @@ export default function Menu({ children }) {
           </NavLink>
         </nav>
 
-
         <div className="user-area">
           {usuarioLogado ? (
-            <div className={`menu-usuario-container ${menuAberto ? 'menu-aberto' : ''}`}>
-              <button 
-                className="botao-perfil-trigger usuario-nome" 
-                type="button"
-                onClick={() => setMenuAberto((prev) => !prev)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="icone-svg icone-usuario"><path fill="#450fe5" d="M463 448.2C440.9 409.8 399.4 384 352 384L288 384C240.6 384 199.1 409.8 177 448.2C212.2 487.4 263.2 512 320 512C376.8 512 427.8 487.3 463 448.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM320 336C359.8 336 392 303.8 392 264C392 224.2 359.8 192 320 192C280.2 192 248 224.2 248 264C248 303.8 280.2 336 320 336z"/></svg> {usuarioLogado.nome || usuarioLogado.email || 'Usuário'}
-              </button>
-
-              <div className="dropdown-usuario">
-                <Link className="item-dropdown" to="/perfil" onClick={() => setMenuAberto(false)}>
-                  Perfil do Usuário
-                </Link>
-                {usuarioLogado?.admin === true && (
-                  <Link className="item-dropdown" to="/admin" onClick={() => setMenuAberto(false)}>
-                    Painel Admin
-                  </Link>
-                )}
-                <button 
-                  type="button" 
-                  onClick={handleLogout} 
-                  className="item-dropdown item-sair"
-                >
-                  Sair
-                </button>
-
-                <div className="dropdown-divisor"></div>
-
-                {/* Seção de Amigos Integrada */}
-                <div className="dropdown-secao-amigos">
-                  <div className="dropdown-amigos-header">
-                    <div className="dropdown-amigos-titulo">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-amigos-header">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      <span>AMIGOS</span>
-                    </div>
-                    <span className="dropdown-amigos-badge">
-                      {amigos.filter((a) => a.status === 'online').length} Online
-                    </span>
-                  </div>
-
-                  {/* Mini Campo de Busca de Amigos */}
-                  <div className="dropdown-amigos-busca-wrap">
-                    <div className="dropdown-amigos-busca-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="icone-busca-amigos" aria-hidden="true">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                      </svg>
-                      <input
-                        type="text"
-                        className="dropdown-amigos-busca-input"
-                        value={buscaAmigo}
-                        onChange={(e) => setBuscaAmigo(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        placeholder="Buscar amigo..."
-                        aria-label="Buscar amigo"
-                      />
-                      {buscaAmigo && (
-                        <button
-                          type="button"
-                          className="dropdown-amigos-busca-limpar"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setBuscaAmigo('');
-                          }}
-                          title="Limpar pesquisa"
-                          aria-label="Limpar pesquisa"
-                        >
-                          &times;
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="dropdown-amigos-lista">
-                    {amigosFiltrados.length === 0 ? (
-                      <div className="dropdown-amigos-vazio">
-                        {buscaAmigo.trim() ? 'Nenhum amigo encontrado' : 'Nenhum amigo na lista'}
-                      </div>
-                    ) : (
-                      amigosFiltrados.map((amigo) => (
-                        <div key={amigo.id} className="dropdown-amigo-item">
-                          <Link 
-                            to={`/perfil/${amigo.nome_usuario}`} 
-                            className="dropdown-amigo-perfil-link"
-                            onClick={() => setMenuAberto(false)}
-                            title={`Ver perfil de ${amigo.name}`}
-                          >
-                            <div className="dropdown-amigo-avatar-wrap">
-                              <div className="dropdown-amigo-avatar">
-                                {amigo.name.charAt(0).toUpperCase()}
-                              </div>
-                              {(amigo.status === 'online' || amigo.status === 'offline') && (
-                                <span className={`dropdown-status-dot ${amigo.status}`}></span>
-                              )}
-                            </div>
-                            <div className="dropdown-amigo-info">
-                              <span className="dropdown-amigo-nome">{amigo.name}</span>
-                              <span className="dropdown-amigo-status-texto">
-                                {amigo.status === 'online'
-                                  ? 'Disponível'
-                                  : amigo.status === 'offline'
-                                    ? 'Offline'
-                                    : 'Status indisponível'}
-                              </span>
-                            </div>
-                          </Link>
-
-                          <div className="dropdown-amigo-acoes">
-                            <button
-                              type="button"
-                              className="btn-acao-amigo btn-bloquear"
-                              title={`Bloquear ${amigo.name}`}
-                              aria-label={`Bloquear ${amigo.name}`}
-                              onClick={(e) => handleBloquearAmigo(e, amigo)}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-acao-amigo btn-remover"
-                              title={`Remover amizade com ${amigo.name}`}
-                              aria-label={`Remover amizade com ${amigo.name}`}
-                              onClick={(e) => handleRemoverAmigo(e, amigo)}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <Link
-                    to="/perfil"
-                    className="dropdown-amigos-gerenciar"
-                    onClick={() => setMenuAberto(false)}
-                  >
-                    <span>Gerenciar Amigos</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-seta-amigos">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                  </Link>
+            <div
+              className={`social-panel-trigger${painelAberto ? ' painel-ativo' : ''}`}
+              ref={triggerRef}
+              onMouseEnter={handleTriggerMouseEnter}
+              onMouseLeave={handleTriggerMouseLeave}
+            >
+              <div className="social-trigger-avatar-moldura">
+                <div className="social-trigger-avatar">
+                  {usuarioLogado.imagem ? (
+                    <img src={usuarioLogado.imagem} alt={nomeExibicao} />
+                  ) : (
+                    <span>{iniciaisUsuario}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -570,25 +471,313 @@ export default function Menu({ children }) {
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
+      {/* Painel Social estilo Valorant - desliza da direita, comeca abaixo da navbar */}
+      {usuarioLogado && (
+        <aside
+          id="social-panel"
+          className={`social-panel${painelAberto ? ' social-panel-aberto' : ''}`}
+          ref={painelRef}
+          onMouseEnter={handlePainelMouseEnter}
+          onMouseLeave={handlePainelMouseLeave}
+          aria-label="Painel Social"
+        >
+          {/* Header do painel */}
+          <div className="social-panel-header">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="social-panel-icone-header"
+              aria-hidden="true"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span className="social-panel-titulo">SOCIAL</span>
+          </div>
+
+          {/* Secao: Perfil do usuario */}
+          <div className="social-panel-secao social-panel-perfil-secao">
+            <Link
+              to="/perfil"
+              className="social-panel-perfil-link"
+              onClick={() => setPainelAberto(false)}
+              title="Ver meu perfil"
+            >
+              <div className="social-perfil-avatar-moldura">
+                <div className="social-perfil-avatar">
+                  {usuarioLogado.imagem ? (
+                    <img src={usuarioLogado.imagem} alt={nomeExibicao} />
+                  ) : (
+                    <span>{iniciaisUsuario}</span>
+                  )}
+                </div>
+              </div>
+              <div className="social-perfil-info">
+                <span className="social-perfil-nome">{nomeExibicao}</span>
+                <span className="social-perfil-label">Meu Perfil</span>
+              </div>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="social-perfil-seta"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </Link>
+          </div>
+
+          {/* Secao: Time afiliado */}
+          <div className="social-panel-secao social-panel-time-secao">
+            <div className="social-secao-titulo">
+              <span>TIME AFILIADO</span>
+            </div>
+            {carregandoTimes ? (
+              <div className="social-time-carregando">Carregando...</div>
+            ) : timesUsuario.length > 0 ? (
+              timesUsuario.map((time) => (
+                <Link
+                  key={time.id}
+                  to={`/equipes/${time.id}`}
+                  className="social-time-item"
+                  onClick={() => setPainelAberto(false)}
+                  title={`Ver detalhes de ${time.nome}`}
+                >
+                  <div className="social-time-logo-moldura">
+                    <div className="social-time-logo">
+                      {time.logo ? (
+                        <img src={time.logo} alt={time.nome} />
+                      ) : (
+                        <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="social-time-info">
+                    <span className="social-time-nome">
+                      {time.tag ? `[${time.tag}] ` : ''}{time.nome}
+                    </span>
+                    <span className="social-time-funcao">
+                      {time.funcao === 'capitao' ? 'Capitao' : 'Jogador'}
+                    </span>
+                  </div>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="social-time-seta"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </Link>
+              ))
+            ) : (
+              <div className="social-time-vazio">
+                <span>Sem equipe</span>
+                <Link
+                  to="/equipes/criar"
+                  className="social-time-criar-link"
+                  onClick={() => setPainelAberto(false)}
+                >
+                  Criar time
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Secao: Lista de amigos */}
+          <div className="social-panel-secao social-panel-amigos-secao">
+            <div className="social-secao-titulo">
+              <span>AMIGOS</span>
+              <span className="social-amigos-online-badge">{amigosOnline} online</span>
+            </div>
+
+            <div className="social-amigos-busca-wrap">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="social-amigos-busca-icone"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                className="social-amigos-busca-input"
+                value={buscaAmigo}
+                onChange={(e) => setBuscaAmigo(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="Buscar amigo..."
+                aria-label="Buscar amigo"
+              />
+              {buscaAmigo && (
+                <button
+                  type="button"
+                  className="social-amigos-busca-limpar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBuscaAmigo('');
+                  }}
+                  title="Limpar pesquisa"
+                  aria-label="Limpar pesquisa"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+
+            <div className="social-amigos-lista">
+              {amigosFiltrados.length === 0 ? (
+                <div className="social-amigos-vazio">
+                  {buscaAmigo.trim() ? 'Nenhum amigo encontrado' : 'Nenhum amigo na lista'}
+                </div>
+              ) : (
+                amigosFiltrados.map((amigo) => (
+                  <div key={amigo.id} className="social-amigo-item">
+                    <Link
+                      to={`/perfil/${amigo.nome_usuario}`}
+                      className="social-amigo-link"
+                      onClick={() => setPainelAberto(false)}
+                      title={`Ver perfil de ${amigo.name}`}
+                    >
+                      <div className="social-amigo-avatar-moldura">
+                        <div className="social-amigo-avatar">
+                          {amigo.imagem ? (
+                            <img src={amigo.imagem} alt={amigo.name} />
+                          ) : (
+                            <span>{(amigo.name || 'J').charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        {(amigo.status === 'online' || amigo.status === 'offline') && (
+                          <span className={`social-status-dot ${amigo.status}`}></span>
+                        )}
+                      </div>
+                      <div className="social-amigo-info">
+                        <span className="social-amigo-nome">{amigo.name}</span>
+                        <span className="social-amigo-time">{amigo.time_usuario || 'Sem equipe'}</span>
+                      </div>
+                    </Link>
+
+                    <div className="social-amigo-acoes">
+                      <button
+                        type="button"
+                        className="social-btn-acao social-btn-remover"
+                        title={`Remover amizade com ${amigo.name}`}
+                        aria-label={`Remover amizade com ${amigo.name}`}
+                        onClick={(e) => handleRemoverAmigo(e, amigo)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <line x1="23" y1="18" x2="17" y2="18"></line>
+                        </svg>
+                        <span>Remover</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="social-btn-acao social-btn-bloquear"
+                        title={`Bloquear ${amigo.name}`}
+                        aria-label={`Bloquear ${amigo.name}`}
+                        onClick={(e) => handleBloquearAmigo(e, amigo)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                        <span>Bloquear</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Rodape do painel: acoes */}
+          <div className="social-panel-footer">
+            <Link
+              to="/perfil"
+              state={{ editar: true }}
+              className="social-footer-btn social-footer-btn-config"
+              onClick={() => setPainelAberto(false)}
+              title="Configuracoes do perfil"
+              aria-label="Configuracoes do perfil"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Config</span>
+            </Link>
+
+            {usuarioLogado?.admin === true && (
+              <Link
+                to="/admin"
+                className="social-footer-btn social-footer-btn-admin"
+                onClick={() => setPainelAberto(false)}
+                title="Painel do Administrador"
+                aria-label="Painel do Administrador"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>Admin</span>
+              </Link>
+            )}
+
+            <button
+              type="button"
+              className="social-footer-btn social-footer-btn-logout"
+              onClick={handleLogout}
+              title="Sair da conta"
+              aria-label="Sair da conta"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Sair</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* Conteudo Principal */}
       {children}
 
-      {/* Rodapé Global */}
+      {/* Rodape Global */}
       <footer className="rodape-global">
         <div className="rodape-container">
-          {/* Coluna 1: Marca e Quem Somos */}
           <div className="rodape-coluna rodape-marca">
             <h3 className="rodape-logo">CS:GO <span>TOURNAMENTS</span></h3>
             <p className="rodape-descricao">
-              Plataforma competitiva dedicada a torneios e campeonatos de CS. Conectamos equipes, criamos disputas justas e impulsionamos o cenário de esports.
+              Plataforma competitiva dedicada a torneios e campeonatos de CS. Conectamos equipes, criamos disputas justas e impulsionamos o cenario de esports.
             </p>
           </div>
 
-          {/* Coluna 2: Navegação Rápida */}
           <div className="rodape-coluna">
-            <h4 className="rodape-titulo">Navegação</h4>
+            <h4 className="rodape-titulo">Navegacao</h4>
             <ul className="rodape-links">
-              <li><Link to="/">Início</Link></li>
+              <li><Link to="/">Inicio</Link></li>
               <li><Link to="/equipes">Times</Link></li>
               <li><Link to="/torneios">Competir</Link></li>
               <li><Link to="/regras">Regras &amp; Diretrizes</Link></li>
@@ -596,7 +785,6 @@ export default function Menu({ children }) {
             </ul>
           </div>
 
-          {/* Coluna 3: Suporte & Ajuda */}
           <div className="rodape-coluna">
             <h4 className="rodape-titulo">Suporte</h4>
             <ul className="rodape-links">
@@ -608,10 +796,9 @@ export default function Menu({ children }) {
             </ul>
           </div>
 
-          {/* Coluna 4: Comunidade e Redes */}
           <div className="rodape-coluna">
             <h4 className="rodape-titulo">Comunidade</h4>
-            <p className="rodape-comunidade-texto">Junte-se à nossa comunidade para atualizações de partidas e suporte em tempo real.</p>
+            <p className="rodape-comunidade-texto">Junte-se a nossa comunidade para atualizacoes de partidas e suporte em tempo real.</p>
             <div className="rodape-redes">
               <a href="https://discord.com" target="_blank" rel="noreferrer" aria-label="Discord">Discord</a>
               <a href="https://steamcommunity.com" target="_blank" rel="noreferrer" aria-label="Steam">Steam</a>
@@ -620,9 +807,8 @@ export default function Menu({ children }) {
           </div>
         </div>
 
-        {/* Barra Inferior */}
         <div className="rodape-bottom">
-          <p>© 2026 CS:GO Tournaments. Todos os direitos reservados.</p>
+          <p>2026 CS:GO Tournaments. Todos os direitos reservados.</p>
         </div>
       </footer>
 
