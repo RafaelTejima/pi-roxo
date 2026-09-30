@@ -28,6 +28,9 @@ export default function Menu({ children }) {
   const [amigosDropdown, setAmigosDropdown] = useState([]);
   const [timesUsuario, setTimesUsuario] = useState([]);
   const [carregandoTimes, setCarregandoTimes] = useState(false);
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
+  const [statusPedidos, setStatusPedidos] = useState({});
   const amigos = amigosDropdown;
 
   const isBuscandoAmigosRef = useRef(false);
@@ -181,25 +184,29 @@ export default function Menu({ children }) {
     }
   }, []);
 
+  // Busca dados frescos do usuário logado no Supabase e atualiza estado + localStorage
+  const atualizarUsuarioFresco = useCallback(async (userId) => {
+    if (!userId || !supabase) return;
+    try {
+      const { data } = await supabase
+        .from('usuarios')
+        .select('id, nome, nome_usuario, email, imagem, admin, status')
+        .eq('id', userId)
+        .single();
+      if (data) {
+        setUsuarioLogado(data);
+        localStorage.setItem('usuarioLogado', JSON.stringify(data));
+      }
+    } catch (e) {
+      console.warn('Erro ao atualizar usuário fresco:', e);
+    }
+  }, []);
+
   const checarUsuario = useCallback(() => {
     try {
       const salvo = localStorage.getItem('usuarioLogado');
       const user = salvo ? JSON.parse(salvo) : null;
-      setUsuarioLogado((prev) => {
-        if (!user && !prev) return null;
-        if (
-          user &&
-          prev &&
-          String(user.id) === String(prev.id) &&
-          user.nome === prev.nome &&
-          user.email === prev.email &&
-          user.imagem === prev.imagem &&
-          user.admin === prev.admin
-        ) {
-          return prev;
-        }
-        return user;
-      });
+      setUsuarioLogado(user);
       return user;
     } catch {
       setUsuarioLogado(null);
@@ -223,11 +230,111 @@ export default function Menu({ children }) {
       const salvo = localStorage.getItem('usuarioLogado');
       const user = salvo ? JSON.parse(salvo) : null;
       if (user?.id) {
+        // Sempre busca dados frescos ao abrir o painel
+        atualizarUsuarioFresco(user.id);
         carregarAmigosConsolidados(user);
         carregarTimeUsuario(user);
       }
     }
-  }, [painelAberto, carregarAmigosConsolidados, carregarTimeUsuario]);
+  }, [painelAberto, atualizarUsuarioFresco, carregarAmigosConsolidados, carregarTimeUsuario]);
+
+  // Busca global de usuarios no Supabase com debounce
+  useEffect(() => {
+    const termo = buscaAmigo.trim();
+    if (!termo || termo.length < 2) {
+      setResultadosBusca([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      if (!supabase || !usuarioLogado?.id) return;
+      setBuscandoUsuarios(true);
+      try {
+        const { data } = await supabase
+          .from('usuarios')
+          .select('id, nome, nome_usuario, imagem, status')
+          .or(`nome_usuario.ilike.%${termo}%,nome.ilike.%${termo}%`)
+          .neq('id', usuarioLogado.id)
+          .limit(8);
+
+        const idsAmigos = new Set(amigosDropdown.map((a) => String(a.id)));
+        const filtrados = (data || []).filter((u) => !idsAmigos.has(String(u.id)));
+        setResultadosBusca(filtrados);
+      } catch (e) {
+        console.warn('Erro ao buscar usuarios:', e);
+        setResultadosBusca([]);
+      } finally {
+        setBuscandoUsuarios(false);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [buscaAmigo, usuarioLogado, amigosDropdown]);
+
+  const handleEnviarPedido = async (e, usuario) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!supabase || !usuarioLogado?.id) return;
+    setStatusPedidos((prev) => ({ ...prev, [usuario.id]: 'enviando' }));
+    try {
+      const { data: existente } = await supabase
+        .from('amizades')
+        .select('id, status')
+        .or(
+          `and(id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${usuario.id}),` +
+          `and(id_usuario1.eq.${usuario.id},id_usuario2.eq.${usuarioLogado.id})`
+        )
+        .maybeSingle();
+
+      if (existente) {
+        setStatusPedidos((prev) => ({ ...prev, [usuario.id]: existente.status === 'ACEITO' ? 'amigos' : 'enviado' }));
+        return;
+      }
+      const { error } = await supabase.from('amizades').insert({
+        id_usuario1: usuarioLogado.id,
+        id_usuario2: usuario.id,
+        status: 'PENDENTE'
+      });
+      if (error) throw error;
+      setStatusPedidos((prev) => ({ ...prev, [usuario.id]: 'enviado' }));
+      mostrarAlerta({
+        titulo: 'Pedido Enviado!',
+        mensagem: `Pedido de amizade enviado para ${usuario.nome_usuario || usuario.nome}.`,
+        tipo: 'sucesso'
+      });
+    } catch (err) {
+      console.warn('Erro ao enviar pedido:', err);
+      setStatusPedidos((prev) => ({ ...prev, [usuario.id]: null }));
+      mostrarAlerta({ titulo: 'Erro', mensagem: 'Nao foi possivel enviar o pedido.', tipo: 'erro' });
+    }
+  };
+
+  const handleBloquearBusca = async (e, usuario) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!supabase || !usuarioLogado?.id) return;
+    setStatusPedidos((prev) => ({ ...prev, [usuario.id]: 'bloqueando' }));
+    try {
+      const { data: existente } = await supabase
+        .from('amizades')
+        .select('id')
+        .or(
+          `and(id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${usuario.id}),` +
+          `and(id_usuario1.eq.${usuario.id},id_usuario2.eq.${usuarioLogado.id})`
+        )
+        .maybeSingle();
+
+      if (existente) {
+        await supabase.from('amizades').update({ status: 'BLOQUEADO', id_usuario1: usuarioLogado.id, id_usuario2: usuario.id }).eq('id', existente.id);
+      } else {
+        await supabase.from('amizades').insert({ id_usuario1: usuarioLogado.id, id_usuario2: usuario.id, status: 'BLOQUEADO' });
+      }
+      setStatusPedidos((prev) => ({ ...prev, [usuario.id]: 'bloqueado' }));
+      setResultadosBusca((prev) => prev.filter((u) => String(u.id) !== String(usuario.id)));
+      mostrarAlerta({ titulo: 'Jogador Bloqueado', mensagem: `${usuario.nome_usuario || usuario.nome} foi bloqueado.`, tipo: 'erro' });
+    } catch (err) {
+      console.warn('Erro ao bloquear usuario:', err);
+      setStatusPedidos((prev) => ({ ...prev, [usuario.id]: null }));
+    }
+  };
 
   const handleRemoverAmigo = async (e, amigo) => {
     e.stopPropagation();
@@ -294,15 +401,38 @@ export default function Menu({ children }) {
   };
 
   useEffect(() => {
+    // Carga inicial
     const user = checarUsuario();
     if (user?.id) {
+      atualizarUsuarioFresco(user.id);
       carregarAmigosConsolidados(user);
       carregarTimeUsuario(user);
+    }
+
+    // Subscription ao Supabase Auth — reage a login/logout em tempo real
+    let authSub;
+    if (supabase?.auth?.onAuthStateChange) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          atualizarUsuarioFresco(session.user.id).then(() => {
+            const salvo = localStorage.getItem('usuarioLogado');
+            const u = salvo ? JSON.parse(salvo) : { id: session.user.id };
+            carregarAmigosConsolidados(u);
+            carregarTimeUsuario(u);
+          });
+        } else {
+          setUsuarioLogado(null);
+          setAmigosDropdown([]);
+          setTimesUsuario([]);
+        }
+      });
+      authSub = data?.subscription;
     }
 
     const sincronizarAuthEAmigos = () => {
       const u = checarUsuario();
       if (u?.id) {
+        atualizarUsuarioFresco(u.id);
         carregarAmigosConsolidados(u);
         carregarTimeUsuario(u);
       } else {
@@ -314,22 +444,34 @@ export default function Menu({ children }) {
     const onAmigosAtualizados = () => {
       const salvo = localStorage.getItem('usuarioLogado');
       const u = salvo ? JSON.parse(salvo) : null;
+      if (u?.id) carregarAmigosConsolidados(u);
+      else setAmigosDropdown([]);
+    };
+
+    // Evento disparado pela tela de Perfil ao salvar alterações
+    const onPerfilAtualizado = () => {
+      const salvo = localStorage.getItem('usuarioLogado');
+      const u = salvo ? JSON.parse(salvo) : null;
       if (u?.id) {
+        atualizarUsuarioFresco(u.id);
         carregarAmigosConsolidados(u);
-      } else {
-        setAmigosDropdown([]);
+        carregarTimeUsuario(u);
       }
     };
 
     window.addEventListener('authAtualizada', sincronizarAuthEAmigos);
     window.addEventListener('storage', sincronizarAuthEAmigos);
     window.addEventListener('amigosAtualizados', onAmigosAtualizados);
+    window.addEventListener('perfilAtualizado', onPerfilAtualizado);
+
     return () => {
+      authSub?.unsubscribe();
       window.removeEventListener('authAtualizada', sincronizarAuthEAmigos);
       window.removeEventListener('storage', sincronizarAuthEAmigos);
       window.removeEventListener('amigosAtualizados', onAmigosAtualizados);
+      window.removeEventListener('perfilAtualizado', onPerfilAtualizado);
     };
-  }, [checarUsuario, carregarAmigosConsolidados, carregarTimeUsuario]);
+  }, [checarUsuario, atualizarUsuarioFresco, carregarAmigosConsolidados, carregarTimeUsuario]);
 
   const handleTriggerMouseEnter = () => {
     clearTimeout(hoverTimeoutRef.current);
@@ -470,7 +612,7 @@ export default function Menu({ children }) {
                 : <span>{iniciaisUsuario}</span>}
             </div>
           </div>
-                <hr className="social-line"/>
+          {timesUsuario.length > 0 && <hr className="social-line" />}
           {/* Ícones do time */}
           {timesUsuario.slice(0, 3).map((time) => (
             <div key={time.id} className="social-compact-item">
@@ -672,71 +814,144 @@ export default function Menu({ children }) {
             </div>
 
             <div className="social-amigos-lista">
-              {amigosFiltrados.length === 0 ? (
-                <div className="social-amigos-vazio">
-                  {buscaAmigo.trim() ? 'Nenhum amigo encontrado' : 'Nenhum amigo na lista'}
-                </div>
-              ) : (
-                amigosFiltrados.map((amigo) => (
-                  <div key={amigo.id} className="social-amigo-item">
-                    <Link
-                      to={`/perfil/${amigo.nome_usuario}`}
-                      className="social-amigo-link"
-                      onClick={() => setPainelAberto(false)}
-                      title={`Ver perfil de ${amigo.name}`}
-                    >
-                      <div className="social-amigo-avatar-moldura">
-                        <div className="social-amigo-avatar">
-                          {amigo.imagem ? (
-                            <img src={amigo.imagem} alt={amigo.name} />
-                          ) : (
-                            <span>{(amigo.name || 'J').charAt(0).toUpperCase()}</span>
-                          )}
-                        </div>
-                        {(amigo.status === 'online' || amigo.status === 'offline') && (
-                          <span className={`social-status-dot ${amigo.status}`}></span>
+              {buscaAmigo.trim().length >= 2 ? (
+                /* ---- Modo busca global ---- */
+                buscandoUsuarios ? (
+                  <div className="social-amigos-vazio">Buscando...</div>
+                ) : resultadosBusca.length === 0 ? (
+                  <div className="social-amigos-vazio">Nenhum usuário encontrado</div>
+                ) : (
+                  resultadosBusca.map((usuario) => {
+                    const st = statusPedidos[usuario.id];
+                    const jaEnviado = st === 'enviado' || st === 'amigos';
+                    const bloqueado = st === 'bloqueado';
+                    const carregando = st === 'enviando' || st === 'bloqueando';
+                    return (
+                      <div key={usuario.id} className="social-amigo-item">
+                        <Link
+                          to={`/perfil/${usuario.nome_usuario}`}
+                          className="social-amigo-link"
+                          onClick={() => setPainelAberto(false)}
+                          title={`Ver perfil de ${usuario.nome_usuario || usuario.nome}`}
+                        >
+                          <div className="social-amigo-avatar-moldura">
+                            <div className="social-amigo-avatar">
+                              {usuario.imagem ? (
+                                <img src={usuario.imagem} alt={usuario.nome_usuario || usuario.nome} />
+                              ) : (
+                                <span>{(usuario.nome_usuario || usuario.nome || 'U').charAt(0).toUpperCase()}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="social-amigo-info">
+                            <span className="social-amigo-nome">{usuario.nome_usuario || usuario.nome}</span>
+                            <span className="social-amigo-time">
+                              {bloqueado ? 'Bloqueado' : jaEnviado ? (st === 'amigos' ? 'Já são amigos' : 'Pedido enviado ✓') : 'Jogador'}
+                            </span>
+                          </div>
+                        </Link>
+                        {!bloqueado && (
+                          <div className="social-amigo-acoes">
+                            <button
+                              type="button"
+                              className={`social-btn-acao ${jaEnviado ? 'social-btn-enviado' : 'social-btn-adicionar'}`}
+                              disabled={carregando || jaEnviado}
+                              title={jaEnviado ? 'Pedido já enviado' : `Adicionar ${usuario.nome_usuario || usuario.nome}`}
+                              onClick={(e) => handleEnviarPedido(e, usuario)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                              </svg>
+                              <span>{carregando && st === 'enviando' ? '...' : jaEnviado ? 'Enviado' : 'Adicionar'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="social-btn-acao social-btn-bloquear"
+                              disabled={carregando}
+                              title={`Bloquear ${usuario.nome_usuario || usuario.nome}`}
+                              onClick={(e) => handleBloquearBusca(e, usuario)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                              </svg>
+                              <span>{carregando && st === 'bloqueando' ? '...' : 'Bloquear'}</span>
+                            </button>
+                          </div>
                         )}
                       </div>
-                      <div className="social-amigo-info">
-                        <span className="social-amigo-nome">{amigo.name}</span>
-                        <span className="social-amigo-time">{amigo.time_usuario || 'Sem equipe'}</span>
-                      </div>
-                    </Link>
-
-                    <div className="social-amigo-acoes">
-                      <button
-                        type="button"
-                        className="social-btn-acao social-btn-remover"
-                        title={`Remover amizade com ${amigo.name}`}
-                        aria-label={`Remover amizade com ${amigo.name}`}
-                        onClick={(e) => handleRemoverAmigo(e, amigo)}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <line x1="23" y1="18" x2="17" y2="18"></line>
-                        </svg>
-                        <span>Remover</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="social-btn-acao social-btn-bloquear"
-                        title={`Bloquear ${amigo.name}`}
-                        aria-label={`Bloquear ${amigo.name}`}
-                        onClick={(e) => handleBloquearAmigo(e, amigo)}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                        </svg>
-                        <span>Bloquear</span>
-                      </button>
-                    </div>
+                    );
+                  })
+                )
+              ) : (
+                /* ---- Modo lista de amigos ---- */
+                amigosFiltrados.length === 0 ? (
+                  <div className="social-amigos-vazio">
+                    {buscaAmigo.trim() ? 'Nenhum amigo encontrado' : 'Nenhum amigo na lista'}
                   </div>
-                ))
+                ) : (
+                  amigosFiltrados.map((amigo) => (
+                    <div key={amigo.id} className="social-amigo-item">
+                      <Link
+                        to={`/perfil/${amigo.nome_usuario}`}
+                        className="social-amigo-link"
+                        onClick={() => setPainelAberto(false)}
+                        title={`Ver perfil de ${amigo.name}`}
+                      >
+                        <div className="social-amigo-avatar-moldura">
+                          <div className="social-amigo-avatar">
+                            {amigo.imagem ? (
+                              <img src={amigo.imagem} alt={amigo.name} />
+                            ) : (
+                              <span>{(amigo.name || 'J').charAt(0).toUpperCase()}</span>
+                            )}
+                          </div>
+                          {(amigo.status === 'online' || amigo.status === 'offline') && (
+                            <span className={`social-status-dot ${amigo.status}`}></span>
+                          )}
+                        </div>
+                        <div className="social-amigo-info">
+                          <span className="social-amigo-nome">{amigo.name}</span>
+                          <span className="social-amigo-time">{amigo.time_usuario || 'Sem equipe'}</span>
+                        </div>
+                      </Link>
+                      <div className="social-amigo-acoes">
+                        <button
+                          type="button"
+                          className="social-btn-acao social-btn-remover"
+                          title={`Remover amizade com ${amigo.name}`}
+                          onClick={(e) => handleRemoverAmigo(e, amigo)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <line x1="23" y1="18" x2="17" y2="18"></line>
+                          </svg>
+                          <span>Remover</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="social-btn-acao social-btn-bloquear"
+                          title={`Bloquear ${amigo.name}`}
+                          onClick={(e) => handleBloquearAmigo(e, amigo)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                          </svg>
+                          <span>Bloquear</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )
               )}
             </div>
           </div>
+
 
           {/* Rodape do painel: acoes */}
           <div className="social-panel-footer">

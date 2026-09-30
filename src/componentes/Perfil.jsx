@@ -784,7 +784,21 @@ export default function Perfil() {
       setSalvando(false);
       return;
     }
-    setUsuario(prev => ({ ...prev, ...payload }));
+    const usuarioAtualizado = { ...usuario, ...payload };
+    setUsuario(usuarioAtualizado);
+
+    // Atualiza o localStorage e notifica a sidebar para refrescar
+    try {
+      const salvo = localStorage.getItem('usuarioLogado');
+      if (salvo) {
+        const logado = JSON.parse(salvo);
+        if (String(logado.id) === String(usuario.id)) {
+          localStorage.setItem('usuarioLogado', JSON.stringify({ ...logado, ...payload }));
+          window.dispatchEvent(new Event('perfilAtualizado'));
+        }
+      }
+    } catch {}
+
     setSalvando(false);
     setEditando(false);
     mostrarAlerta({ titulo: 'Perfil Atualizado!', mensagem: 'Suas informações foram salvas com sucesso.', tipo: 'sucesso' });
