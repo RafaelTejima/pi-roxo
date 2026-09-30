@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
@@ -34,54 +34,13 @@ function formatPrize(value) {
 }
 
 // ============================================================
-// COMPONENTE: DETALHES DO TORNEIO (com Bracket)
+// COMPONENTE: CARD DE TORNEIO
 // ============================================================
 
 function tournamentStatus(status) {
   if (status === true) return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status' }
   if (status === false) return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
   return { label: 'STATUS NÃO INFORMADO', classe: 'tournament-status' }
-}
-
-function TournamentDetails({ tournaments, loading, error }) {
-  const { id } = useParams()
-  const tournament = tournaments.find((item) => String(item.id) === id)
-
-  if (loading) return <main className="tournament-page-state"><p>Carregando detalhes...</p></main>
-  if (error) return <main className="tournament-page-state error"><p>{error}</p><Link to="/torneios">Voltar para torneios</Link></main>
-  if (!tournament) return <main className="tournament-page-state"><h1>Torneio não encontrado</h1><Link to="/torneios">Voltar para torneios</Link></main>
-
-  const info = tournamentStatus(tournament.status)
-
-  return (
-    <main className="tournament-details fundo-aurora-motion">
-      <AuroraBackground />
-      <Link className="back-link" to="/torneios">&lt;- Voltar para torneios</Link>
-      <div className="details-hero">
-        <div className="tournament-card-visual" aria-hidden="true">
-          <span>ROXO</span>
-          <strong>{tournament.jogo || 'Não informado'}</strong>
-        </div>
-        <div>
-          <span className={info.classe}>{info.label}</span>
-          <h1>{tournament.nome}</h1>
-          <p>{formatDate(tournament.data_inicio)}</p>
-        </div>
-      </div>
-      <div className="details-grid">
-        <div><small>VALOR DO PRÊMIO</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
-        <div><small>FORMATO</small><strong>{tournament.formato || 'Não informado'}</strong></div>
-      </div>
-      <section className="details-rules">
-        <h2>Descrição do torneio</h2>
-        <p>{tournament.descricao || 'Nenhuma descrição informada.'}</p>
-      </section>
-      <section className="details-rules">
-        <h2>Chaveamento</h2>
-        <p>Os dados de partidas deste torneio ainda não estão disponíveis.</p>
-      </section>
-    </main>
-  )
 }
 
 function TournamentCard({ tournament, index }) {
@@ -93,7 +52,7 @@ function TournamentCard({ tournament, index }) {
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
           <span>ROXO</span>
-          <strong>{tournament.jogo || 'Não informado'}</strong>
+          <strong>CS2</strong>
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
@@ -122,7 +81,6 @@ export default function Torneios() {
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
   const [busca, setBusca] = useState('')
-  const { id } = useParams()
 
   useEffect(() => {
     let ativo = true
@@ -164,18 +122,15 @@ export default function Torneios() {
     return tournaments.filter((tournament) => {
       const matchNome = (tournament.nome || '').toLowerCase().includes(termo)
       const matchFormato = (tournament.formato || '').toLowerCase().includes(termo)
-      const matchJogo = (tournament.jogo || '').toLowerCase().includes(termo)
       const matchDesc = (tournament.descricao || '').toLowerCase().includes(termo)
       
       const valorPremioStr = String(tournament.dinheiro || '')
       const premioFormatado = formatPrize(tournament.dinheiro).toLowerCase()
       const matchPremio = valorPremioStr.includes(termo) || premioFormatado.includes(termo)
 
-      return matchNome || matchFormato || matchJogo || matchDesc || matchPremio
+      return matchNome || matchFormato || matchDesc || matchPremio
     })
   }, [tournaments, busca])
-
-  if (id !== undefined) return <TournamentDetails tournaments={tournaments} loading={loading} error={erro} />
 
   return (
     <main className="tournaments-page fundo-aurora-motion">

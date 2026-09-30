@@ -68,17 +68,41 @@
   display: inline-block;
   margin-top: 24px;
   padding: 12px 26px;
+  border: none;
   border-radius: 10px;
   background: linear-gradient(120deg, var(--roxo-principal, #723EC3), var(--roxo-vivo, #b565f2));
   color: white;
   font-weight: 700;
   font-size: 14px;
+  font-family: inherit;
   text-decoration: none;
+  cursor: pointer;
   transition: transform 0.25s ease;
 }
 
 .tournaments-criar-btn:hover {
   transform: translateY(-2px);
+}
+
+.tournaments-criar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Botão de Inscrição na página de detalhes --- */
+.details-inscricao {
+  text-align: center;
+}
+
+.details-inscricao .tournaments-criar-btn {
+  margin-top: 0;
+}
+
+.details-inscricao p {
+  margin-top: 12px;
+  color: var(--texto-secundario, #a8a8a8);
+  font-size: 0.9rem;
 }
 
 /* ============================================================
@@ -398,6 +422,7 @@
   margin-top: 8px;
   line-height: 1.5;
   font-size: 0.85rem;
+  white-space: pre-line;
 }
 
 .tournament-rules[open] p {
@@ -522,6 +547,44 @@
   color: var(--texto-secundario, #a8a8a8);
   line-height: 1.7;
   font-size: 0.95rem;
+  white-space: pre-line;
+}
+
+/* --- Fase de Grupos --- */
+.details-grupo h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e9d5ff;
+  margin-bottom: 12px;
+}
+
+.details-grupo-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.details-grupo-lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(157, 78, 221, 0.18);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.details-grupo-tag {
+  background: rgba(157, 78, 221, 0.25);
+  color: #e9d5ff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
 }
 
 /* --- Estados de Carregamento, Vazio e Erro --- */

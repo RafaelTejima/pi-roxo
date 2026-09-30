@@ -96,6 +96,28 @@
   border-color: var(--roxo-vivo, #b565f2);
 }
 
+#pagina-criar-torneio .campo-form select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: white;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s ease;
+}
+
+#pagina-criar-torneio .campo-form select:focus {
+  outline: none;
+  border-color: var(--roxo-vivo, #b565f2);
+}
+
+#pagina-criar-torneio .campo-form select option {
+  background: #1a1225;
+  color: white;
+}
+
 /* --- Data e hora (data + hora + minuto) --- */
 #pagina-criar-torneio .campo-form-datahora {
   display: flex;
