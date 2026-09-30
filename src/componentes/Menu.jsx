@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAlerta } from './AlertaModal';
 import { supabase } from '../supabase';
 
@@ -7,6 +7,7 @@ import './menu.css';
 
 export default function Menu({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { mostrarAlerta } = useAlerta();
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
     try {
@@ -327,6 +328,8 @@ export default function Menu({ children }) {
     window.dispatchEvent(new Event('authAtualizada'));
     window.dispatchEvent(new Event('amigosAtualizados'));
     window.dispatchEvent(new Event('storage'));
+    // Garante que paginas restritas (perfil, admin, criacao) nao continuem visiveis apos sair
+    navigate('/', { replace: true });
   };
 
   return (

@@ -106,3 +106,9 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - A lista de amigos e os perfis nao presumem status online/offline ou jogo atual. Perfis inexistentes exibem estado de nao encontrado.
 - Removidos contadores, promessas promocionais, estatisticas zeradas e configuracoes de privacidade que eram salvas apenas no navegador, sem persistencia no schema.
 - Mantidos placeholders de formularios e o catalogo estatico de mapas, pois sao elementos de entrada/representacao visual e nao registros de usuarios, equipes ou torneios.
+
+## Correcao: Logout nao redirecionava (usuario continuava acessando perfil/admin/criacao)
+- **Bug:** o botao "Sair" do dropdown do menu (`handleLogout` em `src/componentes/Menu.jsx`) apenas limpava o `localStorage`/estado do usuario, mas nao navegava para nenhuma rota. Como as paginas restritas (`Perfil.jsx`, `AdminPanel.jsx`, `CriarEquipe.jsx`, `CriarTorneio.jsx`) so checam `usuarioLogado` no `localStorage` uma unica vez ao montar (em `useState`/`useEffect` de montagem), o componente continuava montado com os dados ja carregados em memoria e a pessoa seguia vendo/usando a tela como se ainda estivesse logada, incluindo o Painel Admin.
+- **Correcao:** `handleLogout` agora chama `navigate('/', { replace: true })` (via `useNavigate` do `react-router-dom`) logo apos limpar o `localStorage` e os estados locais, forcando o desmonte das paginas restritas e o retorno para a Home.
+- O botao "Sair da conta" dentro do proprio `Perfil.jsx` (`sair()`) ja fazia `navigate('/')` corretamente e nao precisou de alteracao.
+- Nao foi criado um sistema central de rotas protegidas (`ProtectedRoute`) porque cada pagina restrita ja possui sua propria checagem de `usuarioLogado` ao montar e redireciona corretamente quando acessada diretamente sem sessao; o problema era exclusivamente a falta de navegacao apos o logout.

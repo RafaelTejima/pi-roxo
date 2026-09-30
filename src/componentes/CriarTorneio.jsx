@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../css/criar-torneio.css'
 import { useAlerta } from './AlertaModal'
@@ -22,6 +22,13 @@ export default function CriarTorneio() {
     const usuarioSalvo = localStorage.getItem('usuarioLogado')
     return usuarioSalvo ? JSON.parse(usuarioSalvo) : null
   })
+
+  // Bloqueia acesso direto a rota sem sessao, igual ao CriarEquipe
+  useEffect(() => {
+    if (!usuario) {
+      navigate('/login')
+    }
+  }, [navigate, usuario])
 
   const [nome, setNome] = useState('')
   const [data, setData] = useState('')
