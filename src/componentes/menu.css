@@ -289,35 +289,29 @@
   cursor: pointer;
   position: relative;
   user-select: none;
-  transition: transform 0.2s ease;
 }
 
-.social-panel-trigger:hover,
-.social-panel-trigger.painel-ativo {
-  transform: scale(1.05);
-}
-
-/* Moldura roxa do avatar no trigger da navbar */
 .social-trigger-avatar-moldura {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
   flex-shrink: 0;
 }
 
 .social-trigger-avatar-moldura::before {
   content: '';
   position: absolute;
-  inset: -2.5px;
-  border-radius: 10px;
+  inset: -2px;
+  border-radius: 4px;
   background: linear-gradient(135deg, #b565f2, #723ec3);
   z-index: 0;
   transition: opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
-.social-panel-trigger:hover .social-trigger-avatar-moldura::before,
-.social-panel-trigger.painel-ativo .social-trigger-avatar-moldura::before {
-  box-shadow: 0 0 12px rgba(181, 101, 242, 0.6);
+#social-panel:hover .social-trigger-avatar-moldura::before,
+#social-panel.social-panel-aberto .social-trigger-avatar-moldura::before {
+  box-shadow: 0 0 16px rgba(181, 101, 242, 0.7);
+  background: linear-gradient(135deg, #d69eff, #b565f2);
 }
 
 .social-trigger-avatar {
@@ -325,7 +319,7 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 2px;
   background: linear-gradient(135deg, #1a0f2e, #291547);
   border: 2px solid #0d0818;
   display: flex;
@@ -333,7 +327,7 @@
   justify-content: center;
   overflow: hidden;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   color: #e2d6ff;
   letter-spacing: 0.5px;
 }
@@ -342,34 +336,32 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 1px;
 }
 
 
 /* ================= Painel Social Estilo Valorant ================= */
 #social-panel.social-panel {
   position: fixed;
-  /* Começa abaixo da navbar (altura ~80px) */
   top: 80px;
   right: 0;
-  width: 260px;
+  width: 290px;
   height: calc(100vh - 80px);
-  background: rgba(8, 4, 18, 0.92);
+  background: rgba(8, 4, 18, 0.96);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border-left: 1px solid rgba(181, 101, 242, 0.22);
+  border-left: 1px solid rgba(181, 101, 242, 0.3);
   border-top: 1px solid rgba(181, 101, 242, 0.15);
   display: flex;
   flex-direction: column;
   z-index: 999;
-  /* Painel fechado: deslocado para direita */
   transform: translateX(100%);
   opacity: 0;
   visibility: hidden;
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.28s ease,
-              visibility 0.28s ease;
-  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.6), -2px 0 16px rgba(114, 62, 195, 0.2);
+              opacity 0.22s ease,
+              visibility 0.22s ease;
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.7), -2px 0 16px rgba(114, 62, 195, 0.25);
   overflow: hidden;
 }
 
@@ -378,6 +370,119 @@
   opacity: 1;
   visibility: visible;
 }
+
+/* Linha do avatar compacto no topo da sidebar */
+.social-compact-avatar-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(114, 62, 195, 0.06);
+  cursor: pointer;
+}
+
+/* ====== Faixa compacta fixa (sempre visível) ====== */
+.social-compact-strip-fixed {
+  position: fixed;
+  right: 0;
+  top: 80px;
+  width: 64px;
+  height: calc(100vh - 80px);
+  background: rgba(8, 4, 18, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(181, 101, 242, 0.3);
+  z-index: 998;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: pointer;
+}
+.social-compact-strip-fixed::-webkit-scrollbar { display: none; }
+
+.social-compact-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* Avatar do usuário — quadrado com moldura roxa */
+.social-compact-item--user .social-compact-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #b565f2, #723ec3);
+  padding: 2px;
+}
+
+.social-compact-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(114, 62, 195, 0.25);
+  border: 1.5px solid rgba(181, 101, 242, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #e2d6ff;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.social-compact-item--user .social-compact-avatar > img,
+.social-compact-item--user .social-compact-avatar > span {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ícones de time — quadrados */
+.social-compact-avatar--square {
+  border-radius: 4px;
+  background: rgba(181, 101, 242, 0.15);
+  border: 1.5px solid rgba(181, 101, 242, 0.4);
+  font-size: 0.65rem;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.social-compact-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Bolinha de status online */
+.social-compact-online-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #4ade80;
+  border: 2px solid #080412;
+  box-shadow: 0 0 4px rgba(74, 222, 128, 0.6);
+}
+
+
 
 /* Header do painel: icone + titulo SOCIAL */
 .social-panel-header {

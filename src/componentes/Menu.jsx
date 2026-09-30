@@ -344,6 +344,7 @@ export default function Menu({ children }) {
 
   const handlePainelMouseEnter = () => {
     clearTimeout(hoverTimeoutRef.current);
+    setPainelAberto(true);
   };
 
   const handlePainelMouseLeave = () => {
@@ -441,24 +442,7 @@ export default function Menu({ children }) {
         </nav>
 
         <div className="user-area">
-          {usuarioLogado ? (
-            <div
-              className={`social-panel-trigger${painelAberto ? ' painel-ativo' : ''}`}
-              ref={triggerRef}
-              onMouseEnter={handleTriggerMouseEnter}
-              onMouseLeave={handleTriggerMouseLeave}
-            >
-              <div className="social-trigger-avatar-moldura">
-                <div className="social-trigger-avatar">
-                  {usuarioLogado.imagem ? (
-                    <img src={usuarioLogado.imagem} alt={nomeExibicao} />
-                  ) : (
-                    <span>{iniciaisUsuario}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
+          {!usuarioLogado && (
             <>
               <Link to="/login" className="botao-login">
                 Entrar
@@ -471,7 +455,48 @@ export default function Menu({ children }) {
         </div>
       </header>
 
-      {/* Painel Social estilo Valorant - desliza da direita, comeca abaixo da navbar */}
+      {/* Faixa compacta fixa — sempre visível no lado direito, abaixo da navbar */}
+      {usuarioLogado && (
+        <div
+          className="social-compact-strip-fixed"
+          onMouseEnter={handleTriggerMouseEnter}
+          onMouseLeave={handleTriggerMouseLeave}
+        >
+          {/* Avatar do usuário logado */}
+          <div className="social-compact-item social-compact-item--user">
+            <div className="social-compact-avatar">
+              {usuarioLogado.imagem
+                ? <img src={usuarioLogado.imagem} alt={nomeExibicao} />
+                : <span>{iniciaisUsuario}</span>}
+            </div>
+          </div>
+
+          {/* Ícones do time */}
+          {timesUsuario.slice(0, 3).map((time) => (
+            <div key={time.id} className="social-compact-item">
+              <div className="social-compact-avatar social-compact-avatar--square">
+                {time.logo
+                  ? <img src={time.logo} alt={time.nome} />
+                  : <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>}
+              </div>
+            </div>
+          ))}
+
+          {/* Ícones dos amigos */}
+          {amigosDropdown.slice(0, 8).map((amigo) => (
+            <div key={amigo.id} className="social-compact-item">
+              <div className="social-compact-avatar">
+                {amigo.imagem
+                  ? <img src={amigo.imagem} alt={amigo.nome_usuario || amigo.nome} />
+                  : <span>{(amigo.nome_usuario || amigo.nome || 'A').substring(0, 2).toUpperCase()}</span>}
+              </div>
+              {amigo.status === 'online' && <span className="social-compact-online-dot" />}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Painel Social completo — desliza por cima da faixa compacta */}
       {usuarioLogado && (
         <aside
           id="social-panel"
@@ -481,7 +506,7 @@ export default function Menu({ children }) {
           onMouseLeave={handlePainelMouseLeave}
           aria-label="Painel Social"
         >
-          {/* Header do painel */}
+          {/* Header do painel — só visível quando expandido */}
           <div className="social-panel-header">
             <svg
               viewBox="0 0 24 24"
@@ -714,8 +739,7 @@ export default function Menu({ children }) {
           {/* Rodape do painel: acoes */}
           <div className="social-panel-footer">
             <Link
-              to="/perfil"
-              state={{ editar: true }}
+              to="/perfil#editar"
               className="social-footer-btn social-footer-btn-config"
               onClick={() => setPainelAberto(false)}
               title="Configuracoes do perfil"

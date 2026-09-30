@@ -26,7 +26,7 @@ export default function Perfil() {
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (location.state?.editar && !isPublico && usuario && !editando) {
+    if (location.hash === '#editar' && !isPublico && usuario && !editando) {
       setEditando(true);
       setForm({
         nome_usuario: usuario.nome_usuario || '',
@@ -39,9 +39,9 @@ export default function Perfil() {
         conexao_twitch: usuario.conexao_twitch || '',
         conexao_bluesky: usuario.conexao_bluesky || ''
       });
-      navigate(location.pathname, { replace: true, state: {} });
+      window.history.replaceState(null, '', location.pathname);
     }
-  }, [location.state, isPublico, usuario, editando, navigate, location.pathname]);
+  }, [location.hash, isPublico, usuario, editando, location.pathname]);
 
   // ---- Amizades (Supabase) ----
   const [listaAmigos, setListaAmigos] = useState([]);
