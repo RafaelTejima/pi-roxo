@@ -238,13 +238,6 @@ function SecaoTabela({ tabela, usuarioLogado }) {
       setDados((prev) => prev.filter((l) => l.id !== linha.id));
 
       if (tabela.nome === 'times') {
-        try {
-          const salvas = localStorage.getItem('equipesCadastradas');
-          if (salvas) {
-            const lista = JSON.parse(salvas);
-            localStorage.setItem('equipesCadastradas', JSON.stringify(lista.filter((t) => String(t.id) !== String(linha.id))));
-          }
-        } catch {}
         window.dispatchEvent(new Event('equipesAtualizadas'));
         window.dispatchEvent(new Event('storage'));
       }

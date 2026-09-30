@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import armaazul from '../../imagens/armaazul.png';
-import tiroem2 from '../../imagens/tiroem2.jpg';
-import dandotiro from '../../imagens/dandotiro.jpg';
 import videoplayback from '../../imagens/videoplayback.mp4';
 
 export default function Home() {
@@ -98,7 +95,7 @@ export default function Home() {
         <div className="hero-content">
           <h1 className="titulo">DOMINE O SERVIDOR</h1>
           <p className="subtitulo">
-            Participe dos melhores campeonatos de CS:GO, dispute premiações em dinheiro e leve sua equipe ao topo do cenário competitivo.
+            Encontre torneios, organize campeonatos e monte sua equipe para competir.
           </p>
           <div className="hero-botoes">
             <Link to="/torneios" className="botao-principal">
@@ -107,10 +104,6 @@ export default function Home() {
             <button type="button" onClick={handleCriarEquipe} className="botao-secundario">
               CRIAR SUA EQUIPE
             </button>
-          </div>
-          <div className="hero-status-ticker">
-            <span className="ponto-pulsante" aria-hidden="true"></span>
-            <span>Torneios diários ativos • Premiações garantidas</span>
           </div>
         </div>
 
@@ -121,31 +114,11 @@ export default function Home() {
 
 
 
-      {/* Estatísticas Rápidas da Plataforma */}
-      <section className="stats-bar">
-        <div className="stat-item">
-          <h3>+R$ 150.000</h3>
-          <p>Em Premiações</p>
-        </div>
-        <div className="stat-item">
-          <h3>1.240</h3>
-          <p>Times Registrados</p>
-        </div>
-        <div className="stat-item">
-          <h3>540+</h3>
-          <p>Torneios Realizados</p>
-        </div>
-        <div className="stat-item">
-          <h3>24/7</h3>
-          <p>Suporte Dedicado</p>
-        </div>
-      </section>
-
       {/* Seção de Informações / Recursos do Site */}
       <section className="sobre-site">
         <div className="secao-titulo">
-          <h2>POR QUE JOGAR CONOSCO?</h2>
-          <p>Estrutura profissional voltada para elevar o nível do competitivo nacional.</p>
+          <h2>Ferramentas da plataforma</h2>
+          <p>Recursos disponíveis para jogadores e organizadores.</p>
         </div>
 
         <div className="container-cards">
@@ -153,24 +126,24 @@ export default function Home() {
             <div className="icone-card">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="icone-svg icone-trofeu"><path fill="rgb(255, 212, 59)" d="M208.3 64L432.3 64C458.8 64 480.4 85.8 479.4 112.2C479.2 117.5 479 122.8 478.7 128L528.3 128C554.4 128 577.4 149.6 575.4 177.8C567.9 281.5 514.9 338.5 457.4 368.3C441.6 376.5 425.5 382.6 410.2 387.1C390 415.7 369 430.8 352.3 438.9L352.3 512L416.3 512C434 512 448.3 526.3 448.3 544C448.3 561.7 434 576 416.3 576L224.3 576C206.6 576 192.3 561.7 192.3 544C192.3 526.3 206.6 512 224.3 512L288.3 512L288.3 438.9C272.3 431.2 252.4 416.9 233 390.6C214.6 385.8 194.6 378.5 175.1 367.5C121 337.2 72.2 280.1 65.2 177.6C63.3 149.5 86.2 127.9 112.3 127.9L161.9 127.9C161.6 122.7 161.4 117.5 161.2 112.1C160.2 85.6 181.8 63.9 208.3 63.9zM165.5 176L113.1 176C119.3 260.7 158.2 303.1 198.3 325.6C183.9 288.3 172 239.6 165.5 176zM444 320.8C484.5 297 521.1 254.7 527.3 176L475 176C468.8 236.9 457.6 284.2 444 320.8z"/></svg>
             </div>
-            <h2>Torneios Diários</h2>
-            <p>Campeonatos frequentes divididos por elos e formatos (MD1 e MD3), garantindo partidas equilibradas e aprendizado constante.</p>
+            <h2>Torneios</h2>
+            <p>Consulte os torneios disponíveis ou publique um campeonato.</p>
           </div>
 
           <div className="card-info">
             <div className="icone-card">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="icone-svg icone-dinheiro"><path fill="rgb(241, 191, 14)" d="M392 176L248 176L210.7 101.5C208.9 97.9 208 93.9 208 89.9C208 75.6 219.6 64 233.9 64L406.1 64C420.4 64 432 75.6 432 89.9C432 93.9 431.1 97.9 429.3 101.5L392 176zM233.6 224L406.4 224L455.1 264.6C521.6 320 560 402 560 488.5C560 536.8 520.8 576 472.5 576L167.4 576C119.2 576 80 536.8 80 488.5C80 402 118.4 320 184.9 264.6L233.6 224zM324 288C313 288 304 297 304 308L304 312C275.2 312.3 252 335.7 252 364.5C252 390.2 270.5 412.1 295.9 416.3L337.6 423.3C343.6 424.3 348 429.5 348 435.6C348 442.5 342.4 448.1 335.5 448.1L280 448C269 448 260 457 260 468C260 479 269 488 280 488L304 488L304 492C304 503 313 512 324 512C335 512 344 503 344 492L344 487.3C369 483.2 388 461.6 388 435.5C388 409.8 369.5 387.9 344.1 383.7L302.4 376.7C296.4 375.7 292 370.5 292 364.4C292 357.5 297.6 351.9 304.5 351.9L352 351.9C363 351.9 372 342.9 372 331.9C372 320.9 363 311.9 352 311.9L344 311.9L344 307.9C344 296.9 335 287.9 324 287.9z"/></svg>
             </div>
-            <h2>Premiações Reais</h2>
-            <p>Dispute prize pools em dinheiro via PIX e premiações em skins exclusivas de alto valor para coroar os campeões.</p>
+            <h2>Equipes</h2>
+            <p>Crie uma equipe e organize sua line-up com jogadores cadastrados.</p>
           </div>
 
           <div className="card-info">
             <div className="icone-card">
               <i className="fa-solid fa-square-poll-vertical icone-grafico" style={{ color: "rgb(255, 212, 59)" }}></i>
             </div>
-            <h2>Ranking e Stats</h2>
-            <p>Acompanhe o desempenho individual e da sua line-up através de placares automatizados, histórico e estatísticas detalhadas.</p>
+            <h2>Perfis de jogador</h2>
+            <p>Atualize suas informações e gerencie sua lista de amigos.</p>
           </div>
         </div>
       </section>

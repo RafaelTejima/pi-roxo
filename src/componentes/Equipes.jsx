@@ -5,85 +5,6 @@ import '../css/equipes.css';
 import evaPersonagemImg from '../../imagens/eva-06-1.png';
 import AuroraBackground from './AuroraBackground';
 
-export const TIMES_PADRAO = [
-  {
-    id: 'furia',
-    nome: 'FURIA Esports',
-    tag: 'FUR',
-    descricao: 'Organização líder do cenário brasileiro de Counter-Strike e esportes eletrônicos.',
-    logo: 'https://placehold.co/120x120/120d20/FFFFFF?text=FURIA',
-    capitao: 'FalleN',
-    id_capitao: 'usr-fallen',
-    capitaoNome: 'FalleN',
-    totalIntegrantes: 5,
-    registro: '2024-01-15T12:00:00Z',
-    jogadores: [
-      { id: 'usr-fallen', nome: 'FalleN', funcao: 'capitao' },
-      { id: 'usr-kscerato', nome: 'KSCERATO', funcao: 'jogador' },
-      { id: 'usr-yuurih', nome: 'yuurih', funcao: 'jogador' },
-      { id: 'usr-chelo', nome: 'chelo', funcao: 'jogador' },
-      { id: 'usr-skullz', nome: 'skullz', funcao: 'jogador' }
-    ]
-  },
-  {
-    id: 'mibr',
-    nome: 'Made in Brazil',
-    tag: 'MIBR',
-    descricao: 'Uma das marcas mais históricas e lendárias dos e-sports brasileiros e mundiais.',
-    logo: 'https://placehold.co/120x120/120d20/FFFFFF?text=MIBR',
-    capitao: 'exit',
-    id_capitao: 'usr-exit',
-    capitaoNome: 'exit',
-    totalIntegrantes: 5,
-    registro: '2024-02-10T14:30:00Z',
-    jogadores: [
-      { id: 'usr-exit', nome: 'exit', funcao: 'capitao' },
-      { id: 'usr-insani', nome: 'insani', funcao: 'jogador' },
-      { id: 'usr-saffee', nome: 'saffee', funcao: 'jogador' },
-      { id: 'usr-drop', nome: 'drop', funcao: 'jogador' },
-      { id: 'usr-brnz4n', nome: 'brnz4n', funcao: 'jogador' }
-    ]
-  },
-  {
-    id: 'imperial',
-    nome: 'Imperial Esports',
-    tag: 'IMP',
-    descricao: 'Equipe verde e amarela com trajetória memorável em Majors de CS.',
-    logo: 'https://placehold.co/120x120/120d20/FFFFFF?text=IMP',
-    capitao: 'VINI',
-    id_capitao: 'usr-vini',
-    capitaoNome: 'VINI',
-    totalIntegrantes: 5,
-    registro: '2024-03-01T10:15:00Z',
-    jogadores: [
-      { id: 'usr-vini', nome: 'VINI', funcao: 'capitao' },
-      { id: 'usr-felps', nome: 'felps', funcao: 'jogador' },
-      { id: 'usr-decenty', nome: 'decenty', funcao: 'jogador' },
-      { id: 'usr-noway', nome: 'noway', funcao: 'jogador' },
-      { id: 'usr-try', nome: 'try', funcao: 'jogador' }
-    ]
-  },
-  {
-    id: 'pain',
-    nome: 'paIN Gaming',
-    tag: 'PAIN',
-    descricao: 'Tradição e garra representando o Brasil nas principais ligas internacionais.',
-    logo: 'https://placehold.co/120x120/120d20/FFFFFF?text=PAIN',
-    capitao: 'biguzera',
-    id_capitao: 'usr-biguzera',
-    capitaoNome: 'biguzera',
-    totalIntegrantes: 5,
-    registro: '2024-03-12T16:45:00Z',
-    jogadores: [
-      { id: 'usr-biguzera', nome: 'biguzera', funcao: 'capitao' },
-      { id: 'usr-lux', nome: 'lux', funcao: 'jogador' },
-      { id: 'usr-kauez', nome: 'kauez', funcao: 'jogador' },
-      { id: 'usr-nqz', nome: 'nqz', funcao: 'jogador' },
-      { id: 'usr-snow', nome: 'snow', funcao: 'jogador' }
-    ]
-  }
-];
-
 export default function Equipes() {
   const [equipes, setEquipes] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -97,6 +18,7 @@ export default function Equipes() {
 
     let equipesSupabase = [];
     let carregouDoBanco = false;
+    let falhaConsulta = false;
 
     // 1. Sempre buscar a lista mais atualizada diretamente do Supabase via JOIN com times_integrantes
     try {
@@ -190,63 +112,17 @@ export default function Equipes() {
         }
       }
     } catch (err) {
-      console.warn('Falha na consulta Supabase, utilizando dados locais como fallback:', err);
+      console.error('Falha ao carregar equipes do Supabase:', err);
+      falhaConsulta = true;
+      setErro('Não foi possível carregar as equipes. Tente novamente mais tarde.');
     }
-
-    const todas = [];
-    const idsVistos = new Set();
-
-    if (carregouDoBanco) {
-      // 2. O localStorage é IMEDIATAMENTE sobrescrito com os dados frescos do banco,
-      // garantindo que times deletados desapareçam da interface e do cache.
-      try {
-        localStorage.setItem('equipesCadastradas', JSON.stringify(equipesSupabase));
-      } catch (err) {
-        console.warn('Erro ao atualizar localStorage de equipes:', err);
-      }
-
-      // Renderiza estritamente as equipes ativas do banco
-      equipesSupabase.forEach((eq) => {
-        if (eq && eq.id && !idsVistos.has(String(eq.id))) {
-          idsVistos.add(String(eq.id));
-          todas.push(eq);
-        }
-      });
-    } else {
-      // Fallback offline estrito caso o banco esteja inacessível
-      let equipesLocais = [];
-      try {
-        const salvas = localStorage.getItem('equipesCadastradas');
-        if (salvas) {
-          equipesLocais = JSON.parse(salvas);
-        }
-      } catch (err) {
-        console.warn('Erro ao ler equipes do localStorage:', err);
-      }
-
-      equipesLocais.forEach((eq) => {
-        if (eq && eq.id && !idsVistos.has(String(eq.id))) {
-          idsVistos.add(String(eq.id));
-          todas.push({
-            ...eq,
-            capitaoNome: eq.capitao || eq.capitaoNome || 'Não informado',
-            totalIntegrantes: eq.jogadores?.length || eq.totalIntegrantes || 1
-          });
-        }
-      });
-    }
-
-    // 3. Adiciona Times Padrão de demonstração (caso não existam no banco)
-    TIMES_PADRAO.forEach((eq) => {
-      if (eq && eq.id && !idsVistos.has(String(eq.id))) {
-        idsVistos.add(String(eq.id));
-        todas.push(eq);
-      }
-    });
 
     if (!montadoRef.current) return;
 
-    setEquipes(todas);
+    if (!carregouDoBanco && !falhaConsulta) {
+      setErro('Não foi possível carregar as equipes. Tente novamente mais tarde.');
+    }
+    setEquipes(equipesSupabase);
     setCarregando(false);
   }, []);
 
@@ -327,7 +203,7 @@ export default function Equipes() {
                   </div>
                   <div className="equipe-info-top">
                     <h3>{equipe.nome}</h3>
-                    <span className="equipe-tag">[{equipe.tag || 'ROX'}]</span>
+                    <span className="equipe-tag">[{equipe.tag || 'Sem tag'}]</span>
                   </div>
                 </div>
                 <div className="equipe-card-body">

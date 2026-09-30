@@ -18,16 +18,8 @@ export default function Menu({ children }) {
   });
   const [menuAberto, setMenuAberto] = useState(false);
   const [buscaAmigo, setBuscaAmigo] = useState('');
-  const [amigosDropdown, setAmigosDropdown] = useState(() => {
-    try {
-      const salvas = localStorage.getItem('listaAmigosUsuario');
-      return salvas ? JSON.parse(salvas) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [amigosDropdown, setAmigosDropdown] = useState([]);
   const amigos = amigosDropdown;
-  const setAmigos = setAmigosDropdown;
 
   const isBuscandoAmigosRef = useRef(false);
 
@@ -56,7 +48,6 @@ export default function Menu({ children }) {
         (a) => String(a.status).toUpperCase() === 'ACEITO'
       );
 
-      // Extrair IDs de amigos reais confirmados na tabela amizades
       const idsAmigosBanco = [
         ...new Set(
           relacoesAceitas.map((a) =>
@@ -138,8 +129,7 @@ export default function Menu({ children }) {
             nome_usuario: u.nome_usuario || u.nome,
             time_usuario: mapaTimes.get(amigoId) || 'Sem equipe',
             imagem: u.imagem || '',
-            status: u.status || 'online',
-            game: 'CS2'
+            status: u.status
           });
         } else if (!mapaAtivos.has(amigoId)) {
           // Amigo foi deletado da tabela usuarios: expurga imediatamente o registro órfão
@@ -155,6 +145,7 @@ export default function Menu({ children }) {
       localStorage.setItem('listaAmigosPerfil', JSON.stringify(amigosValidados));
     } catch (err) {
       console.warn('Erro ao carregar e validar amigos no Menu:', err);
+      setAmigosDropdown([]);
     } finally {
       isBuscandoAmigosRef.current = false;
     }
@@ -192,8 +183,7 @@ export default function Menu({ children }) {
 
     return amigosDropdown.filter((amigo) => {
       const nome = (amigo.name || amigo.nome || amigo.nome_usuario || '').toLowerCase();
-      const jogo = (amigo.game || '').toLowerCase();
-      return nome.includes(termo) || jogo.includes(termo);
+      return nome.includes(termo);
     });
   }, [amigosDropdown, buscaAmigo]);
 
@@ -502,14 +492,18 @@ export default function Menu({ children }) {
                               <div className="dropdown-amigo-avatar">
                                 {amigo.name.charAt(0).toUpperCase()}
                               </div>
-                              <span className={`dropdown-status-dot ${amigo.status}`}></span>
+                              {(amigo.status === 'online' || amigo.status === 'offline') && (
+                                <span className={`dropdown-status-dot ${amigo.status}`}></span>
+                              )}
                             </div>
                             <div className="dropdown-amigo-info">
                               <span className="dropdown-amigo-nome">{amigo.name}</span>
                               <span className="dropdown-amigo-status-texto">
                                 {amigo.status === 'online'
-                                  ? (amigo.game ? `Jogando ${amigo.game}` : 'Disponível')
-                                  : 'Offline'}
+                                  ? 'Disponível'
+                                  : amigo.status === 'offline'
+                                    ? 'Offline'
+                                    : 'Status indisponível'}
                               </span>
                             </div>
                           </Link>

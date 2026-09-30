@@ -4,20 +4,6 @@ import { supabase } from '../supabase'
 import '../css/criar-equipe.css'
 import { useAlerta } from './AlertaModal'
 
-const MOCK_JOGADORES = [
-  { id: 'usr-admin', nome: 'admin', email: 'admin@csgo.com' },
-  { id: 'usr-fallen', nome: 'FalleN', email: 'fallen@imperial.gg' },
-  { id: 'usr-coldzera', nome: 'coldzera', email: 'coldzera@redcanids.com.br' },
-  { id: 'usr-s1mple', nome: 's1mple', email: 's1mple@navi.gg' },
-  { id: 'usr-zywoo', nome: 'ZywOo', email: 'zywoo@vitality.gg' },
-  { id: 'usr-fer', nome: 'fer', email: 'fer@csgo.com' },
-  { id: 'usr-taco', nome: 'TACO', email: 'taco@csgo.com' },
-  { id: 'usr-kscerato', nome: 'KSCERATO', email: 'kscerato@furia.gg' },
-  { id: 'usr-yuurih', nome: 'yuurih', email: 'yuurih@furia.gg' },
-  { id: 'usr-chelo', nome: 'chelo', email: 'chelo@furia.gg' },
-  { id: 'usr-art', nome: 'arT', email: 'art@fluxo.gg' }
-]
-
 const equipeInicial = { nome: '', sigla: '', descricao: '' }
 
 export default function CriarEquipe() {
@@ -65,41 +51,27 @@ export default function CriarEquipe() {
 
     let ativo = true
 
-    // Filtrar nos mocks locais instantaneamente
-    const locais = MOCK_JOGADORES.filter(
-      (j) =>
-        (j.nome.toLowerCase().includes(termo) || j.email.toLowerCase().includes(termo)) &&
-        j.id !== usuario?.id &&
-        !jogadores.some((item) => item.id === j.id)
-    )
-
-    setResultados(locais)
+    setResultados([])
     setDropdownAberto(true)
 
-    // Buscar no Supabase se houver conexão
-    if (supabase) {
-      supabase
-        .from('usuarios')
-        .select('id, nome, email')
-        .or(`nome.ilike.%${termo}%,email.ilike.%${termo}%`)
-        .limit(5)
-        .then(({ data, error }) => {
-          if (ativo && !error && data) {
-            const combinados = [...locais]
-            data.forEach((jDb) => {
-              if (
-                jDb.id !== usuario?.id &&
-                !jogadores.some((item) => item.id === jDb.id) &&
-                !combinados.some((item) => item.id === jDb.id || item.email === jDb.email)
-              ) {
-                combinados.push(jDb)
-              }
-            })
-            setResultados(combinados)
-          }
-        })
-        .catch(() => {})
-    }
+    supabase
+      .from('usuarios')
+      .select('id, nome, nome_usuario, email')
+      .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%,email.ilike.%${termo}%`)
+      .limit(5)
+      .then(({ data, error }) => {
+        if (!ativo) return
+        if (error) {
+          setErro('Não foi possível buscar jogadores cadastrados.')
+          return
+        }
+        setResultados((data || []).filter(
+          (jogador) => jogador.id !== usuario?.id && !jogadores.some((item) => item.id === jogador.id)
+        ))
+      })
+      .catch(() => {
+        if (ativo) setErro('Não foi possível buscar jogadores cadastrados.')
+      })
 
     return () => {
       ativo = false
@@ -143,13 +115,6 @@ export default function CriarEquipe() {
 
       if (resultados.length > 0) {
         adicionarJogador(resultados[0])
-      } else {
-        const novoConvidado = {
-          id: 'usr-' + Date.now(),
-          nome: termo,
-          email: `${termo.toLowerCase().replace(/\s+/g, '')}@jogador.com`
-        }
-        adicionarJogador(novoConvidado)
       }
     }
   }
@@ -333,33 +298,6 @@ export default function CriarEquipe() {
       }
 
       // Passo C: APENAS se ambas as operações no Supabase forem concluídas com sucesso irrefutável, atualiza o localStorage e emite eventos globais
-      const novaEquipeObj = {
-        id: novoIdTime,
-        nome: nomeLimpo,
-        tag: tagLimpa,
-        descricao: descLimpa,
-        capitao: usuario.nome || usuario.email,
-        id_capitao: usuario.id,
-        capitaoNome: usuario.nome || usuario.email,
-        totalIntegrantes: jogadores.length + 1,
-        jogadoresCount: `${jogadores.length + 1}/5`,
-        jogadores: [
-          { id: usuario.id, nome: usuario.nome || usuario.email, funcao: 'capitao', role: 'captain' },
-          ...jogadores.map((j) => ({ id: j.id, nome: j.nome, email: j.email, funcao: 'jogador', role: 'player' }))
-        ],
-        createdAt: timeInserido.registro || new Date().toISOString()
-      }
-
-      try {
-        const salvas = localStorage.getItem('equipesCadastradas')
-        const lista = salvas ? JSON.parse(salvas) : []
-        const filtrada = lista.filter((t) => String(t.id) !== String(novoIdTime))
-        filtrada.unshift(novaEquipeObj)
-        localStorage.setItem('equipesCadastradas', JSON.stringify(filtrada))
-      } catch (errStorage) {
-        console.error('Erro ao salvar no localStorage:', errStorage)
-      }
-
       window.dispatchEvent(new Event('equipesAtualizadas'))
       window.dispatchEvent(new Event('storage'))
 
@@ -463,7 +401,7 @@ export default function CriarEquipe() {
                 onChange={(event) => setBuscaJogador(event.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => buscaJogador.trim() && setDropdownAberto(true)}
-                placeholder="Buscar por nick ou e-mail do jogador (ex: admin)..."
+                placeholder="Buscar por nick ou e-mail de um jogador cadastrado..."
                 disabled={jogadores.length >= 4}
               />
             </div>

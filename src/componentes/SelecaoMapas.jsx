@@ -105,7 +105,12 @@ export default function SelecaoMapas() {
     setErro('')
     setEnviando(true)
 
-    const mapaNome = mapaSelecionado ? mapaSelecionado.nome : 'Mirage'
+    if (!mapaSelecionado) {
+      setErro('Selecione um mapa antes de continuar.')
+      return
+    }
+
+    const mapaNome = mapaSelecionado.nome
     const descricaoComMapa = `${dadosTorneio.descricao || ''}\n- Mapa oficial: ${mapaNome}`
 
     try {
@@ -113,10 +118,15 @@ export default function SelecaoMapas() {
         throw new Error('Cliente Supabase não inicializado ou indisponível.')
       }
 
-      // Schema estrito da tabela 'torneios': [id, nome, status, registro]
       const payloadBanco = {
         nome: dadosTorneio.nome?.trim(),
+        descricao: descricaoComMapa,
+        jogo: dadosTorneio.jogo,
+        formato: dadosTorneio.formato,
+        data_inicio: dadosTorneio.data_inicio,
         status: typeof dadosTorneio.status === 'boolean' ? dadosTorneio.status : true,
+        id_criador: dadosTorneio.id_criador,
+        dinheiro: dadosTorneio.dinheiro,
       }
 
       const { data: torneioCriado, error } = await supabase
@@ -142,33 +152,6 @@ export default function SelecaoMapas() {
           tipo: 'erro'
         })
         return
-      }
-
-      const torneioIdGerado = torneioCriado?.id
-
-      // Persistência no localStorage dos metadados completos enriquecidos para exibição no frontend
-      const novoTorneioCompleto = {
-        id: torneioIdGerado,
-        nome: dadosTorneio.nome?.trim(),
-        descricao: descricaoComMapa,
-        jogo: dadosTorneio.jogo || 'CS2',
-        formato: dadosTorneio.formato || 'Eliminação Simples',
-        data_inicio: dadosTorneio.data_inicio || new Date().toISOString(),
-        status: torneioCriado?.status ?? true,
-        id_criador: dadosTorneio.id_criador,
-        dinheiro: Number(dadosTorneio.dinheiro) || 0,
-        mapa: mapaNome,
-        registro: torneioCriado?.registro || new Date().toISOString(),
-      }
-
-      try {
-        const salvas = localStorage.getItem('torneiosCadastrados')
-        const lista = salvas ? JSON.parse(salvas) : []
-        const filtrada = lista.filter((t) => String(t.id) !== String(torneioIdGerado))
-        filtrada.unshift(novoTorneioCompleto)
-        localStorage.setItem('torneiosCadastrados', JSON.stringify(filtrada))
-      } catch (errLocal) {
-        console.warn('Erro ao atualizar torneiosCadastrados no localStorage:', errLocal)
       }
 
       localStorage.removeItem('dadosTorneioEmCriacao')

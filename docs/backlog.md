@@ -28,12 +28,12 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 
 ## Pagina de Torneios (listagem + detalhes)
 - **Componente:** `src/componentes/Torneios.jsx` (rotas `/torneios`, `/torneios/:id`)
-- **CSS:** `src/css/torneios.css` e `src/css/bracket.css`
-- `loadTournaments()` busca os dados reais da tabela `public.torneios` usando o client compartilhado `src/supabase.js` (`supabase.from('torneios').select('*').order('data_inicio')`).
+- **CSS:** `src/css/torneios.css`
+- `loadTournaments()` busca os dados diretamente da tabela `public.torneios` usando o client compartilhado `src/supabase.js`; nao combina registros locais ou de demonstracao.
 - Removidos os dados ficticios (`TORNEIOS_FICTICIOS`) usados como fallback; a tela agora reflete somente o banco real, com estados separados de carregamento, erro (`erro`, mensagem amigavel) e lista vazia ("Nenhum torneio disponivel no momento.").
 - Campos exibidos seguem a tabela `torneios`: `nome`, `data_inicio`, `dinheiro` (premio), `formato` e `descricao` (dropdown "Ver descricao"). O status (boolean) mapeia para "INSCRICOES ABERTAS" (`true`) ou "ENCERRADO" (`false`).
 - O stat "TIMES INSCRITOS" foi removido do card e da tela de detalhes porque a tabela `torneios` nao tem essa coluna; nao ha relacao com uma tabela de inscricoes ainda ligada a esse `id` (bigint). Se for necessario no futuro, criar uma consulta agregada em uma tabela de inscricoes que referencie `torneios.id`.
-- Detalhes do torneio (`TournamentDetails`) incluem bracket de chaveamento simulado (times e resultados aleatorios, apenas para demonstracao visual — nao vem do banco).
+- O bracket de demonstracao foi removido. `TournamentDetails` informa que partidas ainda nao estao disponiveis, sem criar equipes ou resultados; `src/css/bracket.css` foi removido.
 - **Fluxo completo de criacao (CriarTorneio -> SelecaoMapas):** o `handleFinalizar` em `SelecaoMapas.jsx` insere em `torneios` (`nome`, `descricao` com o mapa escolhido anexado, `jogo`, `formato`, `data_inicio`, `status`, `id_criador`, `dinheiro`) e so navega para `/torneios` se nao houver erro. Em caso de falha no insert, exibe mensagem de erro no modal de confirmacao (`.selecao-mapas-mensagem-erro`) e mantem o usuario na tela para tentar novamente, em vez de navegar silenciosamente. O botao "Continuar" fica desabilitado ("Salvando...") durante o insert para evitar duplo envio.
 
 ## Pagina de Criacao de Equipe
@@ -48,7 +48,7 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **CSS:** `src/css/lista-amigos.css` (escopado por `#widget-amigos`)
 - Um painel (widget) flutuante fixado no canto inferior direito, disponível em todas as rotas da aplicação através do `App.jsx`.
 - Inclui um botão toggle que exibe a quantidade de amigos online.
-- Funcionalidade com dados mockados (não conectada ao banco de dados por enquanto), exibindo jogadores online/offline, status de jogo e placeholder para convite.
+- A lista consulta amizades e usuarios no Supabase; a contagem online usa somente o status informado pelo banco. Status de jogo e dados de demonstracao nao sao exibidos.
 - Interface escura com tema roxo (#723EC3) em destaque, utilizando animações CSS simples e placeholders visuais do `placehold.co` para avatares, de acordo com as restrições do projeto.
 
 ## Documentacao da Pagina de Suporte
@@ -70,7 +70,7 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Atualizacao:** A pagina de perfil foi completamente refeita para exibir apenas as informacoes que o usuario registrou no banco de dados, removendo visualizacoes estaticas.
 - **Edicao de Perfil:** Adicionada opcao para o usuario editar seu perfil (foto/imagem via URL, biografia, nome de usuario). Esses dados sao salvos diretamente no Supabase (`tabela usuarios`).
 <<<<<<< Updated upstream
-- **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos). Como esses campos ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
+- **Conexoes:** Discord, Steam e Twitter sao editados no perfil e salvos na tabela `usuarios`. Os controles de privacidade que eram persistidos somente no `localStorage` foram removidos enquanto nao houver suporte no schema.
 
 ## Integracao da Criacao de Equipe com o banco (tabela `times`)
 - **Componentes:** `src/componentes/CriarEquipe.jsx` (rota `/equipes/criar`) e `src/componentes/Equipes.jsx` (rota `/equipes`)
@@ -95,8 +95,14 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 
 =======
 =======
-- **Conexoes e Privacidade:** Adicionados campos no formulario para vincular Discord, Steam, Twitter, YouTube, Twitch e Bluesky, e configuracoes de privacidade (visibilidade do nome de perfil, lista de amigos e ganhos).
-- **Personalizacao e Aparencia:** A secao de "Personalizacao" foi movida para o fim do formulario de edicao. Nela, foi adicionada a escolha visual de **Fundo do Perfil** atraves de uma selecao de 5 imagens (placeholders do `placehold.co`), garantindo uma experiencia interativa na edicao do perfil visual. Foram tambem adicionados icones SVG originais para cada rede social.
-- Como esses novos campos de conexoes, fundo e privacidade ainda nao existem no schema atual da tabela `usuarios`, os dados dessas configuracoes adicionais estao sendo provisoriamente salvos e recuperados no `localStorage` ate a atualizacao do banco.
+- **Conexoes:** Discord, Steam, Twitter, YouTube, Twitch e Bluesky usam as colunas existentes da tabela `usuarios`. Opcoes de fundo e privacidade nao estao disponiveis no perfil atual.
 >>>>>>> Stashed changes
 >>>>>>> Stashed changes
+
+## Remocao de dados simulados
+- Removidos times e jogadores de demonstracao, convidados com IDs inventados e fallbacks de listagem/detalhes de equipe em `localStorage`; equipes e integrantes exibidos agora dependem dos registros do Supabase.
+- Removido o bracket com times e placares aleatorios. Detalhes de torneio informam quando os dados de partidas ainda nao estao disponiveis; o CSS exclusivo do bracket demonstrativo foi removido.
+- Torneios sao lidos somente do Supabase e a publicacao grava os campos preenchidos no banco, incluindo descricao/regras e mapa escolhido; foram removidos valores presumidos e o fallback de mapa Mirage.
+- A lista de amigos e os perfis nao presumem status online/offline ou jogo atual. Perfis inexistentes exibem estado de nao encontrado.
+- Removidos contadores, promessas promocionais, estatisticas zeradas e configuracoes de privacidade que eram salvas apenas no navegador, sem persistencia no schema.
+- Mantidos placeholders de formularios e o catalogo estatico de mapas, pois sao elementos de entrada/representacao visual e nao registros de usuarios, equipes ou torneios.

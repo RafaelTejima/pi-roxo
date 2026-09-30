@@ -107,7 +107,7 @@ export default function Perfil() {
               const { data: ti } = await supabase
                 .from('times_integrantes')
                 .select('id, id_time, funcao, times ( id, nome, tag )')
-                .eq('id_usuario', id)
+                .eq('id_usuario', uSimples.id)
                 .maybeSingle();
 
               const timeObj = Array.isArray(ti?.times) ? ti.times[0] : ti?.times;
@@ -127,20 +127,7 @@ export default function Perfil() {
         }
 
         if (ativo) {
-          if (dadosUsuario) {
-            setUsuario(dadosUsuario);
-          } else {
-            setUsuario({
-              id: 0,
-              nome: `Jogador ${nome_usuario}`,
-              nome_usuario: nome_usuario,
-              time_usuario: 'Sem equipe',
-              bio: 'Perfil público de jogador na plataforma.',
-              imagem: '',
-              registro: new Date().toISOString(),
-              status: 'offline'
-            });
-          }
+          setUsuario(dadosUsuario);
           setLoading(false);
         }
         return;
@@ -337,8 +324,7 @@ export default function Perfil() {
                 name: u.nome_usuario || u.nome,
                 time_usuario: mapaTimes.get(idStr) || 'Sem equipe',
                 imagem: u.imagem || '',
-                status: u.status || 'online',
-                game: 'CS2'
+                status: u.status
               });
             } else if (!mapaAtivos.has(idStr)) {
               // Amigo excluído do sistema: remove relação órfã da tabela amizades
@@ -539,9 +525,8 @@ export default function Perfil() {
            nome: pedido.remetente.nome,
            nome_usuario: pedido.remetente.nome_usuario,
            imagem: pedido.remetente.imagem,
-           status: pedido.remetente.status || 'offline',
+            status: pedido.remetente.status,
            time_usuario: pedido.remetente.time_usuario,
-           game: 'CS2'
         }]);
       }
       mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Pedido de amizade aceito com sucesso.', tipo: 'sucesso' });
@@ -625,7 +610,7 @@ export default function Perfil() {
     // Busca direta no Supabase com usuários reais cadastrados
     supabase
       .from('usuarios')
-      .select('id, nome, nome_usuario, imagem')
+      .select('id, nome, nome_usuario, imagem, status')
       .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
       .limit(8)
       .then(async ({ data, error }) => {
@@ -641,7 +626,7 @@ export default function Perfil() {
             nome_usuario: jDb.nome_usuario || jDb.nome,
             time_usuario: 'Sem equipe',
             imagem: jDb.imagem || '',
-            status: 'offline'
+            status: jDb.status
           });
           idsEncontrados.push(jDb.id);
         });
@@ -723,9 +708,6 @@ export default function Perfil() {
       youtube: usuario.conexao_youtube || '',
       twitch: usuario.conexao_twitch || '',
       bluesky: usuario.conexao_bluesky || '',
-      privacidade_amigos: localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico',
-      privacidade_nome: localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico',
-      privacidade_ganhos: localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico',
     });
     setEditando(true);
   }
@@ -750,9 +732,6 @@ export default function Perfil() {
       setSalvando(false);
       return;
     }
-    localStorage.setItem(`priv_amigos_${usuario.id}`, form.privacidade_amigos);
-    localStorage.setItem(`priv_nome_${usuario.id}`, form.privacidade_nome);
-    localStorage.setItem(`priv_ganhos_${usuario.id}`, form.privacidade_ganhos);
     setUsuario(prev => ({ ...prev, ...payload }));
     setSalvando(false);
     setEditando(false);
@@ -780,12 +759,23 @@ export default function Perfil() {
       </main>
     );
   }
-  if (!usuario) return null;
+  if (!usuario) {
+    return (
+      <main id="perfil-page" className="perfil-page">
+        <div className="perfil-container">
+          <h1>Perfil não encontrado</h1>
+          <Link to="/">Voltar para o início</Link>
+        </div>
+      </main>
+    );
+  }
 
   // ------------------------------------------------------------------
   // DERIVAÇÕES
   // ------------------------------------------------------------------
-  const dataRegistro = new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const dataRegistro = usuario.registro && !Number.isNaN(new Date(usuario.registro).getTime())
+    ? new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    : 'Não informado';
   const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
   const discord = isPublico ? (usuario.discord || null) : usuario.conexao_discord;
@@ -794,15 +784,6 @@ export default function Perfil() {
   const youtube = isPublico ? null : usuario.conexao_youtube;
   const twitch  = isPublico ? null : usuario.conexao_twitch;
   const bluesky = isPublico ? null : usuario.conexao_bluesky;
-
-  const privNome   = isPublico ? (localStorage.getItem(`priv_nome_${usuario.id}`) || 'publico') : 'publico';
-  const privGanhos = isPublico ? (localStorage.getItem(`priv_ganhos_${usuario.id}`) || 'publico') : 'publico';
-  const privAmigos = isPublico ? (localStorage.getItem(`priv_amigos_${usuario.id}`) || 'publico') : 'publico';
-
-  const statsPartidas = usuario.stats?.partidas ?? 0;
-  const statsTorneios = usuario.stats?.torneios ?? 0;
-  const statsTitulos  = usuario.stats?.titulos  ?? 0;
-  const statsGanhos   = usuario.stats?.ganhos   ?? (privGanhos === 'privado' ? '🔒 Oculto' : 'R$ 0,00');
 
   const totalPendentes = pedidosPendentes.length;
 
@@ -896,15 +877,17 @@ export default function Perfil() {
           <aside className="perfil-resumo">
             <div className="perfil-avatar-wrap">
               <img src={avatarUrl} alt={`Avatar de ${usuario.nome || usuario.nome_usuario}`} />
-              <span
-                className={`perfil-status-dot ${usuario.status === 'offline' ? 'offline' : ''}`}
-                style={usuario.status === 'offline' ? { backgroundColor: '#64748b', boxShadow: 'none' } : {}}
-                aria-label={usuario.status === 'offline' ? 'Offline' : 'Online'}
-              ></span>
+              {(usuario.status === 'online' || usuario.status === 'offline') && (
+                <span
+                  className={`perfil-status-dot ${usuario.status === 'offline' ? 'offline' : ''}`}
+                  style={usuario.status === 'offline' ? { backgroundColor: '#64748b', boxShadow: 'none' } : {}}
+                  aria-label={usuario.status === 'offline' ? 'Offline' : 'Online'}
+                ></span>
+              )}
             </div>
 
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-              {privNome === 'privado' ? 'Nome Privado' : (usuario.nome || usuario.nome_usuario || 'Jogador')}
+              {usuario.nome || usuario.nome_usuario || 'Jogador'}
               {usuario.admin && (
                 <span style={{ fontSize: '10px', background: '#8c52ff', padding: '2px 7px', borderRadius: '4px', fontWeight: '800', color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', flexShrink: 0 }}>ADM</span>
               )}
@@ -916,9 +899,11 @@ export default function Perfil() {
               <div><span>Time atual</span><strong>{usuario.time_usuario || 'Nenhum'}</strong></div>
               <div>
                 <span>Status</span>
-                {usuario.status === 'offline'
-                  ? <strong style={{ color: '#94a3b8' }}>Offline</strong>
-                  : <strong className="perfil-online">Online agora</strong>
+                {usuario.status === 'online'
+                  ? <strong className="perfil-online">Online agora</strong>
+                  : usuario.status === 'offline'
+                    ? <strong style={{ color: '#94a3b8' }}>Offline</strong>
+                    : <strong>Não informado</strong>
                 }
               </div>
               <div><span>Membro desde</span><strong style={{ textTransform: 'capitalize' }}>{dataRegistro}</strong></div>
@@ -992,24 +977,6 @@ export default function Perfil() {
                     </div>
                   </div>
 
-                  <div>
-                    <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', marginBottom: '10px' }}>Privacidade</h3>
-                    <div className="perfil-detalhes-grid">
-                      {[
-                        { key: 'privacidade_nome', label: 'Nome de Perfil', opts: [['publico','Público'],['amigos','Apenas Amigos'],['privado','Privado']] },
-                        { key: 'privacidade_amigos', label: 'Lista de Amigos', opts: [['publico','Mostrar'],['privado','Privar']] },
-                        { key: 'privacidade_ganhos', label: 'Meus Ganhos', opts: [['publico','Mostrar'],['privado','Privar']] },
-                      ].map(({ key, label, opts }) => (
-                        <div key={key}>
-                          <label style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>{label}</label>
-                          <select value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} className="perfil-input">
-                            {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                          </select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
                     <button type="submit" className="perfil-botao perfil-botao-principal" disabled={salvando} style={{ maxWidth: '200px' }}>
                       {salvando ? 'Salvando...' : 'Salvar Alterações'}
@@ -1031,20 +998,6 @@ export default function Perfil() {
                     {usuario.bio || 'Este jogador ainda não escreveu nenhuma biografia.'}
                   </p>
 
-                  <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '32px 0 14px' }}>Desempenho</h3>
-                  <div className="perfil-detalhes-grid" style={{ gap: '16px' }}>
-                    {[
-                      { label: 'Partidas Jogadas', valor: statsPartidas, cor: '#e8e0f0' },
-                      { label: 'Torneios Participados', valor: statsTorneios, cor: '#e8e0f0' },
-                      { label: 'Torneios Vencidos', valor: statsTitulos, cor: '#e8e0f0' },
-                      { label: 'Ganhos Totais', valor: statsGanhos, cor: privGanhos === 'privado' ? 'var(--texto-terciario)' : '#5ce390' },
-                    ].map(({ label, valor, cor }) => (
-                      <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--texto-secundario)' }}>{label}</span>
-                        <strong style={{ fontSize: '28px', color: cor }}>{valor}</strong>
-                      </div>
-                    ))}
-                  </div>
                 </section>
 
                 {/* ---- CONEXÕES VINCULADAS ---- */}
@@ -1157,9 +1110,7 @@ export default function Perfil() {
                     </div>
 
                     {/* Conteúdo das abas */}
-                    {privAmigos === 'privado' ? (
-                      <p className="perfil-vazio">Sua lista de amigos está definida como privada nas configurações.</p>
-                    ) : carregandoAmigos ? (
+                    {carregandoAmigos ? (
                       <div className="perfil-amigos-loading">
                         <div className="perfil-spinner"></div>
                         Carregando amizades...
@@ -1274,7 +1225,7 @@ export default function Perfil() {
                 )}
 
                 {/* ---- AMIGOS em perfil público (exibe contagem) ---- */}
-                {isPublico && privAmigos === 'publico' && (
+                {isPublico && (
                   <section className="perfil-secao" style={{ marginTop: '24px' }}>
                     <div className="perfil-secao-titulo">
                       <div><span className="perfil-kicker">Comunidade</span><h2>Amigos</h2></div>

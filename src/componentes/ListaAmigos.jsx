@@ -3,15 +3,6 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/lista-amigos.css';
 
-const MOCK_FRIENDS = [
-  { id: 1, name: "FalleN", status: "online", game: "CS2" },
-  { id: 2, name: "coldzera", status: "offline" },
-  { id: 3, name: "fer", status: "online", game: "CS2" },
-  { id: 4, name: "TACO", status: "online" },
-  { id: 5, name: "fnx", status: "offline" },
-  { id: 6, name: "gaules", status: "online", game: "Streaming" },
-];
-
 function ListaAmigos() {
   const [isOpen, setIsOpen] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('amigos'); // 'amigos' | 'pendentes'
@@ -22,7 +13,7 @@ function ListaAmigos() {
 
   const togglePanel = () => setIsOpen(!isOpen);
 
-  const onlineFriends = MOCK_FRIENDS.filter((f) => f.status === 'online').length;
+  const onlineFriends = amigos.filter((amigo) => amigo.status === 'online').length;
 
   // Carrega e sincroniza o usuário logado
   useEffect(() => {
@@ -57,8 +48,8 @@ function ListaAmigos() {
         .from('amizades')
         .select(`
           id, status, registro,
-          usuario1:id_usuario1 ( id, nome, nome_usuario, imagem ),
-          usuario2:id_usuario2 ( id, nome, nome_usuario, imagem )
+          usuario1:id_usuario1 ( id, nome, nome_usuario, imagem, status ),
+          usuario2:id_usuario2 ( id, nome, nome_usuario, imagem, status )
         `)
         .eq('status', 'ACEITO')
         .or(`id_usuario1.eq.${usuarioLogado.id},id_usuario2.eq.${usuarioLogado.id}`);
