@@ -3,6 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/detalhes-time.css'
 
+const LOGO_PLACEHOLDER = 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'
+
+function resolverLogo(logo) {
+  const caminho = typeof logo === 'string' ? logo.trim() : ''
+  if (!caminho) return LOGO_PLACEHOLDER
+  if (/^(https?:\/\/|data:|blob:|\/\/)/i.test(caminho)) return caminho
+  return `/${caminho.replace(/^(\.\/)+/, '').replace(/^\/+/, '')}`
+}
+
 function formatarData(valor) {
   if (!valor) return 'Data não informada'
   try {
@@ -328,9 +337,17 @@ export default function DetalhesTime() {
         <div className="detalhes-time-coluna-principal">
           <section className="detalhes-time-cabecalho">
             <img
-              src={time.logo || 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'}
+              src={resolverLogo(time.logo)}
               alt={`Logo do time ${time.nome}`}
               className="detalhes-time-logo"
+              onError={(event) => {
+                const imagem = event.currentTarget
+                if (imagem.src === LOGO_PLACEHOLDER) {
+                  imagem.style.display = 'none'
+                  return
+                }
+                imagem.src = LOGO_PLACEHOLDER
+              }}
             />
             <div className="detalhes-time-info">
               <span className="detalhes-time-tag">[{time.tag}]</span>

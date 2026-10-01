@@ -5,6 +5,15 @@ import '../css/equipes.css';
 import evaPersonagemImg from '../../imagens/eva-06-1.png';
 import AuroraBackground from './AuroraBackground';
 
+const LOGO_PLACEHOLDER = 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM';
+
+function resolverLogo(logo) {
+  const caminho = typeof logo === 'string' ? logo.trim() : '';
+  if (!caminho) return LOGO_PLACEHOLDER;
+  if (/^(https?:\/\/|data:|blob:|\/\/)/i.test(caminho)) return caminho;
+  return `/${caminho.replace(/^(\.\/)+/, '').replace(/^\/+/, '')}`;
+}
+
 export default function Equipes() {
   const [equipes, setEquipes] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -198,8 +207,14 @@ export default function Equipes() {
             {equipesFiltradas.map((equipe) => (
               <Link to={`/equipes/${equipe.id}`} key={equipe.id} className="equipe-card">
                 <div className="equipe-card-header">
-                  <div className="equipe-avatar">
+                  <div className="equipe-avatar" style={{ position: 'relative', overflow: 'hidden' }}>
                     {equipe.tag ? equipe.tag.substring(0, 3) : 'TEAM'}
+                    <img
+                      src={resolverLogo(equipe.logo)}
+                      alt={`Logo da equipe ${equipe.nome}`}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
                   </div>
                   <div className="equipe-info-top">
                     <h3>{equipe.nome}</h3>
