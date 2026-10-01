@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/detalhes-time.css'
 
@@ -23,6 +23,7 @@ function formatarData(valor) {
 
 export default function DetalhesTime() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [usuario] = useState(() => {
     const usuarioSalvo = localStorage.getItem('usuarioLogado')
     return usuarioSalvo ? JSON.parse(usuarioSalvo) : null
@@ -45,6 +46,8 @@ export default function DetalhesTime() {
   const [processandoId, setProcessandoId] = useState(null)
   const [erroJogadores, setErroJogadores] = useState('')
   const [logoComErro, setLogoComErro] = useState(false)
+  const [saindoDoTime, setSaindoDoTime] = useState(false)
+  const [erroSaida, setErroSaida] = useState('')
 
   useEffect(() => {
     setLogoComErro(false)
@@ -221,6 +224,14 @@ export default function DetalhesTime() {
   const capitao = integrantes.find((i) => i.funcao === 'capitao')
   const jogadores = integrantes.filter((i) => i.funcao !== 'capitao')
   const podeEditar = usuario && (usuario.id === time.id_capitao || usuario.admin)
+  const jogadorLogado = usuario?.id == null
+    ? null
+    : integrantes.find((integrante) => String(integrante.idUsuario) === String(usuario.id))
+  const podeSairDoTime = Boolean(
+    jogadorLogado &&
+    jogadorLogado.funcao !== 'capitao' &&
+    String(usuario.id) !== String(time.id_capitao)
+  )
 
   function abrirEdicao() {
     setFormEdicao({
@@ -332,6 +343,36 @@ export default function DetalhesTime() {
     }
 
     setIntegrantes((atuais) => atuais.filter((item) => item.id !== integranteId))
+  }
+
+  async function sairDoTime() {
+    if (!podeSairDoTime || !jogadorLogado || saindoDoTime) return
+    if (!window.confirm(`Deseja sair do time ${time.nome}?`)) return
+
+    setErroSaida('')
+    setSaindoDoTime(true)
+
+    try {
+      const { data: vinculoRemovido, error: erroDelete } = await supabase
+        .from('times_integrantes')
+        .delete()
+        .eq('id', jogadorLogado.id)
+        .eq('id_time', id)
+        .eq('id_usuario', usuario.id)
+        .eq('funcao', 'jogador')
+        .select('id')
+        .maybeSingle()
+
+      if (erroDelete || !vinculoRemovido) {
+        throw erroDelete || new Error('Vínculo do jogador não encontrado.')
+      }
+
+      navigate('/equipes')
+    } catch {
+      setErroSaida('Não foi possível sair do time. Tente novamente.')
+    } finally {
+      setSaindoDoTime(false)
+    }
   }
 
   async function atualizarCapitao(integrante, remover = false) {
@@ -448,6 +489,17 @@ export default function DetalhesTime() {
                   Editar time
                 </button>
               )}
+              {podeSairDoTime && (
+                <button
+                  type="button"
+                  className="detalhes-time-sair-btn"
+                  onClick={sairDoTime}
+                  disabled={saindoDoTime}
+                >
+                  {saindoDoTime ? 'Saindo...' : 'Sair do time'}
+                </button>
+              )}
+              {erroSaida && <p className="detalhes-time-mensagem-erro">{erroSaida}</p>}
             </div>
           </section>
 

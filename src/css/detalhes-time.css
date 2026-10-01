@@ -133,6 +133,28 @@
   box-shadow: 0 0 24px rgba(181, 101, 242, 0.5);
 }
 
+.detalhes-time-sair-btn {
+  margin-top: 14px;
+  padding: 9px 18px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.08);
+  color: #f4a4b3;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.detalhes-time-sair-btn:hover:not(:disabled) {
+  border-color: rgba(248, 113, 113, 0.75);
+  background: rgba(248, 113, 113, 0.16);
+}
+
+.detalhes-time-sair-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .detalhes-time-secao {
   background: rgba(18, 13, 30, 0.65);
   border: 1px solid rgba(157, 78, 221, 0.18);
