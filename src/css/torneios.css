@@ -854,35 +854,92 @@
   .tournaments-page,
   .tournament-details,
   .tournament-page-state {
-    margin-top: 140px;
+    margin-top: 100px;
+    padding: 0 14px;
   }
 
   .details-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
   .details-hero {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
+  }
+
+  .details-hero .tournament-card-visual {
+    width: 100%;
+    height: 140px;
+  }
+
+  .details-rules {
+    padding: 18px 16px;
   }
 
   .tournaments-heading h1 {
-    font-size: 34px;
+    font-size: 28px;
   }
 
   .tournaments-busca-container {
     max-width: 100%;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
   }
 
   .tournaments-busca-input {
     font-size: 13px;
     padding: 11px 0;
   }
+
+  .tournament-meta {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .tournament-meta span {
+    min-width: calc(50% - 6px);
+  }
+
+  .back-link {
+    font-size: 0.85rem;
+  }
 }
 
+@media (max-width: 480px) {
+  .tournaments-page,
+  .tournament-details,
+  .tournament-page-state {
+    margin-top: 80px;
+    padding: 0 10px;
+  }
 
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 
+  .tournament-meta {
+    flex-direction: column;
+  }
 
+  .details-grupo-lista li {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .details-grupo-declarar-btn {
+    width: 100%;
+  }
+
+  .tournaments-heading h1 {
+    font-size: 22px;
+  }
+
+  .tournaments-criar-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
 
 

@@ -517,6 +517,12 @@ export default function Menu({ children }) {
     : '';
 
   const amigosOnline = amigos.filter((a) => a.status === 'online').length;
+  const [menuMobileAberto, setMenuMobileAberto] = useState(false);
+
+  // Fecha o menu mobile ao mudar de rota
+  useEffect(() => {
+    setMenuMobileAberto(false);
+  }, [location.pathname]);
 
   return (
     <div>
@@ -594,7 +600,39 @@ export default function Menu({ children }) {
             </>
           )}
         </div>
+
+        {/* Botão hambúrguer — visível apenas em mobile */}
+        <button
+          className={`menu-hamburguer${menuMobileAberto ? ' aberto' : ''}`}
+          aria-label="Abrir menu"
+          aria-expanded={menuMobileAberto}
+          onClick={() => setMenuMobileAberto((v) => !v)}
+        >
+          <span /><span /><span />
+        </button>
       </header>
+
+      {/* Overlay + Drawer mobile */}
+      {menuMobileAberto && (
+        <div
+          className="menu-mobile-overlay"
+          onClick={() => setMenuMobileAberto(false)}
+          aria-hidden="true"
+        />
+      )}
+      <nav className={`menu-mobile-drawer${menuMobileAberto ? ' aberto' : ''}`} aria-label="Navegação mobile">
+        <NavLink to="/" end className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setMenuMobileAberto(false)}>INÍCIO</NavLink>
+        <NavLink to="/equipes" className={({ isActive }) => `menu-mobile-link${isActive || location.pathname.startsWith('/equipes') ? ' ativo' : ''}`} onClick={() => setMenuMobileAberto(false)}>TIMES</NavLink>
+        <NavLink to="/torneios" className={({ isActive }) => `menu-mobile-link menu-mobile-link--destaque${isActive || location.pathname.startsWith('/torneios') ? ' ativo' : ''}`} onClick={() => setMenuMobileAberto(false)}>COMPETIR</NavLink>
+        <NavLink to="/regras" className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setMenuMobileAberto(false)}>REGRAS</NavLink>
+        <NavLink to="/faq" className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setMenuMobileAberto(false)}>FAQ</NavLink>
+        {!usuarioLogado && (
+          <div className="menu-mobile-auth">
+            <Link to="/login" className="botao-login" onClick={() => setMenuMobileAberto(false)}>Entrar</Link>
+            <Link to="/cadastro" className="botao-cadastrar" onClick={() => setMenuMobileAberto(false)}>Cadastrar</Link>
+          </div>
+        )}
+      </nav>
 
       {/* Faixa compacta fixa — sempre visível no lado direito, abaixo da navbar */}
       {usuarioLogado && (
