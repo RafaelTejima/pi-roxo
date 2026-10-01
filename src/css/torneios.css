@@ -246,6 +246,44 @@
   z-index: 2;
 }
 
+.tournaments-encerrados {
+  position: relative;
+  z-index: 2;
+  margin-top: 32px;
+  border-top: 1px solid rgba(157, 78, 221, 0.28);
+}
+
+.tournaments-encerrados summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 4px;
+  color: #e9d5ff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tournaments-encerrados summary::-webkit-details-marker {
+  display: none;
+}
+
+.tournaments-encerrados-icone {
+  color: var(--roxo-claro, #9d4edd);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.tournaments-encerrados[open] .tournaments-encerrados-icone {
+  transform: rotate(45deg);
+}
+
+.tournaments-encerrados .tournaments-grid {
+  padding-bottom: 8px;
+}
+
 
 /* --- Card de Torneio --- */
 .tournament-card {
@@ -288,6 +326,14 @@
   padding: 0 20px;
   position: relative;
   overflow: hidden;
+}
+
+.tournament-card-map-image {
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  position: absolute;
+  width: 100%;
 }
 
 .tournament-card-visual span {
