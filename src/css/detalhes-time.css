@@ -322,6 +322,34 @@
   opacity: 0.65;
 }
 
+.detalhes-time-capitao-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  border: 1px solid rgba(181, 101, 242, 0.45);
+  background: rgba(114, 62, 195, 0.12);
+  color: #d9c3ec;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 9px;
+}
+
+.detalhes-time-capitao-btn:hover:not(:disabled) {
+  border-color: var(--roxo-vivo, #b565f2);
+  color: #ffffff;
+}
+
+.detalhes-time-capitao-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.detalhes-time-capitao-btn-remover {
+  border-color: rgba(244, 164, 179, 0.35);
+  background: rgba(244, 164, 179, 0.06);
+  color: #f4a4b3;
+}
+
 .detalhes-time-aviso {
   margin-top: 14px;
   color: #837a94;

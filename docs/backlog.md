@@ -2,12 +2,30 @@
 
 Este arquivo eh escrito e mantido apenas por IAs para registrar features ja implementadas no projeto.
 
+## Agrupamento de Torneios Encerrados
+- **Componente:** `src/componentes/Torneios.jsx` (rota `/torneios`)
+- Torneios com `status = false` sao exibidos em uma secao recolhida chamada "Torneios encerrados", abaixo da lista de torneios ativos; a secao abre ao clicar no titulo.
+- A busca da pagina continua filtrando ativos e encerrados, e a contagem do titulo reflete somente os torneios encerrados correspondentes a busca.
+- **CSS:** `src/css/torneios.css` — estilos da secao recolhivel e grade interna.
+
+## Imagem do Mapa nos Cards de Torneio
+- Os cards em `src/componentes/Torneios.jsx` leem `Mapa oficial` da descricao e mostram a imagem correspondente no visual do card.
+- As imagens por nome ficam centralizadas em `src/mapas.js` e sao reutilizadas pela tela `src/componentes/SelecaoMapas.jsx`.
+- Torneios sem um mapa conhecido mantem o visual ROXO / CS2 anterior.
+
+## Administracao de Capitao do Time
+- **Componente:** `src/componentes/DetalhesTime.jsx` (aba "Adicionar/Remover jogadores")
+- Somente usuarios administradores recebem as acoes para tornar um integrante capitao ou remover a funcao do capitao atual.
+- A promocao sincroniza `times.id_capitao` e `times_integrantes.funcao`, rebaixando o capitao anterior a jogador. Remover a funcao limpa `times.id_capitao` e rebaixa o integrante a jogador.
+- **CSS:** `src/css/detalhes-time.css` — botoes de promocao/remocao do capitao.
+
 ## Pagina de Selecao de Mapas
 - **Componente:** `src/componentes/SelecaoMapas.jsx` (rota `/torneios/:id/mapa`)
 - **CSS:** `src/css/selecao-mapas.css` (escopado por `#selecao-mapas`)
 - Tela responsiva com grid de mapas usando placeholders `placehold.co`, selecao unica e destaque visual roxo.
 - Pesquisa por nome, filtro por categoria, limpeza dos filtros e contagem de resultados implementados com React.
 - Painel de detalhes atualizado conforme o mapa selecionado, com categoria, formato, rodadas e descricao.
+- Cards e painel de detalhes exibem thumbnails reais correspondentes aos sete mapas disponiveis (Mirage, Inferno, Nuke, Dust II, Overpass, Ancient e Anubis), no lugar dos placeholders.
 - Confirmacao do mapa exibida em modal; link para a tela adicionado aos detalhes do torneio.
 
 ## Pagina de Criacao de Torneio

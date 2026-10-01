@@ -25,6 +25,11 @@ export default function Perfil() {
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
 
+  useEffect(() => {
+    setEditando(false);
+    setForm({});
+  }, [location.pathname]);
+
   // ---- Carteira ----
   const [sacando, setSacando] = useState(false);
 

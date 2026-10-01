@@ -4,6 +4,8 @@ import { supabase } from '../supabase'
 import '../css/torneios.css'
 import AuroraBackground from './AuroraBackground'
 import { useAlerta } from './AlertaModal'
+import TournamentBracket from './TournamentBracket'
+import { gerarBracket } from '../utils/bracketGenerator'
 
 const TAMANHO_LINEUP = 5
 
@@ -55,6 +57,9 @@ export default function DetalhesTorneio() {
 
   // Declaracao de vencedor (visivel para o criador do torneio ou admin)
   const [declarandoVencedorId, setDeclarandoVencedorId] = useState(null)
+  
+  // Controle do botao de gerar bracket
+  const [gerando, setGerando] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -69,6 +74,16 @@ export default function DetalhesTorneio() {
           .select('*')
           .eq('id', id)
           .maybeSingle()
+
+        if (data) {
+          const { data: criador } = await supabase
+            .from('usuarios')
+            .select('nome')
+            .eq('id', data.id_criador)
+            .maybeSingle()
+          
+          data.organizadorNome = criador?.nome || 'Desconhecido'
+        }
 
         if (error) throw error
         if (ativo) setTournament(data)
@@ -342,6 +357,47 @@ export default function DetalhesTorneio() {
     }
   }
 
+  async function handleGerarChaveamento() {
+    if (timesGrupo.length < 2) {
+      mostrarAlerta({
+        titulo: 'Ação Bloqueada',
+        mensagem: 'É necessário pelo menos 2 times inscritos para gerar o chaveamento.',
+        tipo: 'aviso'
+      })
+      return
+    }
+
+    setGerando(true)
+    try {
+      await gerarBracket(id, timesGrupo)
+      
+      // Fecha inscrições automaticamente ao iniciar o torneio
+      const { error } = await supabase
+        .from('torneios')
+        .update({ status: false })
+        .eq('id', id)
+        
+      if (!error) {
+        setTournament((atual) => ({ ...atual, status: false }))
+      }
+
+      mostrarAlerta({
+        titulo: 'Sucesso',
+        mensagem: 'Chaveamento gerado com sucesso! As inscrições foram encerradas e o torneio começou.',
+        tipo: 'sucesso'
+      })
+    } catch (err) {
+      console.error(err)
+      mostrarAlerta({
+        titulo: 'Erro',
+        mensagem: 'Falha ao gerar chaveamento: ' + (err.message || JSON.stringify(err)),
+        tipo: 'erro'
+      })
+    } finally {
+      setGerando(false)
+    }
+  }
+
   if (loading) return <main className="tournament-page-state"><p>Carregando detalhes...</p></main>
   if (erro) return <main className="tournament-page-state error"><p>{erro}</p><Link to="/torneios">Voltar para torneios</Link></main>
   if (!tournament) return <main className="tournament-page-state"><h1>Torneio não encontrado</h1><Link to="/torneios">Voltar para torneios</Link></main>
@@ -354,7 +410,7 @@ export default function DetalhesTorneio() {
   else if (enviandoInscricao) textoBotao = 'Inscrevendo...'
 
   const botaoDesabilitado = !inscricoesAbertas || jaInscrito || enviandoInscricao || carregandoInscricao || (usuario && !timeCapitaneado) || Boolean(torneioConflito)
-  const podeDeclararVencedor = inscricoesAbertas && usuario && (usuario.id === tournament.id_criador || usuario.admin)
+  const podeEditar = usuario && (usuario.id === tournament.id_criador || usuario.admin)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * timesGrupo.length
 
   return (
@@ -373,6 +429,7 @@ export default function DetalhesTorneio() {
         </div>
       </div>
       <div className="details-grid">
+        <div><small>ORGANIZADOR</small><strong>{tournament.organizadorNome || 'Não informado'}</strong></div>
         <div><small>TAXA DE INSCRIÇÃO (POR TIME)</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
         <div><small>PRÊMIO ACUMULADO</small><strong>{formatPrize(premioAcumulado)}</strong></div>
         <div><small>FORMATO</small><strong>{tournament.formato || 'Não informado'}</strong></div>
@@ -419,7 +476,7 @@ export default function DetalhesTorneio() {
                 <li key={time.id}>
                   <span className="details-grupo-tag">{time.tag || 'TAG'}</span>
                   <span>{time.nome}</span>
-                  {podeDeclararVencedor && (
+                  {podeEditar && inscricoesAbertas && (
                     <button
                       type="button"
                       className="details-grupo-declarar-btn"
@@ -434,6 +491,22 @@ export default function DetalhesTorneio() {
             </ol>
           </div>
         )}
+      </section>
+
+      <section className="details-rules">
+        <h2>Chaveamento (Bracket)</h2>
+        {podeEditar && inscricoesAbertas && (
+          <div style={{ marginBottom: '15px' }}>
+            <button 
+              className="tournaments-criar-btn" 
+              onClick={handleGerarChaveamento} 
+              disabled={gerando || carregandoGrupo}
+            >
+              {gerando ? 'Gerando Chaves...' : 'Gerar Chaveamento (Iniciar Torneio)'}
+            </button>
+          </div>
+        )}
+        <TournamentBracket torneioId={id} podeEditar={podeEditar} />
       </section>
     </main>
   )

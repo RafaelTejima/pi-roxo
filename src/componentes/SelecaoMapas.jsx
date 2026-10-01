@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { imagensMapas } from '../mapas'
 import '../css/selecao-mapas.css'
 import { useAlerta } from './AlertaModal'
 
@@ -12,7 +13,7 @@ const mapas = [
     descricao: 'Um mapa clássico de equilíbrio tático, com rotas abertas para o controle do meio e execuções coordenadas nos bombsites.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/282238/e9ddff?text=MIRAGE',
+    imagem: imagensMapas.Mirage,
   },
   {
     nome: 'Inferno',
@@ -21,7 +22,7 @@ const mapas = [
     descricao: 'Corredores estreitos e pontos de estrangulamento fazem deste mapa uma escolha para equipes que dominam utilitários.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/392821/f7d8c9?text=INFERNO',
+    imagem: imagensMapas.Inferno,
   },
   {
     nome: 'Nuke',
@@ -30,7 +31,7 @@ const mapas = [
     descricao: 'Dois níveis de combate exigem comunicação precisa, leitura de rota e controle constante das áreas de acesso.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/202d36/d9edf4?text=NUKE',
+    imagem: imagensMapas.Nuke,
   },
   {
     nome: 'Dust II',
@@ -39,7 +40,7 @@ const mapas = [
     descricao: 'O campo de batalha mais reconhecido da série, com confrontos diretos e espaço para jogadas individuais.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/423328/f5dfc0?text=DUST+II',
+    imagem: imagensMapas['Dust II'],
   },
   {
     nome: 'Overpass',
@@ -48,7 +49,7 @@ const mapas = [
     descricao: 'Um mapa vertical e dinâmico que recompensa rotações rápidas e domínio das áreas externas.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/25332e/d9eee3?text=OVERPASS',
+    imagem: imagensMapas.Overpass,
   },
   {
     nome: 'Ancient',
@@ -57,7 +58,7 @@ const mapas = [
     descricao: 'Arquitetura antiga, espaços apertados e uma região central disputada em cada rodada.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/2b3529/e2edc9?text=ANCIENT',
+    imagem: imagensMapas.Ancient,
   },
   {
     nome: 'Anubis',
@@ -66,7 +67,7 @@ const mapas = [
     descricao: 'Linhas longas e passagens conectadas criam possibilidades variadas para ataques e retakes.',
     rounds: 'MR12',
     formato: 'Competitivo',
-    imagem: 'https://placehold.co/900x560/3b3028/f2d9bd?text=ANUBIS',
+    imagem: imagensMapas.Anubis,
   },
 ]
 

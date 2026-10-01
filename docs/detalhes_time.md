@@ -48,6 +48,7 @@ Esta é a página que mostra as informações completas de um time cadastrado, a
 
 - Botão/link para voltar à listagem de times (`/equipes`).
 - Caso o usuário autenticado (`localStorage.usuarioLogado`) seja o capitão do time (`usuario.id === times.id_capitao`), exibir opção de editar o time (nome, sigla, descrição, logo) — a edição em si pode ser implementada em uma tarefa futura, mas o botão/link já deve aparecer condicionalmente.
+- Na aba "Adicionar/Remover jogadores", somente administradores podem definir um integrante como capitão ou remover a função do capitão atual; a alteração deve atualizar `times.id_capitao` e `times_integrantes.funcao`.
 - Não exibir nenhuma ação de edição para usuários que não sejam o capitão.
 
 ## Requisitos visuais

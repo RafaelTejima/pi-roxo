@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { imagensMapas } from '../mapas'
 import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
@@ -62,13 +63,21 @@ function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
   const info = tournamentStatus(tournament.status)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
+  const nomeMapa = tournament.descricao?.match(/(?:^|\n)- Mapa oficial:\s*(.+)/i)?.[1]?.trim()
+  const imagemMapa = nomeMapa ? imagensMapas[nomeMapa] : null
 
   return (
     <article className="tournament-card">
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
-          <span>ROXO</span>
-          <strong>CS2</strong>
+          {imagemMapa ? (
+            <img className="tournament-card-map-image" src={imagemMapa} alt="" />
+          ) : (
+            <>
+              <span>ROXO</span>
+              <strong>CS2</strong>
+            </>
+          )}
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
@@ -158,6 +167,9 @@ export default function Torneios() {
     })
   }, [tournaments, busca])
 
+  const torneiosAtivos = torneiosFiltrados.filter((tournament) => tournament.status !== false)
+  const torneiosEncerrados = torneiosFiltrados.filter((tournament) => tournament.status === false)
+
   return (
     <main className="tournaments-page fundo-aurora-motion">
       <AuroraBackground />
@@ -233,12 +245,26 @@ export default function Torneios() {
         </div>
       )}
 
-      {!loading && !erro && torneiosFiltrados.length > 0 && (
+      {!loading && !erro && torneiosAtivos.length > 0 && (
         <div className="tournaments-grid">
-          {torneiosFiltrados.map((tournament, index) => (
+          {torneiosAtivos.map((tournament, index) => (
             <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
           ))}
         </div>
+      )}
+
+      {!loading && !erro && torneiosEncerrados.length > 0 && (
+        <details className="tournaments-encerrados">
+          <summary>
+            <span>Torneios encerrados ({torneiosEncerrados.length})</span>
+            <span className="tournaments-encerrados-icone" aria-hidden="true">+</span>
+          </summary>
+          <div className="tournaments-grid">
+            {torneiosEncerrados.map((tournament, index) => (
+              <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
+            ))}
+          </div>
+        </details>
       )}
 
       <div className="torneios-personagem-wrap" aria-hidden="true">
