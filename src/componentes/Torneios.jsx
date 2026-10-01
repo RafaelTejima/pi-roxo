@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { imagensMapas } from '../mapas'
 import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
@@ -63,39 +62,22 @@ function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
   const info = tournamentStatus(tournament.status)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
-  const nomeMapa = tournament.descricao?.match(/(?:^|\n)- Mapa oficial:\s*(.+)/i)?.[1]?.trim()
-  const imagemMapa = nomeMapa ? imagensMapas[nomeMapa] : null
 
   return (
     <article className="tournament-card">
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
-          {imagemMapa ? (
-            <img className="tournament-card-map-image" src={imagemMapa} alt="" />
-          ) : (
-            <>
               <span>ROXO</span>
               <strong>CS2</strong>
-            </>
-          )}
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
           <h2>{tournament.nome}</h2>
           <p className="tournament-date">{formatDate(tournament.data_inicio)}</p>
           <div className="tournament-meta">
-            <span className="tournament-meta-premio">
-              <small>PRÊMIO ACUMULADO</small>
-              <strong className="tournament-premio-valor">{formatPrize(premioAcumulado)}</strong>
-            </span>
-            <span>
-              <small>TAXA DE INSCRIÇÃO</small>
-              <strong>{formatPrize(tournament.dinheiro)}</strong>
-            </span>
-            <span>
-              <small>FORMATO</small>
-              <strong>{tournament.formato || 'Não informado'}</strong>
-            </span>
+            <span><small>PRÊMIO ACUMULADO</small>{formatPrize(premioAcumulado)}</span>
+            <span><small>TAXA DE INSCRIÇÃO</small>{formatPrize(tournament.dinheiro)}</span>
+            <span><small>FORMATO</small>{tournament.formato || 'Não informado'}</span>
           </div>
         </div>
       </Link>
@@ -166,9 +148,6 @@ export default function Torneios() {
       return matchNome || matchFormato || matchDesc || matchPremio
     })
   }, [tournaments, busca])
-
-  const torneiosAtivos = torneiosFiltrados.filter((tournament) => tournament.status !== false)
-  const torneiosEncerrados = torneiosFiltrados.filter((tournament) => tournament.status === false)
 
   return (
     <main className="tournaments-page fundo-aurora-motion">
@@ -245,26 +224,12 @@ export default function Torneios() {
         </div>
       )}
 
-      {!loading && !erro && torneiosAtivos.length > 0 && (
+      {!loading && !erro && torneiosFiltrados.length > 0 && (
         <div className="tournaments-grid">
-          {torneiosAtivos.map((tournament, index) => (
+          {torneiosFiltrados.map((tournament, index) => (
             <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
           ))}
         </div>
-      )}
-
-      {!loading && !erro && torneiosEncerrados.length > 0 && (
-        <details className="tournaments-encerrados">
-          <summary>
-            <span>Torneios encerrados ({torneiosEncerrados.length})</span>
-            <span className="tournaments-encerrados-icone" aria-hidden="true">+</span>
-          </summary>
-          <div className="tournaments-grid">
-            {torneiosEncerrados.map((tournament, index) => (
-              <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
-            ))}
-          </div>
-        </details>
       )}
 
       <div className="torneios-personagem-wrap" aria-hidden="true">

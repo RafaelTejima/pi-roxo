@@ -64,7 +64,7 @@ export default function Suporte({ embedded = false }) {
     ].filter((linha) => linha !== false && linha !== undefined).join('\n');
 
     const assunto = `[${formulario.categoria}] ${formulario.assunto}`;
-    window.location.href = `mailto:suporte@csgotournaments.com?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+    window.location.href = `mailto:suporte@csmatch.com?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
     setMensagem('Seu aplicativo de e-mail foi aberto com a mensagem preenchida. Revise e envie por lá.');
   }
 
@@ -236,7 +236,7 @@ export default function Suporte({ embedded = false }) {
               <span className="suporte-passo">CANAL DIRETO</span>
               <h2>Fale com a equipe.</h2>
               <p>Seu pedido será preparado para envio ao canal oficial de suporte.</p>
-              <a href="mailto:suporte@csgotournaments.com">suporte@csgotournaments.com</a>
+              <a href="mailto:suporte@csmatch.com">suporte@csmatch.com</a>
             </div>
 
             <div className="suporte-lateral-divisor"></div>
