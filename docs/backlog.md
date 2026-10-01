@@ -13,6 +13,12 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - As imagens por nome ficam centralizadas em `src/mapas.js` e sao reutilizadas pela tela `src/componentes/SelecaoMapas.jsx`.
 - Torneios sem um mapa conhecido mantem o visual ROXO / CS2 anterior.
 
+## Administracao de Capitao do Time
+- **Componente:** `src/componentes/DetalhesTime.jsx` (aba "Adicionar/Remover jogadores")
+- Somente usuarios administradores recebem as acoes para tornar um integrante capitao ou remover a funcao do capitao atual.
+- A promocao sincroniza `times.id_capitao` e `times_integrantes.funcao`, rebaixando o capitao anterior a jogador. Remover a funcao limpa `times.id_capitao` e rebaixa o integrante a jogador.
+- **CSS:** `src/css/detalhes-time.css` — botoes de promocao/remocao do capitao.
+
 ## Pagina de Selecao de Mapas
 - **Componente:** `src/componentes/SelecaoMapas.jsx` (rota `/torneios/:id/mapa`)
 - **CSS:** `src/css/selecao-mapas.css` (escopado por `#selecao-mapas`)

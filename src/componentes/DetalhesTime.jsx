@@ -329,6 +329,92 @@ export default function DetalhesTime() {
     setIntegrantes((atuais) => atuais.filter((item) => item.id !== integranteId))
   }
 
+  async function atualizarCapitao(integrante, remover = false) {
+    if (usuario?.admin !== true) return
+
+    const capitaoAtual = integrantes.find((item) => item.funcao === 'capitao')
+    const novoCapitao = remover ? null : integrante
+    if (!remover && capitaoAtual?.id === novoCapitao.id) return
+
+    setErroJogadores('')
+    setProcessandoId(integrante.id)
+
+    try {
+      if (remover) {
+        const { error: erroTime } = await supabase
+          .from('times')
+          .update({ id_capitao: null })
+          .eq('id', id)
+
+        if (erroTime) throw erroTime
+
+        if (capitaoAtual) {
+          const { error: erroIntegrante } = await supabase
+            .from('times_integrantes')
+            .update({ funcao: 'jogador' })
+            .eq('id', capitaoAtual.id)
+            .eq('id_time', id)
+
+          if (erroIntegrante) {
+            await supabase.from('times').update({ id_capitao: capitaoAtual.idUsuario }).eq('id', id)
+            throw erroIntegrante
+          }
+        }
+      } else {
+        if (capitaoAtual) {
+          const { error: erroCapitaoAtual } = await supabase
+            .from('times_integrantes')
+            .update({ funcao: 'jogador' })
+            .eq('id', capitaoAtual.id)
+            .eq('id_time', id)
+
+          if (erroCapitaoAtual) throw erroCapitaoAtual
+        }
+
+        const { error: erroNovoCapitao } = await supabase
+          .from('times_integrantes')
+          .update({ funcao: 'capitao' })
+          .eq('id', novoCapitao.id)
+          .eq('id_time', id)
+
+        if (erroNovoCapitao) {
+          if (capitaoAtual) {
+            await supabase.from('times_integrantes').update({ funcao: 'capitao' }).eq('id', capitaoAtual.id)
+          }
+          throw erroNovoCapitao
+        }
+
+        const { error: erroTime } = await supabase
+          .from('times')
+          .update({ id_capitao: novoCapitao.idUsuario })
+          .eq('id', id)
+
+        if (erroTime) {
+          await supabase.from('times_integrantes').update({ funcao: 'jogador' }).eq('id', novoCapitao.id)
+          if (capitaoAtual) {
+            await supabase.from('times_integrantes').update({ funcao: 'capitao' }).eq('id', capitaoAtual.id)
+          }
+          throw erroTime
+        }
+      }
+
+      setTime((atual) => ({ ...atual, id_capitao: novoCapitao?.idUsuario ?? null }))
+      setIntegrantes((atuais) => atuais.map((item) => ({
+        ...item,
+        funcao: item.id === capitaoAtual?.id ? 'jogador' : item.funcao
+      })).map((item) => ({
+        ...item,
+        funcao: item.id === novoCapitao?.id ? 'capitao' : item.funcao
+      })))
+    } catch {
+      setErroJogadores(remover
+        ? 'Não foi possível remover o capitão. Tente novamente.'
+        : 'Não foi possível alterar o capitão. Tente novamente.')
+    } finally {
+      setProcessandoId(null)
+    }
+  }
+
   return (
     <main id="pagina-detalhes-time">
       <Link to="/equipes" className="detalhes-time-voltar">&larr; Voltar para Equipes</Link>
@@ -465,12 +551,32 @@ export default function DetalhesTime() {
                 <div className="detalhes-time-jogador-card capitao">
                   <strong>{capitao.nome}</strong>
                   <span>CAPITÃO</span>
+                  {gerenciandoJogadores && usuario?.admin === true && (
+                    <button
+                      type="button"
+                      className="detalhes-time-capitao-btn detalhes-time-capitao-btn-remover"
+                      onClick={() => atualizarCapitao(capitao, true)}
+                      disabled={processandoId !== null}
+                    >
+                      {processandoId === capitao.id ? 'Removendo...' : 'Remover como capitão'}
+                    </button>
+                  )}
                 </div>
               )}
               {jogadores.map((jogador) => (
                 <div className="detalhes-time-jogador-card" key={jogador.id}>
                   <strong>{jogador.nome}</strong>
                   <span>JOGADOR</span>
+                  {gerenciandoJogadores && usuario?.admin === true && (
+                    <button
+                      type="button"
+                      className="detalhes-time-capitao-btn"
+                      onClick={() => atualizarCapitao(jogador)}
+                      disabled={processandoId !== null}
+                    >
+                      {processandoId === jogador.id ? 'Definindo...' : 'Tornar capitão'}
+                    </button>
+                  )}
                   {gerenciandoJogadores && (
                     <button
                       type="button"
