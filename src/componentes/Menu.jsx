@@ -21,7 +21,6 @@ export default function Menu({ children }) {
   // Estado do painel social: aberto via hover
   const [painelAberto, setPainelAberto] = useState(false);
   const painelRef = useRef(null);
-  const triggerRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
 
   const [buscaAmigo, setBuscaAmigo] = useState('');

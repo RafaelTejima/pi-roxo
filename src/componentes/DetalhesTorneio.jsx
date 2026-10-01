@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/torneios.css'
@@ -184,7 +184,7 @@ export default function DetalhesTorneio() {
   }, [usuario, id])
 
   // Busca os times ja inscritos neste torneio para exibir na fase de grupos
-  async function carregarTimesGrupo() {
+  const carregarTimesGrupo = useCallback(async () => {
     setCarregandoGrupo(true)
 
     try {
@@ -201,11 +201,11 @@ export default function DetalhesTorneio() {
     } finally {
       setCarregandoGrupo(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     carregarTimesGrupo()
-  }, [id])
+  }, [carregarTimesGrupo])
 
   async function handleInscrever() {
     if (!usuario) {

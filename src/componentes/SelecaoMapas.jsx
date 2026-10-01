@@ -129,11 +129,9 @@ export default function SelecaoMapas() {
         dinheiro: dadosTorneio.dinheiro,
       }
 
-      const { data: torneioCriado, error } = await supabase
+      const { error } = await supabase
         .from('torneios')
         .insert(payloadBanco)
-        .select()
-        .single()
 
       setEnviando(false)
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * AuroraBackground - Aurora Motion Gradient Mesh
  * Renderiza uma malha animada e lenta de luzes difusas no tema roxo tático (#0b0714, #1b0b30, #723EC3, #b565f2)

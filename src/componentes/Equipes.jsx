@@ -5,8 +5,6 @@ import '../css/equipes.css';
 import evaPersonagemImg from '../../imagens/eva-06-1.png';
 import AuroraBackground from './AuroraBackground';
 
-const LOGO_PLACEHOLDER = 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM';
-
 function resolverLogo(logo) {
   const caminho = typeof logo === 'string' ? logo.trim() : '';
   if (!caminho) return '';
