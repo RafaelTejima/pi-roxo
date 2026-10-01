@@ -334,23 +334,37 @@
   object-fit: cover;
   position: absolute;
   width: 100%;
+  filter: brightness(0.65) contrast(1.1);
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.tournament-card:hover .tournament-card-map-image {
+  transform: scale(1.06);
+  filter: brightness(0.75) contrast(1.15);
 }
 
 .tournament-card-visual span {
   font-weight: 800;
   letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 1.2rem;
+  color: #ffffff;
+  font-size: 1.15rem;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 .tournament-card-visual strong {
-  background: rgba(157, 78, 221, 0.25);
-  border: 1px solid rgba(157, 78, 221, 0.4);
-  color: var(--roxo-claro, #9d4edd);
+  background: rgba(14, 8, 28, 0.75);
+  border: 1px solid rgba(157, 78, 221, 0.55);
+  color: #e9d5ff;
   padding: 4px 12px;
   border-radius: 50px;
   font-size: 0.75rem;
   letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 /* Conteúdo Interno do Card */

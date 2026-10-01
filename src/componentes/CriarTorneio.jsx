@@ -132,9 +132,40 @@ export default function CriarTorneio() {
     // Formato 24h garantido, sem depender do idioma do navegador
     const dataHora = `${data}T${hora}:${minuto}`
     const bruto = Math.round(Number(premio)) || 0
+    const nomeLimpo = nome.trim()
+
+    setEnviando(true)
+
+    // Validação estrita de unicidade do nome no banco de dados (case-insensitive e com trim)
+    try {
+      if (supabase) {
+        const { data: torneiosExistentes, error: erroConsulta } = await supabase
+          .from('torneios')
+          .select('id, nome')
+          .ilike('nome', nomeLimpo)
+
+        const jaExiste = Array.isArray(torneiosExistentes) && torneiosExistentes.some(
+          (t) => t.nome && t.nome.trim().toLowerCase() === nomeLimpo.toLowerCase()
+        )
+
+        if (jaExiste) {
+          setEnviando(false)
+          const msg = 'Já existe um torneio cadastrado com este nome. Escolha outro nome.'
+          setErro(msg)
+          mostrarAlerta({
+            titulo: 'Nome Indisponível',
+            mensagem: msg,
+            tipo: 'aviso'
+          })
+          return
+        }
+      }
+    } catch (errConsulta) {
+      console.warn('Erro ao consultar unicidade do nome do torneio:', errConsulta)
+    }
 
     const formData = {
-      nome: nome.trim(),
+      nome: nomeLimpo,
       descricao: regras.map((regra) => `- ${regra}`).join('\n'),
       formato,
       data_inicio: dataHora,
@@ -143,79 +174,10 @@ export default function CriarTorneio() {
       dinheiro: bruto,
     }
 
-    setEnviando(true)
-
-    // Insere o torneio na tabela torneios
-    let idNovoTorneio = null
-    try {
-      if (supabase) {
-        const { data: torneioCriado, error: erroTorneio } = await supabase
-          .from('torneios')
-          .insert({
-            nome: formData.nome,
-            descricao: formData.descricao,
-            formato: formData.formato,
-            data_inicio: formData.data_inicio,
-            status: true,
-            id_criador: formData.id_criador,
-            dinheiro: formData.dinheiro,
-          })
-          .select()
-          .single()
-
-        if (!erroTorneio && torneioCriado?.id) {
-          idNovoTorneio = torneioCriado.id
-          formData.id = idNovoTorneio
-        }
-      }
-    } catch (errTorneio) {
-      console.warn('Erro ao inserir torneio no Supabase:', errTorneio)
-    }
-
-    // Logo após a query de insert na tabela torneios obter o novo id da competição,
-    // execute uma nova query para inserir na tabela transacoes_plataforma:
-    // { id_torneio: idNovoTorneio, valor_bruto: bruto, taxa_retida: taxa, valor_liquido: liquido }
-    if (idNovoTorneio) {
-      try {
-        const ret = calcularRetencao(bruto)
-        const taxa = ret ? ret.taxaPlataforma : 0
-        const liquido = ret ? ret.premioLiquido : bruto
-
-        await supabase.from('transacoes_plataforma').insert({
-          id_torneio: idNovoTorneio,
-          valor_bruto: bruto,
-          taxa_retida: taxa,
-          valor_liquido: liquido,
-        })
-
-        // Atualização no banco para somar a taxa_retida ao saldo do usuário Admin principal
-        const { data: adminPrincipal } = await supabase
-          .from('usuarios')
-          .select('id, saldo')
-          .eq('admin', true)
-          .order('id', { ascending: true })
-          .limit(1)
-          .single()
-
-        if (adminPrincipal?.id) {
-          const saldoAtual = Number(adminPrincipal.saldo) || 0
-          const novoSaldo = saldoAtual + Number(taxa)
-          await supabase
-            .from('usuarios')
-            .update({ saldo: novoSaldo })
-            .eq('id', adminPrincipal.id)
-        }
-      } catch (errFinanceiro) {
-        console.warn('Erro silencioso ao registrar fluxo financeiro da plataforma:', errFinanceiro)
-      }
-    }
-
     setEnviando(false)
 
-    // Armazena temporariamente no localStorage para sincronia de etapas
+    // Armazena temporariamente no localStorage para a etapa 2 (Seleção de Mapas)
     localStorage.setItem('dadosTorneioEmCriacao', JSON.stringify(formData))
-
-    window.dispatchEvent(new Event('torneiosAtualizados'))
 
     // Navega para a seleção de mapas passando os dados do torneio no state
     navigate('/selecao-mapas', { state: { dadosTorneio: formData } })

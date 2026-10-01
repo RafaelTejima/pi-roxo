@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { imagensMapas } from '../mapas'
 import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
@@ -48,36 +49,111 @@ function formatPrize(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0)
 }
 
+// Fallback seguro e leitura de mapas
+function extrairDadosMapa(tournament) {
+  if (!tournament) return { nome: 'Mirage', imagem: imagensMapas.Mirage }
+
+  // 1. Campo explícito no objeto do banco (caso adicionado no futuro)
+  if (tournament.imagem_mapa || tournament.imagem) {
+    const img = tournament.imagem_mapa || tournament.imagem
+    return { nome: tournament.mapa || 'CS2', imagem: img }
+  }
+
+  // 2. Extrai nome do mapa da descrição (ex: "- Mapa oficial: Mirage" ou "Mapa: Dust II")
+  let nomeDetectado = null
+  const matchRegex = tournament.descricao?.match(/(?:^|\n)-?\s*(?:mapa oficial|mapa):\s*([^\n\r]+)/i)
+  if (matchRegex && matchRegex[1]) {
+    nomeDetectado = matchRegex[1].trim()
+  }
+
+  // 3. Se não achou na regex, procura menção aos mapas conhecidos na descrição ou no nome
+  if (!nomeDetectado) {
+    const textoGeral = `${tournament.nome || ''} ${tournament.descricao || ''}`.toLowerCase()
+    if (textoGeral.includes('dust')) nomeDetectado = 'Dust II'
+    else if (textoGeral.includes('mirage')) nomeDetectado = 'Mirage'
+    else if (textoGeral.includes('inferno')) nomeDetectado = 'Inferno'
+    else if (textoGeral.includes('nuke')) nomeDetectado = 'Nuke'
+    else if (textoGeral.includes('overpass')) nomeDetectado = 'Overpass'
+    else if (textoGeral.includes('ancient')) nomeDetectado = 'Ancient'
+    else if (textoGeral.includes('anubis')) nomeDetectado = 'Anubis'
+  }
+
+  // 4. Normalização de variações de grafia
+  if (nomeDetectado) {
+    if (/dust\s*2|dust2|dust_2|de_dust2/i.test(nomeDetectado)) {
+      return { nome: 'Dust II', imagem: imagensMapas['Dust II'] }
+    }
+    const mapaChave = Object.keys(imagensMapas).find(
+      (m) => m.toLowerCase() === nomeDetectado.toLowerCase()
+    )
+    if (mapaChave && imagensMapas[mapaChave]) {
+      return { nome: mapaChave, imagem: imagensMapas[mapaChave] }
+    }
+  }
+
+  // 5. Fallback padrão seguro (Mirage / Dust II)
+  return {
+    nome: nomeDetectado || 'Mirage',
+    imagem: imagensMapas.Mirage || imagensMapas['Dust II']
+  }
+}
+
 // ============================================================
 // COMPONENTE: CARD DE TORNEIO
 // ============================================================
 
 function tournamentStatus(status) {
-  if (status === true) return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status' }
-  if (status === false) return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
-  return { label: 'STATUS NÃO INFORMADO', classe: 'tournament-status' }
+  const isEncerrado = status === false || status === 'false' || status === 0 || status === '0'
+
+  if (isEncerrado) return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
+  return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status' }
 }
 
 function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
   const info = tournamentStatus(tournament.status)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
+  const mapaInfo = extrairDadosMapa(tournament)
 
   return (
     <article className="tournament-card">
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
-              <span>ROXO</span>
-              <strong>CS2</strong>
+          {mapaInfo.imagem && (
+            <img
+              className="tournament-card-map-image"
+              src={mapaInfo.imagem}
+              alt={mapaInfo.nome}
+              loading="lazy"
+              onError={(e) => {
+                if (e.currentTarget.src !== imagensMapas['Dust II']) {
+                  e.currentTarget.src = imagensMapas['Dust II']
+                } else {
+                  e.currentTarget.style.display = 'none'
+                }
+              }}
+            />
+          )}
+          <span>{mapaInfo.nome.toUpperCase()}</span>
+          <strong>CS2</strong>
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
           <h2>{tournament.nome}</h2>
           <p className="tournament-date">{formatDate(tournament.data_inicio)}</p>
           <div className="tournament-meta">
-            <span><small>PRÊMIO ACUMULADO</small>{formatPrize(premioAcumulado)}</span>
-            <span><small>TAXA DE INSCRIÇÃO</small>{formatPrize(tournament.dinheiro)}</span>
-            <span><small>FORMATO</small>{tournament.formato || 'Não informado'}</span>
+            <span className="tournament-meta-premio">
+              <small>PRÊMIO ACUMULADO</small>
+              <strong className="tournament-premio-valor">{formatPrize(premioAcumulado)}</strong>
+            </span>
+            <span>
+              <small>TAXA DE INSCRIÇÃO</small>
+              <strong>{formatPrize(tournament.dinheiro)}</strong>
+            </span>
+            <span>
+              <small>FORMATO</small>
+              <strong>{tournament.formato || 'Não informado'}</strong>
+            </span>
           </div>
         </div>
       </Link>
