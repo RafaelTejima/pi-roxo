@@ -61,6 +61,12 @@ export default function DetalhesTorneio() {
   // Controle do botao de gerar bracket
   const [gerando, setGerando] = useState(false)
 
+  // Painel de teste (admin): adicionar time manualmente
+  const [buscaTimeAdmin, setBuscaTimeAdmin] = useState('')
+  const [resultadosAdmin, setResultadosAdmin] = useState([])
+  const [buscandoAdmin, setBuscandoAdmin] = useState(false)
+  const [adicionandoAdmin, setAdicionandoAdmin] = useState(null)
+
   useEffect(() => {
     let ativo = true
 
@@ -357,6 +363,45 @@ export default function DetalhesTorneio() {
     }
   }
 
+  // Busca times para o painel admin (com debounce simples)
+  async function handleBuscaAdmin(termo) {
+    setBuscaTimeAdmin(termo)
+    if (termo.trim().length < 2) { setResultadosAdmin([]); return }
+    setBuscandoAdmin(true)
+    try {
+      const { data } = await supabase
+        .from('times')
+        .select('id, nome, tag')
+        .or(`nome.ilike.%${termo.trim()}%,tag.ilike.%${termo.trim()}%`)
+        .limit(8)
+      const idsJaInscritos = new Set(timesGrupo.map((t) => t.id))
+      setResultadosAdmin((data || []).filter((t) => !idsJaInscritos.has(t.id)))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setBuscandoAdmin(false)
+    }
+  }
+
+  async function handleAdicionarTimeAdmin(time) {
+    setAdicionandoAdmin(time.id)
+    try {
+      const { error } = await supabase.from('inscricoes').insert({
+        id_torneio: id,
+        id_time: time.id,
+        id_usuario_inscritor: usuario.id,
+      })
+      if (error) throw error
+      await carregarTimesGrupo()
+      setResultadosAdmin((prev) => prev.filter((t) => t.id !== time.id))
+      mostrarAlerta({ titulo: 'Time Adicionado', mensagem: `${time.nome} foi inscrito no torneio (modo teste).`, tipo: 'sucesso' })
+    } catch (err) {
+      mostrarAlerta({ titulo: 'Erro', mensagem: err.message, tipo: 'erro' })
+    } finally {
+      setAdicionandoAdmin(null)
+    }
+  }
+
   async function handleGerarChaveamento() {
     if (timesGrupo.length < 2) {
       mostrarAlerta({
@@ -508,6 +553,49 @@ export default function DetalhesTorneio() {
         )}
         <TournamentBracket torneioId={id} podeEditar={podeEditar} />
       </section>
+
+      {/* Painel exclusivo para administradores — apenas para testes */}
+      {usuario?.admin && (
+        <section className="details-rules details-admin-teste">
+          <h2>🛠️ Ferramentas de Teste (Admin)</h2>
+          <p style={{ color: '#f87171', fontSize: '0.82rem', marginBottom: '14px' }}>
+            Esta seção é visível apenas para administradores e permite adicionar times diretamente ao torneio sem validações.
+          </p>
+          <div className="admin-busca-time-wrap">
+            <input
+              type="text"
+              className="tournaments-busca-input"
+              placeholder="Buscar time por nome ou TAG..."
+              value={buscaTimeAdmin}
+              onChange={(e) => handleBuscaAdmin(e.target.value)}
+              style={{ marginBottom: '10px', width: '100%' }}
+            />
+            {buscandoAdmin && <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Buscando...</p>}
+            {!buscandoAdmin && resultadosAdmin.length > 0 && (
+              <ul className="admin-busca-resultados">
+                {resultadosAdmin.map((time) => (
+                  <li key={time.id} className="admin-busca-item">
+                    <span className="details-grupo-tag">{time.tag || 'TAG'}</span>
+                    <span>{time.nome}</span>
+                    <button
+                      type="button"
+                      className="tournaments-criar-btn"
+                      style={{ padding: '5px 14px', fontSize: '0.82rem' }}
+                      disabled={adicionandoAdmin === time.id}
+                      onClick={() => handleAdicionarTimeAdmin(time)}
+                    >
+                      {adicionandoAdmin === time.id ? 'Adicionando...' : '+ Adicionar'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!buscandoAdmin && buscaTimeAdmin.trim().length >= 2 && resultadosAdmin.length === 0 && (
+              <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Nenhum time encontrado (ou todos já estão inscritos).</p>
+            )}
+          </div>
+        </section>
+      )}
     </main>
   )
 }
