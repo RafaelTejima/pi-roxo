@@ -81,10 +81,9 @@ Cada mapa deve possuir um card contendo:
 
 **Regras para Imagens:**
 
-- As imagens devem utilizar placeholders quando nao houver imagens disponiveis.
-- Utilizar a URL: `https://placehold.co/`
+- Utilizar imagens correspondentes ao mapa exibido; a selecao atual usa thumbnails de CS2 para Mirage, Inferno, Nuke, Dust II, Overpass, Ancient e Anubis.
 - Nao gerar imagens para este projeto.
-- Os placeholders devem possuir proporcoes adequadas ao conteudo e a resolucao da tela.
+- Quando nao houver uma imagem real disponivel, utilizar `https://placehold.co/` com proporcao adequada ao conteudo e a resolucao da tela.
 
 ---
 

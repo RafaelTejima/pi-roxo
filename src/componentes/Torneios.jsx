@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { imagensMapas } from '../mapas'
 import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
@@ -62,13 +63,21 @@ function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
   const info = tournamentStatus(tournament.status)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
+  const nomeMapa = tournament.descricao?.match(/(?:^|\n)- Mapa oficial:\s*(.+)/i)?.[1]?.trim()
+  const imagemMapa = nomeMapa ? imagensMapas[nomeMapa] : null
 
   return (
     <article className="tournament-card">
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
-          <span>ROXO</span>
-          <strong>CS2</strong>
+          {imagemMapa ? (
+            <img className="tournament-card-map-image" src={imagemMapa} alt="" />
+          ) : (
+            <>
+              <span>ROXO</span>
+              <strong>CS2</strong>
+            </>
+          )}
         </div>
         <div className="tournament-card-content">
           <span className={info.classe}>{info.label}</span>
