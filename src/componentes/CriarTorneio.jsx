@@ -139,7 +139,7 @@ export default function CriarTorneio() {
     // Validação estrita de unicidade do nome no banco de dados (case-insensitive e com trim)
     try {
       if (supabase) {
-        const { data: torneiosExistentes, error: erroConsulta } = await supabase
+        const { data: torneiosExistentes } = await supabase
           .from('torneios')
           .select('id, nome')
           .ilike('nome', nomeLimpo)
@@ -347,8 +347,8 @@ export default function CriarTorneio() {
 
         <div className="criar-torneio-acoes">
           <Link to="/torneios" className="botao-cancelar">Cancelar</Link>
-          <button type="submit" className="botao-enviar">
-            Continuar
+          <button type="submit" className="botao-enviar" disabled={enviando}>
+            {enviando ? 'Validando...' : 'Continuar'}
           </button>
         </div>
 

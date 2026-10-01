@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
 import '../css/bracket.css'
 
@@ -6,7 +6,7 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
   const [partidas, setPartidas] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const carregarPartidas = async () => {
+  const carregarPartidas = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('partidas')
@@ -26,7 +26,7 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [torneioId])
 
   useEffect(() => {
     carregarPartidas()
@@ -47,7 +47,7 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [torneioId])
+  }, [carregarPartidas, torneioId])
 
   const handleDeclararVencedor = async (partida, timeId) => {
     if (!podeEditar || partida.status === 'Finalizada') return

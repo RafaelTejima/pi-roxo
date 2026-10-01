@@ -3,8 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/detalhes-time.css'
 
-const LOGO_PLACEHOLDER = 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'
-
 function resolverLogo(logo) {
   const caminho = typeof logo === 'string' ? logo.trim() : ''
   if (!caminho) return ''
