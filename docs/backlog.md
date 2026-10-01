@@ -2,6 +2,12 @@
 
 Este arquivo eh escrito e mantido apenas por IAs para registrar features ja implementadas no projeto.
 
+## Agrupamento de Torneios Encerrados
+- **Componente:** `src/componentes/Torneios.jsx` (rota `/torneios`)
+- Torneios com `status = false` sao exibidos em uma secao recolhida chamada "Torneios encerrados", abaixo da lista de torneios ativos; a secao abre ao clicar no titulo.
+- A busca da pagina continua filtrando ativos e encerrados, e a contagem do titulo reflete somente os torneios encerrados correspondentes a busca.
+- **CSS:** `src/css/torneios.css` — estilos da secao recolhivel e grade interna.
+
 ## Pagina de Selecao de Mapas
 - **Componente:** `src/componentes/SelecaoMapas.jsx` (rota `/torneios/:id/mapa`)
 - **CSS:** `src/css/selecao-mapas.css` (escopado por `#selecao-mapas`)

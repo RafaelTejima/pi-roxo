@@ -149,6 +149,9 @@ export default function Torneios() {
     })
   }, [tournaments, busca])
 
+  const torneiosAtivos = torneiosFiltrados.filter((tournament) => tournament.status !== false)
+  const torneiosEncerrados = torneiosFiltrados.filter((tournament) => tournament.status === false)
+
   return (
     <main className="tournaments-page fundo-aurora-motion">
       <AuroraBackground />
@@ -224,12 +227,26 @@ export default function Torneios() {
         </div>
       )}
 
-      {!loading && !erro && torneiosFiltrados.length > 0 && (
+      {!loading && !erro && torneiosAtivos.length > 0 && (
         <div className="tournaments-grid">
-          {torneiosFiltrados.map((tournament, index) => (
+          {torneiosAtivos.map((tournament, index) => (
             <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
           ))}
         </div>
+      )}
+
+      {!loading && !erro && torneiosEncerrados.length > 0 && (
+        <details className="tournaments-encerrados">
+          <summary>
+            <span>Torneios encerrados ({torneiosEncerrados.length})</span>
+            <span className="tournaments-encerrados-icone" aria-hidden="true">+</span>
+          </summary>
+          <div className="tournaments-grid">
+            {torneiosEncerrados.map((tournament, index) => (
+              <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
+            ))}
+          </div>
+        </details>
       )}
 
       <div className="torneios-personagem-wrap" aria-hidden="true">
