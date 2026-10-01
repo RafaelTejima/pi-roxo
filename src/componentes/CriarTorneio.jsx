@@ -1,7 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../css/criar-torneio.css'
 import { useAlerta } from './AlertaModal'
+
+// ============================================================
+// REGRAS DE NEGÓCIO: TIERS DE RETENÇÃO DA PLATAFORMA
+// - Tier 1: Prêmios até R$ 200,00 -> retém 12%
+// - Tier 2: Prêmios entre R$ 201,00 e R$ 1.500,00 -> retém 8%
+// - Tier 3: Prêmios acima de R$ 1.500,00 -> retém 5%
+// ============================================================
+function calcularRetencao(valorInput) {
+  const valor = Number(valorInput)
+  if (!valorInput || isNaN(valor) || valor <= 0) {
+    return null
+  }
+
+  let percentual = 12
+  let tier = 1
+
+  if (valor > 1500) {
+    percentual = 5
+    tier = 3
+  } else if (valor > 200) {
+    percentual = 8
+    tier = 2
+  }
+
+  const taxaPlataforma = (valor * percentual) / 100
+  const premioLiquido = valor - taxaPlataforma
+
+  return {
+    tier,
+    percentual,
+    taxaPlataforma,
+    premioLiquido,
+  }
+}
 
 // ============================================================
 // COMPONENTE PRINCIPAL: PAGINA DE CRIACAO DE TORNEIO
@@ -35,6 +69,7 @@ export default function CriarTorneio() {
   const [minuto, setMinuto] = useState('')
   const [formato, setFormato] = useState('')
   const [premio, setPremio] = useState('')
+  const retencao = useMemo(() => calcularRetencao(premio), [premio])
   const [regras, setRegras] = useState([])
   const [novaRegra, setNovaRegra] = useState('')
   const [regrasAbertas, setRegrasAbertas] = useState(false)
@@ -184,7 +219,7 @@ export default function CriarTorneio() {
         </div>
 
         <div className="campo-form">
-          <label htmlFor="premio-torneio">Taxa de inscrição (R$)</label>
+          <label htmlFor="premio-torneio">Premiação / Taxa de Inscrição (R$)</label>
           <input
             id="premio-torneio"
             type="number"
@@ -192,8 +227,41 @@ export default function CriarTorneio() {
             step="1"
             value={premio}
             onChange={(e) => setPremio(e.target.value)}
-            placeholder="Ex: 50"
+            placeholder="Ex: 250"
           />
+
+          {retencao && (
+            <div className="calculadora-retencao" aria-live="polite">
+              <div className="retencao-linha retencao-linha-taxa">
+                <span className="retencao-item-rotulo">
+                  <span className="retencao-tier-tag">Tier {retencao.tier}</span>
+                  Taxa da plataforma ({retencao.percentual}%):
+                </span>
+                <strong className="retencao-valor-taxa">
+                  -R$ {retencao.taxaPlataforma.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </strong>
+              </div>
+
+              <div className="retencao-divisor" aria-hidden="true" />
+
+              <div className="retencao-linha retencao-linha-liquido">
+                <span className="retencao-item-rotulo">
+                  <svg className="retencao-icone" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                  </svg>
+                  Prêmio repassado ao vencedor:
+                </span>
+                <strong className="retencao-valor-liquido">
+                  R$ {retencao.premioLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </strong>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Regras do torneio em formato dropdown */}

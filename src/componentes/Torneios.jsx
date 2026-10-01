@@ -84,9 +84,18 @@ function TournamentCard({ tournament, index }) {
           <h2>{tournament.nome}</h2>
           <p className="tournament-date">{formatDate(tournament.data_inicio)}</p>
           <div className="tournament-meta">
-            <span><small>PRÊMIO ACUMULADO</small>{formatPrize(premioAcumulado)}</span>
-            <span><small>TAXA DE INSCRIÇÃO</small>{formatPrize(tournament.dinheiro)}</span>
-            <span><small>FORMATO</small>{tournament.formato || 'Não informado'}</span>
+            <span className="tournament-meta-premio">
+              <small>PRÊMIO ACUMULADO</small>
+              <strong className="tournament-premio-valor">{formatPrize(premioAcumulado)}</strong>
+            </span>
+            <span>
+              <small>TAXA DE INSCRIÇÃO</small>
+              <strong>{formatPrize(tournament.dinheiro)}</strong>
+            </span>
+            <span>
+              <small>FORMATO</small>
+              <strong>{tournament.formato || 'Não informado'}</strong>
+            </span>
           </div>
         </div>
       </Link>
