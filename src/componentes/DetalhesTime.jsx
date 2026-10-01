@@ -7,7 +7,7 @@ const LOGO_PLACEHOLDER = 'https://placehold.co/120x120/723EC3/FFFFFF?text=TEAM'
 
 function resolverLogo(logo) {
   const caminho = typeof logo === 'string' ? logo.trim() : ''
-  if (!caminho) return LOGO_PLACEHOLDER
+  if (!caminho) return ''
   if (/^(https?:\/\/|data:|blob:|\/\/)/i.test(caminho)) return caminho
   return `/${caminho.replace(/^(\.\/)+/, '').replace(/^\/+/, '')}`
 }
@@ -44,6 +44,11 @@ export default function DetalhesTime() {
   const [dropdownAberto, setDropdownAberto] = useState(false)
   const [processandoId, setProcessandoId] = useState(null)
   const [erroJogadores, setErroJogadores] = useState('')
+  const [logoComErro, setLogoComErro] = useState(false)
+
+  useEffect(() => {
+    setLogoComErro(false)
+  }, [time?.logo])
 
   useEffect(() => {
     async function carregarTime() {
@@ -422,19 +427,18 @@ export default function DetalhesTime() {
       <div className="detalhes-time-layout">
         <div className="detalhes-time-coluna-principal">
           <section className="detalhes-time-cabecalho">
-            <img
-              src={resolverLogo(time.logo)}
-              alt={`Logo do time ${time.nome}`}
-              className="detalhes-time-logo"
-              onError={(event) => {
-                const imagem = event.currentTarget
-                if (imagem.src === LOGO_PLACEHOLDER) {
-                  imagem.style.display = 'none'
-                  return
-                }
-                imagem.src = LOGO_PLACEHOLDER
-              }}
-            />
+            {time.logo && !logoComErro ? (
+              <img
+                src={resolverLogo(time.logo)}
+                alt={`Logo do time ${time.nome}`}
+                className="detalhes-time-logo"
+                onError={() => setLogoComErro(true)}
+              />
+            ) : (
+              <div className="detalhes-time-logo detalhes-time-logo-fallback" aria-label={`Logo do time ${time.nome}`}>
+                {time.tag ? time.tag.substring(0, 4).toUpperCase() : (time.nome ? time.nome.substring(0, 3).toUpperCase() : 'TIME')}
+              </div>
+            )}
             <div className="detalhes-time-info">
               <span className="detalhes-time-tag">[{time.tag}]</span>
               <h1>{time.nome}</h1>

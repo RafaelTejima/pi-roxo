@@ -616,10 +616,16 @@ export default function Menu({ children }) {
           {/* Ícones do time */}
           {timesUsuario.slice(0, 3).map((time) => (
             <div key={time.id} className="social-compact-item">
-              <div className="social-compact-avatar social-compact-avatar--square">
-                {time.logo
-                  ? <img src={time.logo} alt={time.nome} />
-                  : <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>}
+              <div className="social-compact-avatar social-compact-avatar--square" style={{ position: 'relative', overflow: 'hidden' }}>
+                <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>
+                {time.logo && time.logo.trim() !== '' && (
+                  <img
+                    src={time.logo}
+                    alt={time.nome}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -723,11 +729,15 @@ export default function Menu({ children }) {
                   title={`Ver detalhes de ${time.nome}`}
                 >
                   <div className="social-time-logo-moldura">
-                    <div className="social-time-logo">
-                      {time.logo ? (
-                        <img src={time.logo} alt={time.nome} />
-                      ) : (
-                        <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>
+                    <div className="social-time-logo" style={{ position: 'relative', overflow: 'hidden' }}>
+                      <span>{(time.tag || time.nome || 'T').substring(0, 2).toUpperCase()}</span>
+                      {time.logo && time.logo.trim() !== '' && (
+                        <img
+                          src={time.logo}
+                          alt={time.nome}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
                       )}
                     </div>
                   </div>

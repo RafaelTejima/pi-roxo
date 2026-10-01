@@ -82,6 +82,20 @@
   box-shadow: 0 4px 12px rgba(114, 62, 195, 0.4);
 }
 
+.detalhes-time-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(114, 62, 195, 0.45), rgba(41, 21, 71, 0.95));
+  border: 1px solid rgba(157, 78, 221, 0.35);
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
 .detalhes-time-tag {
   font-size: 0.85rem;
   font-weight: 700;
