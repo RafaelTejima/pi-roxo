@@ -10,6 +10,7 @@ const TABELAS_CONHECIDAS = [
   { nome: 'times',             label: 'Times',               icone: 'T',  descricao: 'Times registrados pelos usuários' },
   { nome: 'times_integrantes', label: 'Integrantes de Times',icone: 'TI', descricao: 'Roster e funções dos jogadores em cada time' },
   { nome: 'torneios',          label: 'Torneios',            icone: 'C',  descricao: 'Campeonatos criados na plataforma' },
+  { nome: 'transacoes_plataforma', label: 'Transações da Plataforma', icone: '$', descricao: 'Retenções financeiras e repasses de torneios' },
   { nome: 'mapas',             label: 'Mapas',               icone: 'M',  descricao: 'Mapas de CS2 disponiveis' },
   { nome: 'partidas',          label: 'Partidas',            icone: 'P',  descricao: 'Partidas e confrontos do bracket' },
   { nome: 'inscricoes',        label: 'Inscrições',          icone: 'I',  descricao: 'Inscrições de times em torneios' },
@@ -29,6 +30,23 @@ function formatarValor(valor) {
   const str = String(valor);
   if (str.length > 80) return <span title={str}>{str.slice(0, 80)}…</span>;
   return str;
+}
+
+function formatarDataHora(val) {
+  if (!val) return '-';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return String(val);
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(d);
+}
+
+function formatarMoeda(val) {
+  return Number(val || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 }
 
 // ----- Componente de seção de tabela -----
@@ -74,6 +92,18 @@ function SecaoTabela({ tabela, usuarioLogado }) {
             console.warn('Fallback para busca simples de inscricoes sem join:', res.error);
             res = await supabase.from('inscricoes').select('*').order('id', { ascending: false }).limit(200);
           }
+        } else if (tabela.nome === 'transacoes_plataforma') {
+          // Busca transações da plataforma com dados relacionais do torneio
+          res = await supabase
+            .from('transacoes_plataforma')
+            .select('*, torneio:id_torneio(id, nome)')
+            .order('id', { ascending: false })
+            .limit(200);
+
+          if (res.error) {
+            console.warn('Fallback para busca simples de transacoes_plataforma sem join:', res.error);
+            res = await supabase.from('transacoes_plataforma').select('*').order('id', { ascending: false }).limit(200);
+          }
         } else {
           res = await supabase.from(tabela.nome).select('*').limit(200);
         }
@@ -116,6 +146,16 @@ function SecaoTabela({ tabela, usuarioLogado }) {
               };
             });
             setDados(inscricoesFormatadas);
+          } else if (tabela.nome === 'transacoes_plataforma' && Array.isArray(data)) {
+            const transacoesFormatadas = data.map((t) => {
+              const tor = t.torneio?.nome || (t.id_torneio ? `Torneio #${t.id_torneio}` : '-');
+              const { torneio, ...resto } = t;
+              return {
+                ...resto,
+                torneio_nome: tor
+              };
+            });
+            setDados(transacoesFormatadas);
           } else {
             setDados(data || []);
           }
@@ -177,7 +217,7 @@ function SecaoTabela({ tabela, usuarioLogado }) {
     Object.keys(payload).forEach(key => {
       if (payload[key] === '') {
         payload[key] = null;
-      } else if (key.endsWith('_id') || key.startsWith('id_') || key === 'dinheiro') {
+      } else if (key.endsWith('_id') || key.startsWith('id_') || key === 'dinheiro' || key === 'saldo' || key === 'valor_bruto' || key === 'taxa_retida' || key === 'valor_liquido') {
         if (!isNaN(Number(payload[key])) && payload[key] !== null) {
           payload[key] = Number(payload[key]);
         }
@@ -455,12 +495,257 @@ function SecaoTabela({ tabela, usuarioLogado }) {
   );
 }
 
+// ----- Seção Financeira Restrita (Receitas & Transações) -----
+function SecaoFinanceiro({ usuarioLogado }) {
+  const [transacoes, setTransacoes] = useState([]);
+  const [saldoAdmin, setSaldoAdmin] = useState(0);
+  const [adminPrincipal, setAdminPrincipal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
+  const [busca, setBusca] = useState('');
+
+  const carregarFinanceiro = async () => {
+    setLoading(true);
+    setErro('');
+
+    try {
+      // 1. Requisição para a tabela usuarios para obter a receita total (saldo do Admin principal)
+      const { data: adminData, error: adminErr } = await supabase
+        .from('usuarios')
+        .select('id, nome, email, saldo')
+        .eq('admin', true)
+        .order('id', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!adminErr && adminData) {
+        setSaldoAdmin(Number(adminData.saldo) || 0);
+        setAdminPrincipal(adminData);
+      }
+
+      // 2. Histórico de Transações: consumindo a tabela transacoes_plataforma com join relacional no torneio
+      let res = await supabase
+        .from('transacoes_plataforma')
+        .select('*, torneio:id_torneio(id, nome)')
+        .order('id', { ascending: false });
+
+      if (res.error) {
+        console.warn('Fallback para busca simples em transacoes_plataforma:', res.error);
+        res = await supabase
+          .from('transacoes_plataforma')
+          .select('*')
+          .order('id', { ascending: false });
+      }
+
+      if (res.error) {
+        setErro(res.error.message);
+      } else {
+        setTransacoes(res.data || []);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados financeiros:', err);
+      setErro('Não foi possível carregar os dados financeiros.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarFinanceiro();
+  }, []);
+
+  // Restrição de segurança: só renderiza se admin for true
+  if (!usuarioLogado || (!usuarioLogado.admin && usuarioLogado.admin !== true)) {
+    return null;
+  }
+
+  const totalRetidoHistorico = transacoes.reduce((acc, t) => acc + (Number(t.taxa_retida) || 0), 0);
+  const totalBrutoHistorico = transacoes.reduce((acc, t) => acc + (Number(t.valor_bruto) || 0), 0);
+  const totalLiquidoRepassado = transacoes.reduce((acc, t) => acc + (Number(t.valor_liquido) || 0), 0);
+
+  const transacoesFiltradas = transacoes.filter((t) => {
+    if (!busca.trim()) return true;
+    const termo = busca.toLowerCase();
+    const idStr = String(t.id || '');
+    const idTorneioStr = String(t.id_torneio || '');
+    const nomeTorneio = (t.torneio?.nome || '').toLowerCase();
+    const statusStr = (t.status || '').toLowerCase();
+    return idStr.includes(termo) || idTorneioStr.includes(termo) || nomeTorneio.includes(termo) || statusStr.includes(termo);
+  });
+
+  return (
+    <div className="admin-financeiro-container">
+      {/* Cards de Métricas Financeiras */}
+      <div className="admin-financeiro-grid">
+        <div className="admin-card-metrica admin-card-metrica--destaque">
+          <div className="admin-metrica-header">
+            <span className="admin-metrica-rotulo">Receita Total da Plataforma</span>
+            <span className="admin-metrica-tag-live">SALDO ADMIN</span>
+          </div>
+          <strong className="admin-metrica-valor principal">
+            {formatarMoeda(saldoAdmin || totalRetidoHistorico)}
+          </strong>
+          <small className="admin-metrica-detalhe">
+            Carteira da plataforma ({adminPrincipal?.nome || adminPrincipal?.email || 'Admin Principal'})
+          </small>
+        </div>
+
+        <div className="admin-card-metrica">
+          <div className="admin-metrica-header">
+            <span className="admin-metrica-rotulo">Total de Taxas Retidas</span>
+            <span className="admin-metrica-tag-info">LUCRO RETIDO</span>
+          </div>
+          <strong className="admin-metrica-valor taxa">
+            {formatarMoeda(totalRetidoHistorico)}
+          </strong>
+          <small className="admin-metrica-detalhe">
+            Soma de todas as retenções aplicadas nos torneios
+          </small>
+        </div>
+
+        <div className="admin-card-metrica">
+          <div className="admin-metrica-header">
+            <span className="admin-metrica-rotulo">Volume Bruto Movimentado</span>
+            <span className="admin-metrica-tag-neutro">PREMIAÇÃO TOTAL</span>
+          </div>
+          <strong className="admin-metrica-valor">
+            {formatarMoeda(totalBrutoHistorico)}
+          </strong>
+          <small className="admin-metrica-detalhe">
+            Total bruto acumulado das premiações
+          </small>
+        </div>
+
+        <div className="admin-card-metrica">
+          <div className="admin-metrica-header">
+            <span className="admin-metrica-rotulo">Repassado aos Vencedores</span>
+            <span className="admin-metrica-tag-sucesso">LÍQUIDO</span>
+          </div>
+          <strong className="admin-metrica-valor liquido">
+            {formatarMoeda(totalLiquidoRepassado)}
+          </strong>
+          <small className="admin-metrica-detalhe">
+            {transacoes.length} transação(ões) registrada(s)
+          </small>
+        </div>
+      </div>
+
+      {/* Histórico de Transações */}
+      <div className="admin-secao admin-secao-financeiro">
+        <div className="admin-secao-header static">
+          <div className="admin-secao-titulo-wrap">
+            <span className="admin-secao-icone">💳</span>
+            <div>
+              <h2 className="admin-secao-titulo">Histórico de Transações da Plataforma</h2>
+              <span className="admin-secao-descricao">
+                Registros de retenções financeiras e valores repassados por torneio
+              </span>
+            </div>
+          </div>
+          <div className="admin-secao-acoes">
+            <button
+              type="button"
+              className="admin-btn-recarregar"
+              onClick={carregarFinanceiro}
+              title="Recarregar transações"
+            >
+              Atualizar
+            </button>
+          </div>
+        </div>
+
+        <div className="admin-secao-corpo">
+          <div className="admin-busca-wrap">
+            <input
+              type="text"
+              placeholder="Buscar por ID, torneio ou status..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="admin-busca-input"
+            />
+          </div>
+
+          {loading ? (
+            <div className="admin-carregando">
+              <div className="admin-spinner"></div>
+              <span>Carregando histórico financeiro...</span>
+            </div>
+          ) : erro ? (
+            <div className="admin-erro">
+              <p>Erro ao carregar transações: {erro}</p>
+            </div>
+          ) : transacoesFiltradas.length === 0 ? (
+            <div className="admin-vazio">
+              <p>
+                {busca
+                  ? 'Nenhuma transação encontrada para esta pesquisa.'
+                  : 'Nenhuma transação registrada na tabela transacoes_plataforma até o momento.'}
+              </p>
+            </div>
+          ) : (
+            <div className="admin-tabela-scroll">
+              <table className="admin-tabela">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Torneio</th>
+                    <th>Data</th>
+                    <th>Valor Bruto</th>
+                    <th>Taxa Retida</th>
+                    <th>Valor Líquido</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transacoesFiltradas.map((t) => (
+                    <tr key={t.id}>
+                      <td>
+                        <span className="admin-id-badge">#{t.id}</span>
+                      </td>
+                      <td>
+                        <strong>{t.torneio?.nome || `Torneio #${t.id_torneio}`}</strong>
+                        {t.torneio?.nome && (
+                          <small className="admin-subdado">ID #{t.id_torneio}</small>
+                        )}
+                      </td>
+                      <td>{formatarDataHora(t.registro)}</td>
+                      <td>
+                        <strong>{formatarMoeda(t.valor_bruto)}</strong>
+                      </td>
+                      <td>
+                        <span className="admin-taxa-badge">
+                          +{formatarMoeda(t.taxa_retida)}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="admin-liquido-badge">
+                          {formatarMoeda(t.valor_liquido)}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="admin-badge admin-badge--sim">
+                          {t.status || 'PROCESSADO'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ----- Página principal -----
 export default function AdminPanel() {
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [verificando, setVerificando] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tabelasAtivas] = useState(TABELAS_CONHECIDAS);
+  const [abaAtiva, setAbaAtiva] = useState('financeiro'); // 'financeiro' | 'tabelas'
 
   useEffect(() => {
     async function verificarAdmin() {
@@ -470,6 +755,10 @@ export default function AdminPanel() {
       try {
         const usuario = JSON.parse(salvo);
         setUsuarioLogado(usuario);
+
+        if (usuario && usuario.admin === true) {
+          setIsAdmin(true);
+        }
 
         // Busca o registro atualizado do banco para checar admin
         if (usuario && usuario.id) {
@@ -516,7 +805,7 @@ export default function AdminPanel() {
   }
 
   // Logado mas sem permissão de admin
-  if (!isAdmin) {
+  if (!isAdmin && !usuarioLogado?.admin) {
     return (
       <main id="admin-panel" className="admin-acesso-negado">
         <div className="admin-negado-card">
@@ -538,9 +827,9 @@ export default function AdminPanel() {
       <div className="admin-topo">
         <div className="admin-topo-info">
           <span className="admin-badge admin-badge--admin">ADMINISTRADOR</span>
-          <h1 className="admin-titulo-pagina">Painel do Banco de Dados</h1>
+          <h1 className="admin-titulo-pagina">Painel Administrativo</h1>
           <p className="admin-subtitulo-pagina">
-            Visualize, edite e gerencie todos os registros do Supabase.
+            Gestão financeira de receitas da plataforma e controle de dados do Supabase.
           </p>
         </div>
         <div className="admin-topo-usuario">
@@ -549,14 +838,45 @@ export default function AdminPanel() {
         </div>
       </div>
 
+      <div className="admin-abas-container">
+        <div className="admin-abas-nav" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={abaAtiva === 'financeiro'}
+            className={`admin-aba-btn ${abaAtiva === 'financeiro' ? 'active' : ''}`}
+            onClick={() => setAbaAtiva('financeiro')}
+          >
+            <span className="admin-aba-icone">💰</span>
+            Receitas & Financeiro
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={abaAtiva === 'tabelas'}
+            className={`admin-aba-btn ${abaAtiva === 'tabelas' ? 'active' : ''}`}
+            onClick={() => setAbaAtiva('tabelas')}
+          >
+            <span className="admin-aba-icone">🗄️</span>
+            Banco de Dados ({tabelasAtivas.length})
+          </button>
+        </div>
+      </div>
+
       <div className="admin-container">
-        {tabelasAtivas.map((tabela) => (
-          <SecaoTabela
-            key={tabela.nome}
-            tabela={tabela}
-            usuarioLogado={usuarioLogado}
-          />
-        ))}
+        {abaAtiva === 'financeiro' && (
+          <SecaoFinanceiro usuarioLogado={usuarioLogado} />
+        )}
+
+        {abaAtiva === 'tabelas' && (
+          tabelasAtivas.map((tabela) => (
+            <SecaoTabela
+              key={tabela.nome}
+              tabela={tabela}
+              usuarioLogado={usuarioLogado}
+            />
+          ))
+        )}
       </div>
     </main>
   );

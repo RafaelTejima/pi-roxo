@@ -173,6 +173,28 @@
     border: 1px solid rgba(233, 166, 179, .25);
 }
 
+#perfil-page .perfil-botao-admin {
+    margin-top: 10px;
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(140, 82, 255, 0.85), rgba(181, 101, 242, 0.95));
+    border: 1px solid rgba(181, 101, 242, 0.5);
+    box-shadow: 0 4px 14px rgba(140, 82, 255, 0.25);
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+#perfil-page .perfil-botao-admin:hover {
+    background: linear-gradient(135deg, rgba(140, 82, 255, 1), rgba(181, 101, 242, 1));
+    box-shadow: 0 6px 20px rgba(181, 101, 242, 0.45);
+    transform: translateY(-1px);
+    color: #ffffff;
+}
+
 #perfil-page .perfil-conteudo {
     display: grid;
     gap: 24px;

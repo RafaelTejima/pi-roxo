@@ -839,6 +839,11 @@ export default function Perfil() {
   // ------------------------------------------------------------------
   // DERIVAÇÕES
   // ------------------------------------------------------------------
+  const isAdmin = !isPublico && Boolean(
+    (usuario && (usuario.admin === true || usuario.admin === 'true')) ||
+    (usuarioLogado && (usuarioLogado.admin === true || usuarioLogado.admin === 'true'))
+  );
+
   const dataRegistro = usuario.registro && !Number.isNaN(new Date(usuario.registro).getTime())
     ? new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     : 'Não informado';
@@ -992,6 +997,11 @@ export default function Perfil() {
                   </button>
                 )}
                 <button className="perfil-botao perfil-botao-perigo" type="button" onClick={sair}>Sair da conta</button>
+                {isAdmin && (
+                  <Link to="/admin" className="perfil-botao perfil-botao-admin" title="Acessar Painel Administrativo e Gestão Financeira">
+                    🛡️ Painel Administrativo
+                  </Link>
+                )}
               </>
             )}
           </aside>
@@ -1071,6 +1081,11 @@ export default function Perfil() {
                   <section className="perfil-secao" style={{ marginTop: '24px' }}>
                     <div className="perfil-secao-titulo">
                       <div><span className="perfil-kicker">Financeiro</span><h2>Carteira</h2></div>
+                      {isAdmin && (
+                        <Link to="/admin" className="perfil-link-voltar" style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Acessar Gestão Financeira da plataforma">
+                          Gestão Financeira &rarr;
+                        </Link>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
                       <div>

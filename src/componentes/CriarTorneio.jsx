@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../supabase.js'
 import '../css/criar-torneio.css'
 import { useAlerta } from './AlertaModal'
 
@@ -88,7 +89,7 @@ export default function CriarTorneio() {
     setRegras((prev) => prev.filter((_, i) => i !== index))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setErro('')
     setSucesso('')
@@ -130,6 +131,7 @@ export default function CriarTorneio() {
 
     // Formato 24h garantido, sem depender do idioma do navegador
     const dataHora = `${data}T${hora}:${minuto}`
+    const bruto = Math.round(Number(premio)) || 0
 
     const formData = {
       nome: nome.trim(),
@@ -138,11 +140,82 @@ export default function CriarTorneio() {
       data_inicio: dataHora,
       status: true,
       id_criador: usuario.id,
-      dinheiro: Math.round(Number(premio)),
+      dinheiro: bruto,
     }
+
+    setEnviando(true)
+
+    // Insere o torneio na tabela torneios
+    let idNovoTorneio = null
+    try {
+      if (supabase) {
+        const { data: torneioCriado, error: erroTorneio } = await supabase
+          .from('torneios')
+          .insert({
+            nome: formData.nome,
+            descricao: formData.descricao,
+            formato: formData.formato,
+            data_inicio: formData.data_inicio,
+            status: true,
+            id_criador: formData.id_criador,
+            dinheiro: formData.dinheiro,
+          })
+          .select()
+          .single()
+
+        if (!erroTorneio && torneioCriado?.id) {
+          idNovoTorneio = torneioCriado.id
+          formData.id = idNovoTorneio
+        }
+      }
+    } catch (errTorneio) {
+      console.warn('Erro ao inserir torneio no Supabase:', errTorneio)
+    }
+
+    // Logo após a query de insert na tabela torneios obter o novo id da competição,
+    // execute uma nova query para inserir na tabela transacoes_plataforma:
+    // { id_torneio: idNovoTorneio, valor_bruto: bruto, taxa_retida: taxa, valor_liquido: liquido }
+    if (idNovoTorneio) {
+      try {
+        const ret = calcularRetencao(bruto)
+        const taxa = ret ? ret.taxaPlataforma : 0
+        const liquido = ret ? ret.premioLiquido : bruto
+
+        await supabase.from('transacoes_plataforma').insert({
+          id_torneio: idNovoTorneio,
+          valor_bruto: bruto,
+          taxa_retida: taxa,
+          valor_liquido: liquido,
+        })
+
+        // Atualização no banco para somar a taxa_retida ao saldo do usuário Admin principal
+        const { data: adminPrincipal } = await supabase
+          .from('usuarios')
+          .select('id, saldo')
+          .eq('admin', true)
+          .order('id', { ascending: true })
+          .limit(1)
+          .single()
+
+        if (adminPrincipal?.id) {
+          const saldoAtual = Number(adminPrincipal.saldo) || 0
+          const novoSaldo = saldoAtual + Number(taxa)
+          await supabase
+            .from('usuarios')
+            .update({ saldo: novoSaldo })
+            .eq('id', adminPrincipal.id)
+        }
+      } catch (errFinanceiro) {
+        console.warn('Erro silencioso ao registrar fluxo financeiro da plataforma:', errFinanceiro)
+      }
+    }
+
+    setEnviando(false)
 
     // Armazena temporariamente no localStorage para sincronia de etapas
     localStorage.setItem('dadosTorneioEmCriacao', JSON.stringify(formData))
+
+    window.dispatchEvent(new Event('torneiosAtualizados'))
 
     // Navega para a seleção de mapas passando os dados do torneio no state
     navigate('/selecao-mapas', { state: { dadosTorneio: formData } })

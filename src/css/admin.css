@@ -654,3 +654,252 @@ input:disabled + .admin-slider {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* ============================================================
+   SEÇÃO FINANCEIRA & RECEITAS DA PLATAFORMA (ADMIN)
+   ============================================================ */
+
+/* Navegação por Abas */
+.admin-abas-container {
+    max-width: 1300px;
+    margin: -16px auto 36px;
+    padding: 0 32px;
+}
+
+.admin-abas-nav {
+    display: inline-flex;
+    background: rgba(14, 8, 28, 0.85);
+    border: 1px solid rgba(157, 78, 221, 0.25);
+    border-radius: 12px;
+    padding: 6px;
+    gap: 8px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.admin-aba-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transicao-suave, 0.25s ease);
+}
+
+.admin-aba-btn:hover {
+    color: #ffffff;
+    background: rgba(157, 78, 221, 0.12);
+}
+
+.admin-aba-btn.active {
+    background: linear-gradient(135deg, rgba(114, 62, 195, 0.4), rgba(157, 78, 221, 0.3));
+    border-color: rgba(181, 101, 242, 0.5);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(114, 62, 195, 0.25);
+}
+
+.admin-aba-icone {
+    font-size: 16px;
+}
+
+/* Container Financeiro */
+.admin-financeiro-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    width: 100%;
+}
+
+/* Grid de Métricas Financeiras */
+.admin-financeiro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.admin-card-metrica {
+    background: rgba(14, 8, 28, 0.75);
+    border: 1px solid rgba(157, 78, 221, 0.2);
+    border-radius: 14px;
+    padding: 22px 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.admin-card-metrica:hover {
+    transform: translateY(-3px);
+    border-color: rgba(181, 101, 242, 0.45);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+.admin-card-metrica--destaque {
+    background: linear-gradient(145deg, rgba(26, 14, 52, 0.85), rgba(18, 10, 36, 0.85));
+    border-color: rgba(181, 101, 242, 0.5);
+    box-shadow: 0 8px 24px rgba(114, 62, 195, 0.2);
+}
+
+.admin-card-metrica--destaque:hover {
+    border-color: rgba(181, 101, 242, 0.8);
+    box-shadow: 0 12px 30px rgba(114, 62, 195, 0.35);
+}
+
+.admin-metrica-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-metrica-rotulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-secundario, #a8a8a8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-metrica-tag-live {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #4ade80;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    padding: 2px 8px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+}
+
+.admin-metrica-tag-info {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    padding: 2px 8px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+}
+
+.admin-metrica-tag-neutro {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #cbd5e1;
+    background: rgba(203, 213, 225, 0.1);
+    border: 1px solid rgba(203, 213, 225, 0.2);
+    padding: 2px 8px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+}
+
+.admin-metrica-tag-sucesso {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 2px 8px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+}
+
+.admin-metrica-valor {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.15;
+}
+
+.admin-metrica-valor.principal {
+    color: #4ade80;
+    text-shadow: 0 0 16px rgba(74, 222, 128, 0.4);
+}
+
+.admin-metrica-valor.taxa {
+    color: #facc15;
+    text-shadow: 0 0 14px rgba(250, 204, 21, 0.35);
+}
+
+.admin-metrica-valor.liquido {
+    color: #38bdf8;
+}
+
+.admin-metrica-detalhe {
+    font-size: 12px;
+    color: #8b819f;
+}
+
+/* Badges da Tabela Financeira */
+.admin-secao-header.static {
+    cursor: default;
+}
+
+.admin-id-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.admin-taxa-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    padding: 3px 9px;
+    border-radius: 6px;
+}
+
+.admin-liquido-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 3px 9px;
+    border-radius: 6px;
+}
+
+.admin-subdado {
+    display: block;
+    font-size: 11px;
+    color: #8b819f;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .admin-abas-container {
+        padding: 0 16px;
+    }
+
+    .admin-abas-nav {
+        width: 100%;
+        display: flex;
+    }
+
+    .admin-aba-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .admin-financeiro-grid {
+        grid-template-columns: 1fr;
+    }
+}
