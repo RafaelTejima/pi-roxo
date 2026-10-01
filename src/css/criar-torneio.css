@@ -167,6 +167,104 @@
   }
 }
 
+/* --- Calculadora de Retenção de Prêmios em Tempo Real --- */
+#pagina-criar-torneio .calculadora-retencao {
+  margin-top: 6px;
+  background: rgba(22, 15, 36, 0.78);
+  border: 1px solid rgba(157, 78, 221, 0.28);
+  border-left: 3px solid var(--roxo-vivo, #b565f2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  animation: retencaoFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes retencaoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#pagina-criar-torneio .retencao-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  gap: 12px;
+}
+
+#pagina-criar-torneio .retencao-item-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+#pagina-criar-torneio .retencao-tier-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(157, 78, 221, 0.22);
+  border: 1px solid rgba(181, 101, 242, 0.45);
+  color: #e9d5ff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+#pagina-criar-torneio .retencao-icone {
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+#pagina-criar-torneio .retencao-valor-taxa {
+  color: #f59e0b; /* Aviso / neutro moderno */
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+#pagina-criar-torneio .retencao-divisor {
+  height: 1px;
+  background: rgba(157, 78, 221, 0.15);
+  margin: 2px 0;
+}
+
+#pagina-criar-torneio .retencao-linha-liquido .retencao-item-rotulo {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+#pagina-criar-torneio .retencao-valor-liquido {
+  color: #4ade80; /* Verde neon de destaque */
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  #pagina-criar-torneio .retencao-linha {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
 /* --- Dropdown de Regras --- */
 #pagina-criar-torneio .regras-dropdown {
   border: 1px solid rgba(157, 78, 221, 0.25);

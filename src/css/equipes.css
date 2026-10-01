@@ -130,22 +130,29 @@
 }
 
 .equipe-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  background: rgba(18, 12, 35, 0.7);
-  border: 1px solid rgba(114, 62, 195, 0.25);
-  border-radius: 12px;
+  background: rgba(20, 15, 30, 0.72);
+  border: 1px solid rgba(157, 78, 221, 0.22);
+  border-radius: 14px;
   padding: 24px;
   backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0.2, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+  position: relative;
+  z-index: 10;
 }
 
 .equipe-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--roxo-vivo, #b565f2);
-  box-shadow: 0 12px 28px rgba(114, 62, 195, 0.2);
+  transform: translateY(-5px);
+  border-color: rgba(181, 101, 242, 0.75);
+  box-shadow: 0 16px 36px rgba(114, 62, 195, 0.35), 0 0 20px rgba(181, 101, 242, 0.25);
 }
 
 .equipe-card-header {
@@ -181,30 +188,73 @@
 }
 
 .equipe-tag {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--roxo-claro, #9d4edd);
-  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  background: rgba(114, 62, 195, 0.25);
+  border: 1px solid rgba(181, 101, 242, 0.45);
+  box-shadow: 0 0 10px rgba(114, 62, 195, 0.2);
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-top: 3px;
 }
 
 .equipe-card-body {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  margin-top: auto;
+}
+
+.equipe-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(157, 78, 221, 0.12);
+  flex: 1;
+  min-width: 0;
+}
+
+.equipe-meta-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.equipe-meta-icon {
+  color: var(--roxo-claro, #9d4edd);
+  flex-shrink: 0;
+}
+
+.equipe-meta-icon--capitao {
+  color: #facc15;
 }
 
 .equipe-meta-item small {
-  display: block;
-  font-size: 0.7rem;
+  display: inline-block;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: #837a94;
+  color: #94a3b8;
   letter-spacing: 1px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  text-transform: uppercase;
 }
 
 .equipe-meta-item strong {
   font-size: 0.95rem;
-  color: #e2e8f0;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .equipes-vazio {
