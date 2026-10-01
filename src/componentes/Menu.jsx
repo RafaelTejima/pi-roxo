@@ -525,10 +525,10 @@ export default function Menu({ children }) {
       <header className="cabecalho">
         <div className="logo">
           <Link to="/" className="titulo-animado-container" style={{ color: 'inherit', textDecoration: 'none' }}>
-            {"CS:GO Tournaments".split("").map((char, index) => (
+            {"CS:Match".split("").map((char, index) => (
               <span
                 key={index}
-                className={`letra-animada${index >= 6 ? ' roxo' : ''}`}
+                className={`letra-animada${index >= 3 ? ' roxo' : ''}`}
                 style={{ animationDelay: `${index * 0.08}s` }}
               >
                 {char === " " ? "\u00A0" : char}
@@ -1019,7 +1019,7 @@ export default function Menu({ children }) {
       <footer className="rodape-global">
         <div className="rodape-container">
           <div className="rodape-coluna rodape-marca">
-            <h3 className="rodape-logo">CS:GO <span>TOURNAMENTS</span></h3>
+            <h3 className="rodape-logo">CS:<span>MATCH</span></h3>
             <p className="rodape-descricao">
               Plataforma competitiva dedicada a torneios e campeonatos de CS. Conectamos equipes, criamos disputas justas e impulsionamos o cenario de esports.
             </p>
@@ -1042,7 +1042,7 @@ export default function Menu({ children }) {
               <li><Link to="/suporte">Entrar em contato</Link></li>
               <li><Link to="/faq">Central de Ajuda</Link></li>
               <li><Link to="/regras">Regulamento Oficial</Link></li>
-              <li><a href="mailto:suporte@csgotournaments.com">suporte@csgotournaments.com</a></li>
+              <li><a href="mailto:suporte@csmatch.com">suporte@csmatch.com</a></li>
               <li><span>Atendimento: 24/7 via Discord</span></li>
             </ul>
           </div>
@@ -1059,7 +1059,7 @@ export default function Menu({ children }) {
         </div>
 
         <div className="rodape-bottom">
-          <p>2026 CS:GO Tournaments. Todos os direitos reservados.</p>
+          <p>2026 CS:Match. Todos os direitos reservados.</p>
         </div>
       </footer>
 
