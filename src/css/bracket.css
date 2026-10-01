@@ -1,0 +1,144 @@
+.tournament-bracket-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.tournament-bracket {
+  display: flex;
+  gap: 40px;
+  min-width: max-content;
+  padding: 0 20px;
+  align-items: center;
+}
+
+.bracket-rodada {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bracket-rodada-titulo {
+  text-align: center;
+  color: #a084e8;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.bracket-partidas-coluna {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 20px;
+}
+
+.bracket-partida {
+  background-color: #1a1a24;
+  border: 1px solid #2a2a35;
+  border-radius: 6px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Conectores visuais (linhas) */
+.bracket-rodada:not(:last-child) .bracket-partida::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background-color: #2a2a35;
+}
+
+.bracket-rodada:not(:first-child) .bracket-partida::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background-color: #2a2a35;
+}
+
+.bracket-time {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1a1a24;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bracket-time.clicavel {
+  cursor: pointer;
+}
+
+.bracket-time.clicavel:hover {
+  background-color: #2a2a35;
+}
+
+.bracket-time.clicavel::before {
+  content: '🏆';
+  position: absolute;
+  right: 10px;
+  opacity: 0;
+  font-size: 0.8rem;
+  transition: opacity 0.2s;
+}
+
+.bracket-time.clicavel:hover::before {
+  opacity: 1;
+}
+
+.bracket-time.vencedor {
+  background-color: rgba(114, 62, 195, 0.2);
+  border-left: 3px solid #723ec3;
+}
+
+.bracket-time.vencedor .time-nome {
+  font-weight: bold;
+  color: #fff;
+}
+
+.time-tag {
+  font-size: 0.7rem;
+  background: #2a2a35;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #888;
+}
+
+.time-nome {
+  font-size: 0.85rem;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bracket-divisor {
+  height: 1px;
+  background-color: #2a2a35;
+  width: 100%;
+}
+
+.bracket-loading, .bracket-empty {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  margin-top: 1rem;
+}

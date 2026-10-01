@@ -1,99 +1,67 @@
-# Especificação Técnica: Sistema de Bracket e Gerenciamento de Partidas de CS2
+# Bracket + Integração com Supabase
 
-## 1. Visão Geral do Sistema
+Você é um desenvolvedor eSports Fullstack junior e especialista em Supabase e React/Next.js. Preciso que você implemente todo o sistema de Brackets (Chaveamento Dinâmico em Árvore) e Integração de Premiação em Dinheiro para uma plataforma de torneios.
 
-O módulo de chaveamento é responsável pelo gerenciamento em tempo real do fluxo do campeonato, controle do progresso das partidas e avanço automatizado das equipes na tabela:
+Eu JÁ rodei todas as migrations SQL, triggers de avanço automático, Row Level Security (RLS) e stored procedures no Supabase. O seu foco será implementar a lógica de código (Frontend e serviços do Supabase Client).
 
-* **Entrada:** Lista de equipes inscritas, total de participantes ($4, 8, 16, 32$) e modo de definição de resultados (Manual pelo Administrador ou Automático por Algoritmo de Resolução).
+---
 
-* **Processamento:** Cruzamento dinâmico de *seeds*, cálculo exato de avanço de vaga e validação dos placares dos confrontos.
+### 1. Contexto do Banco de Dados no Supabase (PostgreSQL)
 
-* **Saída:** Tabela (*bracket*) interativa atualizada instantaneamente e definição da equipe campeã.
+O banco já possui as seguintes tabelas estruturadas e configuradas:
 
-## 2. Estrutura do Estado (State Management)
+- `torneios` (id, nome, status, registro, data_inicio, descricao, dinheiro, formato, id_criador, premio_acumulado, id_time_vencedor)
+- `partidas` (id, id_torneio, fase, id_jogador1, id_jogador2, id_vencedor, status, rodada, posicao, proxima_partida_id, proxima_partida_slot, registro)
+- `inscricoes` (id, nome_torneio, torneio_status, times, id_times, numero_times, id_usuarios, nome_usuarios, registro)
+- `times` (id, nome, tag, logo, descricao, id_capitao, registro)
+- `usuarios` (id, nome, email, id_time, admin, ...)
+- `historico_jogadores` (id, id_usuario, id_torneio, id_time, posicao_final, ganhos_obtidos)
 
-Todo o estado de um torneio ativo é mantido em uma estrutura relacional leve em formato JSON, garantindo alta performance de leitura e atualização imediata no frontend:
+> **Nota:** Existe uma trigger SQL ativa na tabela `partidas` que, quando uma partida é atualizada para `status = 'Finalizada'` e possui um `id_vencedor`, ela AUTOMATICAMENTE copia esse vencedor para o slot correto da `proxima_partida_id`.
 
-```json
-{
-  "tournament": {
-    "id": "trn-2026-001",
-    "name": "CS2 Major Championship",
-    "team_count": 8,
-    "format": "SINGLE_ELIMINATION"
-  },
-  "teams": [
-    { "id": "t1", "name": "FURIA", "seed": 1 },
-    { "id": "t2", "name": "MIBR", "seed": 2 },
-    { "id": "t3", "name": "Imperial", "seed": 3 },
-    { "id": "t4", "name": "paIN", "seed": 4 },
-    { "id": "t5", "name": "RED Canids", "seed": 5 },
-    { "id": "t6", "name": "Bestia", "seed": 6 },
-    { "id": "t7", "name": "Fluxo", "seed": 7 },
-    { "id": "t8", "name": "ODDIK", "seed": 8 }
-  ],
-  "matches": [
-    {
-      "id": "m_r1_p0",
-      "round": 1,
-      "position": 0,
-      "team1_id": "t1",
-      "team2_id": "t8",
-      "team1_score": 13,
-      "team2_score": 9,
-      "winner_id": "t1",
-      "next_match_id": "m_r2_p0",
-      "status": "FINISHED"
-    }
-  ]
-}
-```
+---
 
-## 3. Algoritmos de Chaveamento e Progressão
+### 2. O que você (Antigravity) deve criar
 
-### A. Cruzamento Inicial por *Seeding* (First Round Bracket Seed)
+#### A. Algoritmo de Geração do Bracket (`BracketGeneratorService`)
+Crie uma função helper/serviço no backend ou lib do projeto responsável por gerar os registros da tabela `partidas` quando um torneio for iniciado (formato Eliminação Simples / Mata-Mata):
 
-Para garantir o equilíbrio competitivo da tabela, o sistema aplica o cruzamento oficial do circuito profissional: o 1º colocado enfrenta o último, o 2º enfrenta o penúltimo, e assim sucessivamente.
+1. **Entrada:** `id_torneio` e a lista de times inscritos buscados da tabela `inscricoes`.
+2. **Cálculo da Árvore:**
+   - Obter o número total de participantes $N$ (ex: 8, 16 ou 32).
+   - Calcular o total de rodadas: $\log_2(N)$ (Ex: 8 times = 3 rodadas: Quartas, Semis, Final).
+3. **Criação Encadeada de Partidas:**
+   - O algoritmo deve gerar primeiro as partidas das rodadas finais (ex: Final [Rodada 3], Semis [Rodada 2]) para obter os `id`s gerados.
+   - Em seguida, deve criar as partidas das rodadas anteriores (Quartas [Rodada 1]) já vinculando `proxima_partida_id` ao `id` da partida correspondente na rodada seguinte.
+   - Definir `proxima_partida_slot` (1 para o primeiro participante do confronto e 2 para o segundo).
+   - Fazer o insert em lote na tabela `partidas` via Supabase Client (`supabase.from('partidas').insert(...)`).
 
-**Estrutura de Confrontos da 1ª Rodada (Exemplo com 8 equipes):**
+---
 
-* **Partida 0:** `Seed 1` vs `Seed 8`
-* **Partida 1:** `Seed 4` vs `Seed 5`
-* **Partida 2:** `Seed 2` vs `Seed 7`
-* **Partida 3:** `Seed 3` vs `Seed 6`
+#### B. Componente Visual e Interativo do Bracket (React Component)
+Crie um componente responsivo e moderno `TournamentBracket.jsx` (ou `.tsx`):
 
-### B. Cálculo da Próxima Partida (Avanço no Bracket)
+1. **Busca de Dados e Realtime:**
+   - Buscar as partidas do torneio (`supabase.from('partidas').select('*, jogador1:times!id_jogador1(*), jogador2:times!id_jogador2(*)').eq('id_torneio', torneioId)`).
+   - Assinar as mudanças em tempo real com `supabase.channel()` para que o bracket atualize automaticamente na tela quando uma partida for atualizada no banco.
+2. **Layout Visual (CSS Grid / Flexbox):**
+   - Renderizar as partidas agrupadas por `rodada` em colunas paralelas (Quartas, Semifinais, Final).
+   - Desenhar os cards de partida mostrando:
+     - Logo, TAG e nome dos dois times.
+     - Destaque visual/cor para o time vencedor se a partida estiver `Finalizada`.
+     - Indicadores de status (`Pendente`, `Agendada`, `Em Andamento`, `Finalizada`).
+   - Linhas de conexão ou alinhamento conectando as partidas de uma rodada com a próxima.
 
-Assim que uma partida tem o seu resultado confirmado em uma chave de Eliminação Simples, o motor da plataforma calcula a partida e a vaga exata para onde a equipe vencedora é transferida:
+---
 
-* **Índice da Próxima Rodada:** $Rodada_{próxima} = Rodada_{atual} + 1$
-
-* **Posição da Próxima Partida:** $Posição_{próxima} = \lfloor \frac{Posição_{atual}}{2} \rfloor$
-
-* **Lado do Confronto (Slot Time 1 ou Time 2):**
-  * Se $Posição_{atual}$ for **par** $\rightarrow$ A equipe assume a vaga de **Time 1** no confronto seguinte.
-  * Se $Posição_{atual}$ for **ímpar** $\rightarrow$ A equipe assume a vaga de **Time 2** no confronto seguinte.
-
-## 4. Modos de Resolução e Operação do Bracket
-
-A plataforma disponibiliza três métodos para progressão e preenchimento dos resultados na chave:
-
-### 1. Resolução Manual / Ação do Usuário
-* O administrador ou operador do torneio clica sobre o card da equipe vencedora para declarar o resultado da partida.
-* O sistema atribui a pontuação do confronto dentro das regras oficiais (ex: `13 x 11` em MR12 ou `2 x 1` em séries BO3) e avança a equipe automaticamente na tabela.
-
-### 2. Algoritmo de Resolução Rápida (Botão "Resolver Partida")
-* Calcula e aplica o resultado exato de uma partida respeitando a pontuação oficial do CS2 em MR12:
-  * O vencedor obrigatoriamente atinge 13 rounds (ou 16 em caso de *overtime*).
-  * O perdedor recebe uma pontuação entre 0 e 11 rounds (ou 12 a 14 no *overtime*).
-
-### 3. Resolução Total do Torneio (Botão "Processar Torneio")
-* O motor percorre em cascata todas as partidas, desde as rodadas iniciais até a grande final, calculando e inserindo os placares de cada fase até coroar a equipe campeã.
-
-## 5. Arquitetura do Frontend e Renderização
-
-Para a construção da interface do chaveamento:
-
-1. **Estrutura Visual:** Layout em colunas dinâmicas (Grid/Flexbox) representando as fases da competição (Quartas de Final, Semifinais, Final).
-2. **Conectores de Tabela:** Linhas SVG ou CSS conectam a partida $P$ da Rodada $R$ às partidas de origem da Rodada $R-1$.
-3. **Reatividade do Estado:** Qualquer alteração no atributo `winner_id` atualiza imediatamente o slot da próxima fase com animação de progressão.
+#### C. Painel do Administrador (Atualização de Resultado)
+1. **Controle de Acesso (Via Frontend):**
+   - **Frontend:** A edição do bracket (como declarar vencedores) deve validar se o usuário autenticado é o criador do torneio (`usuario.id === torneio.id_criador`) ou um administrador geral (`usuario.admin === true`). Sem essas condições, os botões de ação e modais não devem ser sequer renderizados (exibição apenas em modo leitura).
+   - **Backend:** O banco está intencionalmente configurado sem regras de Row Level Security (RLS) restritivas, delegando toda a validação visual e lógica para o client-side/frontend.
+2. Permita que administradores/organizadores cliquem em uma partida no bracket para abrir um modal ou acionar um botão "Declarar Vencedor".
+3. Ao selecionar o vencedor, o Supabase Client deve rodar:
+   ```javascript
+   await supabase
+     .from('partidas')
+     .update({ id_vencedor: teamId, status: 'Finalizada' })
+     .eq('id', partidaId);
