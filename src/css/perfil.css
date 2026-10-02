@@ -943,3 +943,69 @@
         width: 100%;
     }
 }
+
+/* ---- Total Ganho em Campeonatos (Visão Pública & Destaque) ---- */
+#perfil-page .perfil-prestigio-card-publico {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#perfil-page .perfil-prestigio-card-publico:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(52, 211, 153, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(52, 211, 153, 0.08);
+}
+
+#perfil-page .perfil-prestigio-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+#perfil-page .perfil-prestigio-icone-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(255, 212, 59, 0.1);
+    border: 1px solid rgba(255, 212, 59, 0.25);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+#perfil-page .perfil-prestigio-card-publico:hover .perfil-prestigio-icone-wrap {
+    background: rgba(255, 212, 59, 0.18);
+    border-color: rgba(255, 212, 59, 0.45);
+    box-shadow: 0 0 16px rgba(255, 212, 59, 0.25);
+}
+
+#perfil-page .perfil-trofeu-svg {
+    width: 26px;
+    height: 26px;
+    display: block;
+    flex-shrink: 0;
+}
+
+#perfil-page .perfil-prestigio-textos {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+#perfil-page .perfil-prestigio-textos .perfil-carteira-saldo-label {
+    margin: 0;
+}
+
+#perfil-page .perfil-prestigio-textos .perfil-carteira-ganhos-valor {
+    margin: 0;
+    line-height: 1.1;
+}

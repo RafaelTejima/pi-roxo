@@ -408,6 +408,7 @@ export default function Perfil() {
         // Perfil público de outro usuário
         setIsPublico(true);
         setLoading(true);
+        setUsuario(null);
 
         // Busca no Supabase com JOIN em times_integrantes para obter a equipe atual
         let dadosUsuario = null;
@@ -1138,12 +1139,11 @@ export default function Perfil() {
   }
 
   // ------------------------------------------------------------------
-  // DERIVAÇÕES
+  // DERIVAÇÕES E CONTROLE DE PRIVACIDADE (DONO vs. VISITANTE)
   // ------------------------------------------------------------------
-  const isAdmin = !isPublico && Boolean(
-    (usuario && (usuario.admin === true || usuario.admin === 'true')) ||
-    (usuarioLogado && (usuarioLogado.admin === true || usuarioLogado.admin === 'true'))
-  );
+  const isDono = !isPublico && Boolean(usuarioLogado?.id && usuario?.id && String(usuarioLogado.id) === String(usuario.id));
+  const isVisitante = !isDono;
+  const isAdmin = Boolean((usuario && (usuario.admin === true || usuario.admin === 'true')) || (usuarioLogado && (usuarioLogado.admin === true || usuarioLogado.admin === 'true')));
 
   const dataRegistro = usuario.registro && !Number.isNaN(new Date(usuario.registro).getTime())
     ? new Date(usuario.registro).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -1290,7 +1290,7 @@ export default function Perfil() {
             )}
 
             {/* Botões do próprio perfil */}
-            {!isPublico && (
+            {!isPublico && isDono && (
               <>
                 {!editando && (
                   <button className="perfil-botao perfil-botao-principal" type="button" onClick={iniciarEdicao} style={{ marginBottom: '10px' }}>
@@ -1377,8 +1377,8 @@ export default function Perfil() {
 
                 </section>
 
-                {/* ---- CARTEIRA (perfil próprio) ---- */}
-                {!isPublico && (
+                {/* ---- CARTEIRA PESSOAL (ESTRITAMENTE PRIVADA: Apenas Dono da Conta) ---- */}
+                {!isPublico && isDono && (
                   <section className="perfil-secao" style={{ marginTop: '24px' }}>
                     <div className="perfil-secao-titulo">
                       <div><span className="perfil-kicker">Financeiro</span><h2>Carteira</h2></div>
@@ -1388,7 +1388,7 @@ export default function Perfil() {
                         </Link>
                       )}
                     </div>
-                    {/* Métricas Financeiras: Saldo Disponível e Total Ganho em Campeonatos */}
+                    {/* Métricas Financeiras: Saldo Disponível (Privado) e Total Ganho em Campeonatos (Status Público) */}
                     <div className="perfil-carteira-metricas-grid">
                       <div className="perfil-carteira-metrica-card">
                         <span className="perfil-carteira-saldo-label">Saldo disponível</span>
@@ -1482,6 +1482,30 @@ export default function Perfil() {
                   </section>
                 )}
 
+                {/* ---- TOTAL GANHO EM CAMPEONATOS (VISITANTE / PERFIL PÚBLICO) ---- */}
+                {isVisitante && (
+                  <section className="perfil-secao" style={{ marginTop: '24px' }}>
+                    <div className="perfil-secao-titulo">
+                      <div><span className="perfil-kicker">Competitivo</span><h2>Premiações em Torneios</h2></div>
+                    </div>
+                    <div className="perfil-prestigio-card-publico">
+                      <div className="perfil-prestigio-header">
+                        <div className="perfil-prestigio-icone-wrap">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="perfil-trofeu-svg" aria-hidden="true">
+                            <path fill="rgb(255, 212, 59)" d="M208.3 64L432.3 64C458.8 64 480.4 85.8 479.4 112.2C479.2 117.5 479 122.8 478.7 128L528.3 128C554.4 128 577.4 149.6 575.4 177.8C567.9 281.5 514.9 338.5 457.4 368.3C441.6 376.5 425.5 382.6 410.2 387.1C390 415.7 369 430.8 352.3 438.9L352.3 512L416.3 512C434 512 448.3 526.3 448.3 544C448.3 561.7 434 576 416.3 576L224.3 576C206.6 576 192.3 561.7 192.3 544C192.3 526.3 206.6 512 224.3 512L288.3 512L288.3 438.9C272.3 431.2 252.4 416.9 233 390.6C214.6 385.8 194.6 378.5 175.1 367.5C121 337.2 72.2 280.1 65.2 177.6C63.3 149.5 86.2 127.9 112.3 127.9L161.9 127.9C161.6 122.7 161.4 117.5 161.2 112.1C160.2 85.6 181.8 63.9 208.3 63.9zM165.5 176L113.1 176C119.3 260.7 158.2 303.1 198.3 325.6C183.9 288.3 172 239.6 165.5 176zM444 320.8C484.5 297 521.1 254.7 527.3 176L475 176C468.8 236.9 457.6 284.2 444 320.8z"/>
+                          </svg>
+                        </div>
+                        <div className="perfil-prestigio-textos">
+                          <span className="perfil-carteira-saldo-label">Total Ganho em Campeonatos</span>
+                          <strong className="perfil-carteira-ganhos-valor">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGanhos || 0)}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
                 {/* ---- CONEXÕES VINCULADAS ---- */}
                 <section className="perfil-secao" style={{ marginTop: '24px' }}>
                   <h3 style={{ fontSize: '15px', color: 'var(--roxo-claro)', margin: '0 0 16px' }}>Conexões Vinculadas</h3>
@@ -1566,8 +1590,8 @@ export default function Perfil() {
                   </div>
                 </section>
 
-                {/* ---- LISTA DE AMIGOS (perfil próprio) ---- */}
-                {!isPublico && (
+                {/* ---- LISTA DE AMIGOS (perfil próprio - Dono da Conta) ---- */}
+                {!isPublico && isDono && (
                   <section className="perfil-secao perfil-secao-amigos" style={{ marginTop: '24px' }}>
                     <div className="perfil-amigos-header">
                       <div>
