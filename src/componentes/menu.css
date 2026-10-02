@@ -1601,10 +1601,23 @@
   /* O painel social precisa ser ajustado no mobile */
   #social-panel.social-panel {
     top: 62px;
-    height: calc(100vh - 62px);
+    bottom: 0;
+    height: auto;
     width: 280px; /* Igual ao menu-drawer */
     z-index: 1005;
     box-shadow: -4px 0 20px rgba(0,0,0,0.8);
+    overflow-y: auto;
+    display: block;
+  }
+
+  .social-panel-amigos-secao {
+    overflow: visible;
+    flex: none;
+  }
+
+  .social-amigos-lista {
+    overflow: visible;
+    flex: none;
   }
 
   .social-panel-fechar-mobile {
