@@ -17,6 +17,7 @@ export default function Menu({ children }) {
       return null;
     }
   });
+  const [saldoCarteira, setSaldoCarteira] = useState(null);
 
   // Estado do painel social: aberto via hover
   const [painelAberto, setPainelAberto] = useState(false);
@@ -33,6 +34,33 @@ export default function Menu({ children }) {
   const amigos = amigosDropdown;
 
   const isBuscandoAmigosRef = useRef(false);
+
+  useEffect(() => {
+    if (!usuarioLogado?.id || !supabase) {
+      setSaldoCarteira(null);
+      return;
+    }
+
+    let ativo = true;
+
+    async function carregarSaldo() {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('saldo')
+        .eq('id', usuarioLogado.id)
+        .maybeSingle();
+
+      if (ativo && !error) setSaldoCarteira(Number(data?.saldo) || 0);
+    }
+
+    carregarSaldo();
+    window.addEventListener('saldoAtualizado', carregarSaldo);
+
+    return () => {
+      ativo = false;
+      window.removeEventListener('saldoAtualizado', carregarSaldo);
+    };
+  }, [usuarioLogado?.id, location.pathname]);
 
   // Carrega o time do usuario logado
   const carregarTimeUsuario = useCallback(async (usuarioAtual) => {
@@ -518,6 +546,9 @@ export default function Menu({ children }) {
 
   const amigosOnline = amigos.filter((a) => a.status === 'online').length;
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
+  const saldoFormatado = saldoCarteira === null
+    ? 'Carregando...'
+    : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldoCarteira);
 
   // Fecha o menu mobile ao mudar de rota
   useEffect(() => {
@@ -589,6 +620,22 @@ export default function Menu({ children }) {
         </nav>
 
         <div className="user-area">
+          {usuarioLogado && (
+            <Link
+              to="/perfil"
+              className="wallet-header"
+              aria-label={`Carteira: ${saldoFormatado}. Abrir perfil`}
+              title="Abrir carteira no perfil"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 6.5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h13" />
+                <path d="M20 10h-5a2 2 0 0 0 0 4h5" />
+                <circle cx="15" cy="12" r=".5" fill="currentColor" />
+              </svg>
+              <span className="wallet-header-label">Carteira</span>
+              <strong>{saldoFormatado}</strong>
+            </Link>
+          )}
           {!usuarioLogado && (
             <>
               <Link to="/login" className="botao-login">

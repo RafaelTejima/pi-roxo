@@ -56,6 +56,7 @@ export default function Perfil() {
 
     const valorSacado = usuario.saldo;
     setUsuario((atual) => ({ ...atual, saldo: 0 }));
+    window.dispatchEvent(new Event('saldoAtualizado'));
     mostrarAlerta({
       titulo: 'Saque Confirmado',
       mensagem: `Seu saque de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorSacado)} foi solicitado com sucesso.`,

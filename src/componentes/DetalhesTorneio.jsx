@@ -284,6 +284,7 @@ export default function DetalhesTorneio() {
       }
 
       setJaInscrito(true)
+      window.dispatchEvent(new Event('saldoAtualizado'))
       await carregarTimesGrupo()
       mostrarAlerta({
         titulo: 'Inscrição Confirmada',
@@ -346,6 +347,7 @@ export default function DetalhesTorneio() {
       if (erroTorneio) throw erroTorneio
 
       setTournament((atual) => ({ ...atual, status: false, id_time_vencedor: time.id }))
+      window.dispatchEvent(new Event('saldoAtualizado'))
       mostrarAlerta({
         titulo: 'Torneio Encerrado',
         mensagem: `O time ${time.nome} foi declarado campeão e ${formatPrize(premioTotal)} foram divididos entre os ${integrantes.length} integrantes.`,

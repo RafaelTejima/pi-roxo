@@ -64,6 +64,7 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Fase de Grupos (`DetalhesTorneio.jsx`):** a secao que antes mostrava "Chaveamento" (placeholder) agora exibe "Fase de Grupos" com a lista de times inscritos no torneio (`carregarTimesGrupo`, busca `inscricoes` filtrado por `id_torneio` com embed `time:id_time(id, nome, tag)`). Assim que uma inscricao e concluida com sucesso, `carregarTimesGrupo()` e chamado novamente para o time aparecer na lista sem precisar recarregar a pagina. Por enquanto todos os times inscritos aparecem em um unico "Grupo A" (`.details-grupo`); nao ha divisao automatica em multiplos grupos, gerador de confrontos/partidas ou tabela de classificacao — fica como pendencia futura (ver `docs/bracket.md` para a especificacao completa de chaveamento ainda nao implementada).
 
 ## Carteira e Premiacao (Wallet)
+- O cabeçalho global exibe, para usuários autenticados, um link para o perfil com o saldo atual de `usuarios.saldo`. O valor é atualizado ao navegar e após alterações de saldo emitidas por inscrições e saques; o link também aparece ao lado dos controles do cabeçalho em telas mobile.
 - **Novas colunas necessarias no Supabase** (nao existiam antes, seguem o mesmo padrao de erro `PGRST204` ja visto neste projeto — precisam ser criadas manualmente):
   - `public.usuarios.saldo` (numeric, default `0`) — saldo da carteira de cada usuario.
   - `public.torneios.id_time_vencedor` (bigint, nullable, referencia logica a `times.id`) — preenchido quando o organizador declara o time campeao.
