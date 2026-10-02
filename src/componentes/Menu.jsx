@@ -500,6 +500,66 @@ export default function Menu({ children }) {
     };
   }, [checarUsuario, atualizarUsuarioFresco, carregarAmigosConsolidados, carregarTimeUsuario]);
 
+  // ---- Presença Online ----
+  // Marca o usuário como online ao montar e offline ao desmontar/fechar aba
+  useEffect(() => {
+    if (!usuarioLogado?.id || !supabase) return;
+    const userId = usuarioLogado.id;
+
+    // Marca online
+    supabase.from('usuarios').update({ status: 'online' }).eq('id', userId).then(() => {});
+
+    // Marca offline ao fechar/sair da aba
+    const marcarOffline = () => {
+      navigator.sendBeacon && supabase
+        .from('usuarios')
+        .update({ status: 'offline' })
+        .eq('id', userId)
+        .then(() => {});
+    };
+    window.addEventListener('beforeunload', marcarOffline);
+
+    // Polling de presença a cada 60s para manter o status fresco no banco
+    const presenceInterval = setInterval(() => {
+      supabase.from('usuarios').update({ status: 'online' }).eq('id', userId).then(() => {});
+    }, 60000);
+
+    return () => {
+      // Marca offline ao desmontar (ex: logout)
+      supabase.from('usuarios').update({ status: 'offline' }).eq('id', userId).then(() => {});
+      window.removeEventListener('beforeunload', marcarOffline);
+      clearInterval(presenceInterval);
+    };
+  }, [usuarioLogado?.id]);
+
+  // ---- Realtime de Status dos Amigos ----
+  // Escuta mudanças na coluna `status` dos amigos e atualiza a sidebar sem recarregar tudo
+  useEffect(() => {
+    if (!supabase) return;
+    const idsAmigos = amigosDropdown.map((a) => a.id);
+    if (idsAmigos.length === 0) return;
+
+    const channel = supabase
+      .channel('realtime-amigos-status')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'usuarios' },
+        (payload) => {
+          const { id, status } = payload.new || {};
+          if (!id || !status) return;
+          // Atualiza só o amigo cujo status mudou, sem rebuscar tudo
+          setAmigosDropdown((prev) =>
+            prev.map((a) => String(a.id) === String(id) ? { ...a, status } : a)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [amigosDropdown.length]);
+
   const handleTriggerMouseEnter = () => {
     clearTimeout(hoverTimeoutRef.current);
     setPainelAberto(true);
@@ -522,7 +582,13 @@ export default function Menu({ children }) {
     }, 220);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Marca offline antes de sair
+    if (usuarioLogado?.id && supabase) {
+      try {
+        await supabase.from('usuarios').update({ status: 'offline' }).eq('id', usuarioLogado.id);
+      } catch {}
+    }
     localStorage.removeItem('usuarioLogado');
     localStorage.removeItem('listaAmigosUsuario');
     localStorage.removeItem('listaAmigosPerfil');
