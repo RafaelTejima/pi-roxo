@@ -601,7 +601,7 @@ export default function Menu({ children }) {
           )}
         </div>
 
-        {/* Botão hambúrguer — visível apenas em mobile */}
+        {/* Botão hamburguer — visível apenas em mobile */}
         <button
           className={`menu-hamburguer${menuMobileAberto ? ' aberto' : ''}`}
           aria-label="Abrir menu"
@@ -610,6 +610,19 @@ export default function Menu({ children }) {
         >
           <span /><span /><span />
         </button>
+
+        {/* Avatar clicável no header (mobile, usuário logado) — abre o painel social */}
+        {usuarioLogado && (
+          <button
+            className="menu-mobile-avatar-btn"
+            aria-label="Abrir painel social"
+            onClick={() => { setPainelAberto((v) => !v); setMenuMobileAberto(false); }}
+          >
+            {usuarioLogado.imagem
+              ? <img src={usuarioLogado.imagem} alt={nomeExibicao} />
+              : <span>{iniciaisUsuario}</span>}
+          </button>
+        )}
       </header>
 
       {/* Overlay + Drawer mobile */}
@@ -711,6 +724,17 @@ export default function Menu({ children }) {
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <span className="social-panel-titulo">SOCIAL</span>
+            
+            <button 
+              className="social-panel-fechar-mobile" 
+              onClick={() => setPainelAberto(false)}
+              aria-label="Fechar painel social"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           {/* Secao: Perfil do usuario */}

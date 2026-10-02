@@ -525,6 +525,10 @@
   text-transform: uppercase;
 }
 
+.social-panel-fechar-mobile {
+  display: none; /* Hide on desktop */
+}
+
 /* Secoes genéricas do painel */
 .social-panel-secao {
   padding: 0;
@@ -1522,13 +1526,46 @@
   width: 100%;
 }
 
+/* --- Botão de avatar mobile (acesso ao painel social) --- */
+.menu-mobile-avatar-btn {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a0f2e, #291547);
+  border: 2px solid rgba(181, 101, 242, 0.5);
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #e2d6ff;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+  z-index: 1001;
+}
+
+.menu-mobile-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-mobile-avatar-btn:hover {
+  border-color: #b565f2;
+  box-shadow: 0 0 12px rgba(181, 101, 242, 0.4);
+}
+
 /* ================= BREAKPOINT MOBILE (≤ 860px) ================= */
 @media (max-width: 860px) {
-  /* Navbar: simplifica para logo + hambúrguer */
+  /* Navbar: simplifica para logo + hambúrguer (+ avatar se logado) */
   .cabecalho {
     padding: 12px 20px;
     grid-template-columns: 1fr auto;
-    gap: 0;
+    gap: 10px;
   }
 
   /* Esconde navegação central e botões de auth no header */
@@ -1542,6 +1579,11 @@
     display: flex;
   }
 
+  /* Mostra o avatar mobile (quando logado) */
+  .menu-mobile-avatar-btn {
+    display: flex;
+  }
+
   /* Ativa o drawer e overlay */
   .menu-mobile-drawer {
     display: flex;
@@ -1552,9 +1594,39 @@
   }
 
   /* Esconde a faixa social lateral em mobile (ocupa espaço valioso) */
-  .social-compact-strip-fixed,
-  #social-panel.social-panel {
+  .social-compact-strip-fixed {
     display: none !important;
+  }
+
+  /* O painel social precisa ser ajustado no mobile */
+  #social-panel.social-panel {
+    top: 62px;
+    height: calc(100vh - 62px);
+    width: 280px; /* Igual ao menu-drawer */
+    z-index: 1005;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.8);
+  }
+
+  .social-panel-fechar-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s ease;
+  }
+
+  .social-panel-fechar-mobile:hover {
+    color: #f1f5f9;
+  }
+
+  .social-panel-fechar-mobile svg {
+    width: 20px;
+    height: 20px;
   }
 
   /* Reduz font size do logo */
