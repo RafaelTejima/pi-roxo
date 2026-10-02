@@ -665,19 +665,6 @@ export default function Menu({ children }) {
         >
           <span /><span /><span />
         </button>
-
-        {/* Avatar clicável no header (mobile, usuário logado) — abre o painel social */}
-        {usuarioLogado && (
-          <button
-            className="menu-mobile-avatar-btn"
-            aria-label="Abrir painel social"
-            onClick={() => { setPainelAberto((v) => !v); setMenuMobileAberto(false); }}
-          >
-            {usuarioLogado.imagem
-              ? <img src={usuarioLogado.imagem} alt={nomeExibicao} />
-              : <span>{iniciaisUsuario}</span>}
-          </button>
-        )}
       </header>
 
       {/* Overlay + Drawer mobile */}
