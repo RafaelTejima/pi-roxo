@@ -31,25 +31,18 @@ export default function Perfil() {
   }, [location.pathname]);
 
   // ---- Carteira ----
+  const [valorSaque, setValorSaque] = useState('');
   const [sacando, setSacando] = useState(false);
+  const [valorDeposito, setValorDeposito] = useState('');
+  const [depositando, setDepositando] = useState(false);
+  const [totalGanhos, setTotalGanhos] = useState(0);
 
   async function handleSacar() {
-    if (!usuario?.id || !usuario?.saldo) return;
-
-    setSacando(true);
-
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ saldo: 0 })
-      .eq('id', usuario.id);
-
-    setSacando(false);
-
-    if (error) {
+    if (!usuario?.id) {
       mostrarAlerta({
-        titulo: 'Erro ao Sacar',
-        mensagem: 'Não foi possível processar o saque. Tente novamente.',
-        tipo: 'erro'
+        titulo: 'Acesso Restrito',
+        mensagem: 'Você precisa estar logado para realizar um saque.',
+        tipo: 'aviso'
       });
       return;
     }
@@ -62,7 +55,228 @@ export default function Perfil() {
       mensagem: `Seu saque de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorSacado)} foi solicitado com sucesso.`,
       tipo: 'sucesso'
     });
+    const valorLimpo = typeof valorSaque === 'string' ? valorSaque.replace(',', '.').trim() : valorSaque;
+    const valorNum = parseFloat(valorLimpo);
+
+    if (isNaN(valorNum) || valorNum <= 0) {
+      mostrarAlerta({
+        titulo: 'Valor Inválido',
+        mensagem: 'Por favor, insira um valor maior que zero para realizar o saque.',
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const saldoAtual = Number(usuario.saldo) || 0;
+    const valorFormatado = Math.round(valorNum * 100) / 100;
+
+    if (valorFormatado > saldoAtual) {
+      mostrarAlerta({
+        titulo: 'Saldo Insuficiente',
+        mensagem: `Você não possui saldo suficiente para este saque. Saldo disponível: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldoAtual)}.`,
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const novoSaldo = Math.round((saldoAtual - valorFormatado) * 100) / 100;
+
+    setSacando(true);
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ saldo: novoSaldo })
+        .eq('id', usuario.id);
+
+      if (error) throw error;
+
+      // Atualiza o estado local imediatamente no React sem precisar de F5
+      setUsuario((atual) => ({ ...atual, saldo: novoSaldo }));
+      setValorSaque('');
+
+      // Sincroniza localStorage e notifica outros componentes da aplicação
+      const salvo = localStorage.getItem('usuarioLogado');
+      if (salvo) {
+        const logado = JSON.parse(salvo);
+        if (String(logado.id) === String(usuario.id)) {
+          localStorage.setItem('usuarioLogado', JSON.stringify({ ...logado, saldo: novoSaldo }));
+          window.dispatchEvent(new Event('perfilAtualizado'));
+        }
+      }
+
+      mostrarAlerta({
+        titulo: 'Saque Confirmado',
+        mensagem: `Seu saque de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorFormatado)} foi realizado com sucesso.`,
+        tipo: 'sucesso'
+      });
+    } catch (err) {
+      console.error('Erro ao sacar saldo:', err);
+      mostrarAlerta({
+        titulo: 'Erro ao Sacar',
+        mensagem: 'Não foi possível processar o saque. Tente novamente mais tarde.',
+        tipo: 'erro'
+      });
+    } finally {
+      setSacando(false);
+    }
   }
+
+  async function handleDepositar() {
+    if (!usuario?.id) {
+      mostrarAlerta({
+        titulo: 'Acesso Restrito',
+        mensagem: 'Você precisa estar logado para realizar um depósito.',
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const valorLimpo = typeof valorDeposito === 'string' ? valorDeposito.replace(',', '.').trim() : valorDeposito;
+    const valorNum = parseFloat(valorLimpo);
+
+    if (isNaN(valorNum) || valorNum <= 0) {
+      mostrarAlerta({
+        titulo: 'Valor Inválido',
+        mensagem: 'Por favor, insira um valor maior que zero para realizar o depósito.',
+        tipo: 'aviso'
+      });
+      return;
+    }
+
+    const valorFormatado = Math.round(valorNum * 100) / 100;
+    const saldoAtual = Number(usuario.saldo) || 0;
+    const novoSaldo = Math.round((saldoAtual + valorFormatado) * 100) / 100;
+
+    setDepositando(true);
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ saldo: novoSaldo })
+        .eq('id', usuario.id);
+
+      if (error) throw error;
+
+      // Atualiza o estado local do React imediatamente (sem necessidade de F5)
+      setUsuario((atual) => ({ ...atual, saldo: novoSaldo }));
+      setValorDeposito('');
+
+      // Sincroniza localStorage e dispara evento para atualização global (ex: Menu/Sidebar)
+      const salvo = localStorage.getItem('usuarioLogado');
+      if (salvo) {
+        const logado = JSON.parse(salvo);
+        if (String(logado.id) === String(usuario.id)) {
+          localStorage.setItem('usuarioLogado', JSON.stringify({ ...logado, saldo: novoSaldo }));
+          window.dispatchEvent(new Event('perfilAtualizado'));
+        }
+      }
+
+      mostrarAlerta({
+        titulo: 'Depósito Concluído',
+        mensagem: `Depósito de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorFormatado)} realizado com sucesso!`,
+        tipo: 'sucesso'
+      });
+    } catch (err) {
+      console.error('Erro ao processar depósito no Supabase:', err);
+      mostrarAlerta({
+        titulo: 'Erro no Depósito',
+        mensagem: 'Não foi possível processar o depósito. Tente novamente mais tarde.',
+        tipo: 'erro'
+      });
+    } finally {
+      setDepositando(false);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // BUSCA E SOMA DOS GANHOS VITALÍCIOS EM CAMPEONATOS
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    let ativo = true;
+
+    async function buscarTotalGanhos() {
+      if (!usuario?.id) {
+        if (ativo) setTotalGanhos(0);
+        return;
+      }
+
+      try {
+        // 1. Identifica as equipes em que o usuário joga
+        const { data: vinculos, error: errV } = await supabase
+          .from('times_integrantes')
+          .select('id_time')
+          .eq('id_usuario', usuario.id);
+
+        if (errV || !vinculos || vinculos.length === 0) {
+          if (ativo) setTotalGanhos(0);
+          return;
+        }
+
+        const timeIds = vinculos.map((v) => v.id_time).filter(Boolean);
+
+        // 2. Consulta torneios onde uma das equipes do usuário foi a campeã
+        const { data: torneios, error: errT } = await supabase
+          .from('torneios')
+          .select('id, dinheiro, id_time_vencedor')
+          .in('id_time_vencedor', timeIds);
+
+        if (errT || !torneios || torneios.length === 0) {
+          if (ativo) setTotalGanhos(0);
+          return;
+        }
+
+        const torneioIds = torneios.map((t) => t.id);
+
+        // 3. Consulta inscrições para calcular rateio correto de premiações
+        const { data: inscricoes } = await supabase
+          .from('inscricoes')
+          .select('id_torneio')
+          .in('id_torneio', torneioIds);
+
+        // 4. Integrantes das equipes vencedoras para dividir a premiação
+        const { data: integrantes } = await supabase
+          .from('times_integrantes')
+          .select('id_time')
+          .in('id_time', timeIds);
+
+        // 5. Histórico financeiro oficial na tabela transacoes_plataforma (se houver)
+        const { data: transacoes } = await supabase
+          .from('transacoes_plataforma')
+          .select('id_torneio, valor_liquido')
+          .in('id_torneio', torneioIds);
+
+        let soma = 0;
+
+        for (const t of torneios) {
+          const trans = (transacoes || []).find((tr) => tr.id_torneio === t.id);
+          const totalInscritos = (inscricoes || []).filter((i) => i.id_torneio === t.id).length || 1;
+          const numMembros = (integrantes || []).filter((m) => m.id_time === t.id_time_vencedor).length || 5;
+
+          let premioTorneio = 0;
+          if (trans && Number(trans.valor_liquido) > 0) {
+            premioTorneio = Number(trans.valor_liquido);
+          } else {
+            premioTorneio = (Number(t.dinheiro) || 0) * totalInscritos;
+          }
+
+          const ganhoIndividual = premioTorneio / numMembros;
+          soma += ganhoIndividual;
+        }
+
+        if (ativo) {
+          setTotalGanhos(Math.round(soma * 100) / 100);
+        }
+      } catch {
+        // Falha tratada silenciosamente mantendo 0 como fallback
+        if (ativo) setTotalGanhos(0);
+      }
+    }
+
+    buscarTotalGanhos();
+
+    return () => {
+      ativo = false;
+    };
+  }, [usuario?.id]);
 
   useEffect(() => {
     if (location.hash === '#editar' && !isPublico && usuario && !editando) {
@@ -1093,22 +1307,96 @@ export default function Perfil() {
                         </Link>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                      <div>
-                        <p style={{ margin: 0, color: 'var(--texto-secundario)', fontSize: '13px' }}>Saldo disponível</p>
-                        <strong style={{ fontSize: '28px', color: 'var(--roxo-claro)' }}>
+                    {/* Métricas Financeiras: Saldo Disponível e Total Ganho em Campeonatos */}
+                    <div className="perfil-carteira-metricas-grid">
+                      <div className="perfil-carteira-metrica-card">
+                        <span className="perfil-carteira-saldo-label">Saldo disponível</span>
+                        <strong className="perfil-carteira-saldo-valor">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(usuario.saldo || 0)}
                         </strong>
                       </div>
-                      <button
-                        type="button"
-                        className="perfil-botao perfil-botao-principal"
-                        style={{ maxWidth: '160px' }}
-                        onClick={handleSacar}
-                        disabled={sacando || !usuario.saldo}
-                      >
-                        {sacando ? 'Sacando...' : 'Sacar'}
-                      </button>
+                      <div className="perfil-carteira-metrica-card perfil-carteira-metrica-ganhos">
+                        <span className="perfil-carteira-saldo-label">Total Ganho em Campeonatos</span>
+                        <strong className="perfil-carteira-ganhos-valor">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGanhos || 0)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Operações espelhadas de Carteira: Depósito e Saque */}
+                    <div className="perfil-carteira-operacoes">
+                      {/* Operação de Depósito */}
+                      <div className="perfil-carteira-operacao-item">
+                        <div className="perfil-carteira-operacao-info">
+                          <span className="perfil-carteira-operacao-titulo">Depósito</span>
+                        </div>
+                        <form
+                          className="perfil-carteira-form"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleDepositar();
+                          }}
+                        >
+                          <div className="perfil-carteira-input-wrapper">
+                            <span className="perfil-carteira-moeda">R$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0.01"
+                              placeholder="0,00"
+                              value={valorDeposito}
+                              onChange={(e) => setValorDeposito(e.target.value)}
+                              className="perfil-input perfil-carteira-input"
+                              disabled={depositando}
+                              aria-label="Valor do depósito"
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            className="perfil-carteira-botao perfil-carteira-botao-depositar"
+                            disabled={depositando || !valorDeposito}
+                          >
+                            {depositando ? 'Processando...' : 'Depositar'}
+                          </button>
+                        </form>
+                      </div>
+
+                      {/* Operação de Saque */}
+                      <div className="perfil-carteira-operacao-item">
+                        <div className="perfil-carteira-operacao-info">
+                          <span className="perfil-carteira-operacao-titulo">Saque</span>
+                        </div>
+                        <form
+                          className="perfil-carteira-form"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSacar();
+                          }}
+                        >
+                          <div className="perfil-carteira-input-wrapper">
+                            <span className="perfil-carteira-moeda">R$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0.01"
+                              max={usuario.saldo || 0}
+                              placeholder="0,00"
+                              value={valorSaque}
+                              onChange={(e) => setValorSaque(e.target.value)}
+                              className="perfil-input perfil-carteira-input"
+                              disabled={sacando || !usuario.saldo}
+                              aria-label="Valor do saque"
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            className="perfil-carteira-botao perfil-carteira-botao-sacar"
+                            disabled={sacando || !valorSaque || !usuario.saldo}
+                          >
+                            {sacando ? 'Processando...' : 'Sacar'}
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   </section>
                 )}
