@@ -529,6 +529,10 @@
   display: none; /* Hide on desktop */
 }
 
+.social-panel-nav-mobile {
+  display: none;
+}
+
 /* Secoes genéricas do painel */
 .social-panel-secao {
   padding: 0;
@@ -1603,11 +1607,18 @@
     top: 62px;
     bottom: 0;
     height: auto;
-    width: 280px; /* Igual ao menu-drawer */
+    width: 100%; /* Tela toda */
     z-index: 1005;
     box-shadow: -4px 0 20px rgba(0,0,0,0.8);
     overflow-y: auto;
     display: block;
+  }
+
+  .social-panel-nav-mobile {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(181, 101, 242, 0.15);
   }
 
   .social-panel-amigos-secao {
