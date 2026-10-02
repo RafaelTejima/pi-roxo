@@ -279,6 +279,48 @@
   justify-self: end;
 }
 
+.wallet-header {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(181, 101, 242, 0.38);
+  border-radius: 7px;
+  background: linear-gradient(120deg, rgba(114, 62, 195, 0.2), rgba(18, 13, 30, 0.92));
+  color: #e8d6fb;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.wallet-header:hover {
+  transform: translateY(-1px);
+  border-color: rgba(198, 154, 237, 0.78);
+  background: linear-gradient(120deg, rgba(114, 62, 195, 0.32), rgba(27, 17, 41, 0.98));
+}
+
+.wallet-header svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: #c69aed;
+}
+
+.wallet-header-label {
+  color: #cfc2dc;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.wallet-header strong {
+  color: #f2d486;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 
 
 
@@ -1572,10 +1614,35 @@
     gap: 10px;
   }
 
+  .cabecalho:has(.wallet-header) {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
   /* Esconde navegação central e botões de auth no header */
   .val-nav,
   .user-area {
     display: none !important;
+  }
+
+  .cabecalho:has(.wallet-header) .user-area {
+    display: contents !important;
+  }
+
+  .cabecalho:has(.wallet-header) .wallet-header {
+    grid-column: 2;
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .cabecalho:has(.wallet-header) .menu-hamburguer {
+    grid-column: 3;
+    justify-self: center;
+  }
+
+  .cabecalho:has(.wallet-header) .menu-mobile-avatar-btn {
+    grid-column: 4;
   }
 
   /* Mostra o hambúrguer */
@@ -1667,6 +1734,21 @@
 
   .logo {
     font-size: 14px;
+  }
+
+  .cabecalho:has(.wallet-header) {
+    padding: 10px 12px;
+  }
+
+  .cabecalho:has(.wallet-header) .wallet-header-label {
+    display: none;
+  }
+
+  .cabecalho:has(.wallet-header) .wallet-header strong {
+    max-width: 94px;
+    overflow: hidden;
+    font-size: 0.68rem;
+    text-overflow: ellipsis;
   }
 
   .menu-mobile-drawer {
