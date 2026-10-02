@@ -259,6 +259,16 @@
     gap: 12px;
     padding: 15px;
     border: 1px solid rgba(255, 255, 255, .08);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#perfil-page a.perfil-conta:hover {
+    border-color: rgba(140, 82, 255, 0.45);
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(140, 82, 255, 0.15);
 }
 
 #perfil-page .perfil-conta>div {

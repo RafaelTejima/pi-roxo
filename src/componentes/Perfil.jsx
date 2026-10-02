@@ -6,6 +6,81 @@ import { useAlerta } from './AlertaModal';
 import AuroraBackground from './AuroraBackground';
 
 // ------------------------------------------------------------------
+// HELPERS PARA REDES SOCIAIS / CONEXÕES VINCULADAS
+// ------------------------------------------------------------------
+function resolverUrlSocial(tipo, valor) {
+  if (!valor || typeof valor !== 'string') return null;
+  const limpo = valor.trim();
+  if (!limpo) return null;
+
+  if (/^https?:\/\//i.test(limpo)) return limpo;
+
+  switch (tipo) {
+    case 'Steam':
+      if (limpo.startsWith('steamcommunity.com')) return `https://${limpo}`;
+      if (/^\d{17}$/.test(limpo)) return `https://steamcommunity.com/profiles/${limpo}`;
+      return `https://steamcommunity.com/id/${limpo.replace(/^@/, '')}`;
+    case 'Twitter / X':
+      if (limpo.startsWith('twitter.com') || limpo.startsWith('x.com')) return `https://${limpo}`;
+      return `https://x.com/${limpo.replace(/^@/, '')}`;
+    case 'YouTube':
+      if (limpo.startsWith('youtube.com') || limpo.startsWith('www.youtube.com')) return `https://${limpo}`;
+      if (limpo.startsWith('@')) return `https://youtube.com/${limpo}`;
+      return `https://youtube.com/@${limpo}`;
+    case 'Twitch':
+      if (limpo.startsWith('twitch.tv')) return `https://${limpo}`;
+      return `https://twitch.tv/${limpo.replace(/^@/, '')}`;
+    case 'Bluesky':
+      if (limpo.startsWith('bsky.app')) return `https://${limpo}`;
+      return `https://bsky.app/profile/${limpo.replace(/^@/, '')}`;
+    case 'Discord':
+      if (limpo.startsWith('discord.com') || limpo.startsWith('discord.gg')) return `https://${limpo}`;
+      if (/^\d{17,20}$/.test(limpo)) return `https://discord.com/users/${limpo}`;
+      return 'https://discord.com';
+    default:
+      return `https://${limpo}`;
+  }
+}
+
+function formatarHandleSocial(tipo, valor) {
+  if (!valor || typeof valor !== 'string' || !valor.trim()) return 'Não conectado';
+  const limpo = valor.trim().replace(/\/+$/, '');
+
+  try {
+    if (/^https?:\/\//i.test(limpo) || limpo.includes('/')) {
+      if (tipo === 'Steam') {
+        if (limpo.includes('/id/')) {
+          const slug = limpo.split('/id/')[1]?.split('/')[0]?.split('?')[0];
+          if (slug) return slug;
+        }
+        if (limpo.includes('/profiles/')) {
+          const slug = limpo.split('/profiles/')[1]?.split('/')[0]?.split('?')[0];
+          if (slug) return slug;
+        }
+      }
+
+      const parts = limpo.split('/').filter(Boolean);
+      const last = parts[parts.length - 1]?.split('?')[0] || '';
+
+      if (tipo === 'Steam') return last || 'Conectado';
+      if (tipo === 'Discord') return last || 'Conectado';
+      if (tipo === 'Twitter / X' || tipo === 'Twitch') {
+        return `@${last.replace(/^@/, '')}`;
+      }
+      if (tipo === 'YouTube' || tipo === 'Bluesky') {
+        return last.startsWith('@') ? last : `@${last}`;
+      }
+      return last ? `@${last}` : 'Conectado';
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  if (tipo === 'Discord' || tipo === 'Steam') return limpo;
+  return limpo.startsWith('@') ? limpo : `@${limpo}`;
+}
+
+// ------------------------------------------------------------------
 // STATUS AMIZADE: PENDENTE | ACEITO | BLOQUEADO
 // ------------------------------------------------------------------
 
@@ -352,7 +427,10 @@ export default function Perfil() {
               time_usuario: timeNome,
               discord: uComJoin.conexao_discord || null,
               steam: uComJoin.conexao_steam || null,
-              twitter: uComJoin.conexao_twitter || null
+              twitter: uComJoin.conexao_twitter || null,
+              youtube: uComJoin.conexao_youtube || null,
+              twitch: uComJoin.conexao_twitch || null,
+              bluesky: uComJoin.conexao_bluesky || null
             };
           }
         } catch (eJoin) {
@@ -382,7 +460,10 @@ export default function Perfil() {
                 time_usuario: timeNome,
                 discord: uSimples.conexao_discord || null,
                 steam: uSimples.conexao_steam || null,
-                twitter: uSimples.conexao_twitter || null
+                twitter: uSimples.conexao_twitter || null,
+                youtube: uSimples.conexao_youtube || null,
+                twitch: uSimples.conexao_twitch || null,
+                bluesky: uSimples.conexao_bluesky || null
               };
             }
           } catch (eSimples) {
@@ -1061,12 +1142,12 @@ export default function Perfil() {
     : 'Não informado';
   const avatarUrl = usuario.imagem || `https://placehold.co/180x180/35176b/ffffff?text=${(usuario.nome || usuario.nome_usuario || 'U').substring(0, 2).toUpperCase()}`;
 
-  const discord = isPublico ? (usuario.discord || null) : usuario.conexao_discord;
-  const steam   = isPublico ? (usuario.steam   || null) : usuario.conexao_steam;
-  const twitter = isPublico ? (usuario.twitter  || null) : usuario.conexao_twitter;
-  const youtube = isPublico ? null : usuario.conexao_youtube;
-  const twitch  = isPublico ? null : usuario.conexao_twitch;
-  const bluesky = isPublico ? null : usuario.conexao_bluesky;
+  const discord = usuario?.conexao_discord || usuario?.discord || null;
+  const steam   = usuario?.conexao_steam   || usuario?.steam   || null;
+  const twitter = usuario?.conexao_twitter || usuario?.twitter || null;
+  const youtube = usuario?.conexao_youtube || usuario?.youtube || null;
+  const twitch  = usuario?.conexao_twitch  || usuario?.twitch  || null;
+  const bluesky = usuario?.conexao_bluesky || usuario?.bluesky || null;
 
   const totalPendentes = pedidosPendentes.length;
 
@@ -1404,14 +1485,76 @@ export default function Perfil() {
                       { label: 'YouTube', val: youtube, bg: '#FF0000', icon: '/svg/youtube.svg' },
                       { label: 'Twitch', val: twitch, bg: '#9146FF', icon: '/svg/twitch.svg' },
                       { label: 'Bluesky', val: bluesky, bg: '#0085FF', icon: '/svg/bluesky.svg' },
-                    ].map(({ label, val, bg, icon }) => (
-                      <div key={label} className="perfil-conta" style={{ borderRadius: '16px', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
-                        <span className="perfil-conta-icone" style={{ background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={icon} alt={label} style={{ width: '20px', height: '20px' }} />
-                        </span>
-                        <div><strong>{label}</strong><span>{val || 'Não conectado'}</span></div>
-                      </div>
-                    ))}
+                    ].map(({ label, val, bg, icon }) => {
+                      const isConectado = Boolean(val && typeof val === 'string' && val.trim() !== '');
+                      const url = isConectado ? resolverUrlSocial(label, val) : null;
+                      const handleTexto = isConectado ? formatarHandleSocial(label, val) : 'Não conectado';
+
+                      if (isConectado && url) {
+                        return (
+                          <a
+                            key={label}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="perfil-conta"
+                            title={`Acessar ${label} de ${usuario?.nome || usuario?.nome_usuario || 'jogador'}`}
+                            style={{
+                              borderRadius: '16px',
+                              background: 'rgba(255,255,255,0.05)',
+                              backdropFilter: 'blur(8px)',
+                              textDecoration: 'none',
+                              color: 'inherit',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <span className="perfil-conta-icone" style={{ background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <img src={icon} alt={label} style={{ width: '20px', height: '20px' }} />
+                            </span>
+                            <div style={{ overflow: 'hidden' }}>
+                              <strong>{label}</strong>
+                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{handleTexto}</span>
+                            </div>
+                          </a>
+                        );
+                      }
+
+                      return (
+                        <a
+                          key={label}
+                          href="#nao-conectado"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            mostrarAlerta({
+                              titulo: `${label} Não Vinculado`,
+                              mensagem: isPublico
+                                ? `Este jogador ainda não vinculou sua conta do ${label}.`
+                                : `Você ainda não vinculou sua conta do ${label}. Clique em "Editar perfil" para adicioná-la.`,
+                              tipo: 'aviso'
+                            });
+                          }}
+                          className="perfil-conta"
+                          title={`${label} não conectado`}
+                          style={{
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.03)',
+                            backdropFilter: 'blur(8px)',
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            cursor: 'pointer',
+                            opacity: 0.65
+                          }}
+                        >
+                          <span className="perfil-conta-icone" style={{ background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'grayscale(0.4)' }}>
+                            <img src={icon} alt={label} style={{ width: '20px', height: '20px' }} />
+                          </span>
+                          <div style={{ overflow: 'hidden' }}>
+                            <strong>{label}</strong>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Não conectado</span>
+                          </div>
+                        </a>
+                      );
+                    })}
                   </div>
                 </section>
 
