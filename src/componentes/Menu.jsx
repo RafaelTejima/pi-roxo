@@ -603,10 +603,18 @@ export default function Menu({ children }) {
 
         {/* Botão hamburguer — visível apenas em mobile */}
         <button
-          className={`menu-hamburguer${menuMobileAberto ? ' aberto' : ''}`}
+          className={`menu-hamburguer${(menuMobileAberto || painelAberto) ? ' aberto' : ''}`}
           aria-label="Abrir menu"
-          aria-expanded={menuMobileAberto}
-          onClick={() => setMenuMobileAberto((v) => !v)}
+          aria-expanded={menuMobileAberto || painelAberto}
+          onClick={() => {
+            if (usuarioLogado) {
+              setPainelAberto((v) => !v);
+              setMenuMobileAberto(false);
+            } else {
+              setMenuMobileAberto((v) => !v);
+              setPainelAberto(false);
+            }
+          }}
         >
           <span /><span /><span />
         </button>
@@ -706,6 +714,15 @@ export default function Menu({ children }) {
           onMouseLeave={handlePainelMouseLeave}
           aria-label="Painel Social"
         >
+          {/* NavLinks no Social Panel (exclusivo para mobile) */}
+          <div className="social-panel-nav-mobile">
+            <NavLink to="/" end className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setPainelAberto(false)}>INÍCIO</NavLink>
+            <NavLink to="/equipes" className={({ isActive }) => `menu-mobile-link${isActive || location.pathname.startsWith('/equipes') ? ' ativo' : ''}`} onClick={() => setPainelAberto(false)}>TIMES</NavLink>
+            <NavLink to="/torneios" className={({ isActive }) => `menu-mobile-link menu-mobile-link--destaque${isActive || location.pathname.startsWith('/torneios') ? ' ativo' : ''}`} onClick={() => setPainelAberto(false)}>COMPETIR</NavLink>
+            <NavLink to="/regras" className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setPainelAberto(false)}>REGRAS</NavLink>
+            <NavLink to="/faq" className={({ isActive }) => `menu-mobile-link${isActive ? ' ativo' : ''}`} onClick={() => setPainelAberto(false)}>FAQ</NavLink>
+          </div>
+
           {/* Header do painel — só visível quando expandido */}
           <div className="social-panel-header">
             <svg
