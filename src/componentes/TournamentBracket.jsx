@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../supabase'
 import '../css/bracket.css'
 import { useAlerta } from './AlertaModal'
@@ -60,13 +61,21 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
     }
   }, [carregarPartidas, torneioId])
 
-  // Fecha o fullscreen com ESC
+  // Fecha o fullscreen com ESC e trava o scroll da página de fundo
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false)
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    if (isFullscreen) {
+      document.body.classList.add('bracket-fullscreen-active')
+      window.addEventListener('keydown', handleKeyDown)
+    } else {
+      document.body.classList.remove('bracket-fullscreen-active')
+    }
+    return () => {
+      document.body.classList.remove('bracket-fullscreen-active')
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [isFullscreen])
 
   const handleDeclararVencedor = (partida, timeId) => {
@@ -134,75 +143,64 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
 
   const rodadas = [...new Set(partidas.map(p => p.rodada))].sort((a, b) => a - b)
 
-  return (
-    <>
-      {/* Botão fixo no canto da tela quando em fullscreen */}
-      {isFullscreen && (
-        <button
-          className="bracket-fullscreen-btn bracket-fullscreen-btn--fixed"
-          onClick={() => setIsFullscreen(false)}
-          title="Minimizar (ESC)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
-          </svg>
-          <span>Minimizar</span>
-        </button>
-      )}
-
-      <div
-        ref={wrapperRef}
-        className={`tournament-bracket-wrapper${isFullscreen ? ' fullscreen' : ''}`}
+  const bracketJSX = (
+    <div
+      ref={wrapperRef}
+      className={`tournament-bracket-wrapper${isFullscreen ? ' fullscreen' : ''}`}
+    >
+      {/* Botão de Expandir / Minimizar — sempre acessível e alinhado ao topo */}
+      <button
+        className={`bracket-fullscreen-btn${isFullscreen ? ' bracket-fullscreen-btn--fixed' : ''}`}
+        onClick={() => setIsFullscreen(prev => !prev)}
+        title={isFullscreen ? 'Minimizar (ESC)' : 'Expandir chaveamento'}
+        type="button"
       >
-        {/* Botão de maximizar — visível apenas quando NÃO está em fullscreen */}
-        {!isFullscreen && (
-          <button
-            className="bracket-fullscreen-btn"
-            onClick={() => setIsFullscreen(true)}
-            title="Expandir chaveamento"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-            </svg>
-            <span>Expandir</span>
-          </button>
-        )}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {isFullscreen ? (
+            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+          ) : (
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          )}
+        </svg>
+        <span>{isFullscreen ? 'Minimizar' : 'Expandir'}</span>
+      </button>
 
-        <div className="tournament-bracket">
-          {rodadas.map((rIndex) => {
-            const partidasRodada = partidas.filter(p => p.rodada === rIndex)
-            const nomeFase = partidasRodada[0]?.fase || getNomeFase(rIndex)
-            return (
-              <div key={rIndex} className="bracket-rodada">
-                <h3 className="bracket-rodada-titulo">{nomeFase}</h3>
-                <div className="bracket-partidas-coluna">
-                  {partidasRodada.map((p) => (
-                    <div key={p.id} className="bracket-partida-container">
-                      <div className="bracket-partida">
-                        <div
-                          className={`bracket-time ${p.id_vencedor === p.time1_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time1_id && !p.id_vencedor ? 'clicavel' : ''}`}
-                          onClick={() => handleDeclararVencedor(p, p.time1_id)}
-                        >
-                          <span className="time-tag">{p.jogador1?.tag || (p.time1_id ? '???' : 'BYE')}</span>
-                          <span className="time-nome">{p.jogador1?.nome || (p.time1_id ? 'TBD' : '—')}</span>
-                        </div>
-                        <div className="bracket-divisor"></div>
-                        <div
-                          className={`bracket-time ${p.id_vencedor === p.time2_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time2_id && !p.id_vencedor ? 'clicavel' : ''}`}
-                          onClick={() => handleDeclararVencedor(p, p.time2_id)}
-                        >
-                          <span className="time-tag">{p.jogador2?.tag || (p.time2_id ? '???' : 'BYE')}</span>
-                          <span className="time-nome">{p.jogador2?.nome || (p.time2_id ? 'TBD' : '—')}</span>
-                        </div>
+      <div className="tournament-bracket">
+        {rodadas.map((rIndex) => {
+          const partidasRodada = partidas.filter(p => p.rodada === rIndex)
+          const nomeFase = partidasRodada[0]?.fase || getNomeFase(rIndex)
+          return (
+            <div key={rIndex} className="bracket-rodada">
+              <h3 className="bracket-rodada-titulo">{nomeFase}</h3>
+              <div className="bracket-partidas-coluna">
+                {partidasRodada.map((p) => (
+                  <div key={p.id} className="bracket-partida-container">
+                    <div className="bracket-partida">
+                      <div
+                        className={`bracket-time ${p.id_vencedor === p.time1_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time1_id && !p.id_vencedor ? 'clicavel' : ''}`}
+                        onClick={() => handleDeclararVencedor(p, p.time1_id)}
+                      >
+                        <span className="time-tag">{p.jogador1?.tag || (p.time1_id ? 'TAG' : 'TBD')}</span>
+                        <span className="time-nome">{p.jogador1?.nome || (p.time1_id ? 'Time ' + String(p.time1_id).slice(0, 4) : 'A definir')}</span>
+                      </div>
+                      <div className="bracket-divisor"></div>
+                      <div
+                        className={`bracket-time ${p.id_vencedor === p.time2_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time2_id && !p.id_vencedor ? 'clicavel' : ''}`}
+                        onClick={() => handleDeclararVencedor(p, p.time2_id)}
+                      >
+                        <span className="time-tag">{p.jogador2?.tag || (p.time2_id ? 'TAG' : 'TBD')}</span>
+                        <span className="time-nome">{p.jogador2?.nome || (p.time2_id ? 'Time ' + String(p.time2_id).slice(0, 4) : 'A definir')}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
-    </>
+    </div>
   )
+
+  return isFullscreen ? createPortal(bracketJSX, document.body) : bracketJSX
 }

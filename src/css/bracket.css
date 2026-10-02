@@ -15,44 +15,55 @@
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 9999;
+  z-index: 9000;
   border-radius: 0;
   margin: 0;
-  padding: 60px 50px 50px;
+  padding: 60px 40px 40px;
   background-color: #0b0b0e;
   overflow: auto;
+  box-shadow: none;
 }
 
-/* Botão inline (fora do fullscreen) — fica no canto do wrapper */
+body.bracket-fullscreen-active {
+  overflow: hidden !important;
+}
+
+/* Botão inline (fora do fullscreen) — fica no canto superior direito do wrapper */
 .bracket-fullscreen-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #ccc;
-  border-radius: 6px;
-  padding: 6px 10px;
+  top: 14px;
+  right: 16px;
+  background: rgba(25, 16, 42, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(160, 132, 232, 0.4);
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 13px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  z-index: 10;
-  transition: all 0.2s;
+  z-index: 100;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 10px rgba(114, 62, 195, 0.2);
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
 .bracket-fullscreen-btn:hover {
-  background: rgba(114, 62, 195, 0.35);
-  border-color: #a084e8;
+  background: rgba(114, 62, 195, 0.6);
+  border-color: #c084fc;
   color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(114, 62, 195, 0.45);
 }
 
 .bracket-fullscreen-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
@@ -60,9 +71,11 @@
 .bracket-fullscreen-btn--fixed {
   position: fixed;
   top: 16px;
-  right: 16px;
-  z-index: 10001;
-  background: rgba(30, 20, 50, 0.95);
+  right: 24px;
+  z-index: 9010;
+  background: rgba(25, 16, 42, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid #a084e8;
   color: #fff;
   border-radius: 8px;
@@ -73,6 +86,7 @@
 
 .bracket-fullscreen-btn--fixed:hover {
   background: rgba(114, 62, 195, 0.7);
+  border-color: #c084fc;
 }
 
 .tournament-bracket {

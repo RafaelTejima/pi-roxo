@@ -1,32 +1,32 @@
-import { supabase } from '../supabase'
+import { supabase } from '../supabase.js'
+
+/**
+ * Quantidades permitidas de equipes para geração de chaveamento eliminatório (potências de 2 completas).
+ */
+export const TAMANHOS_VALIDOS_BRACKET = [4, 8, 16, 32]
 
 /**
  * Serviço responsável por gerar os registros da tabela partidas
  * quando um torneio (Eliminação Simples) é iniciado.
+ * 
+ * Regra: Só gera chaves com número PAR e exato de equipes (4, 8, 16 ou 32).
+ * Remove qualquer lógica de times "BYE" ou slots fantasmas.
  */
 export async function gerarBracket(torneioId, timesInscritos) {
   try {
-    const N = timesInscritos.length
-    if (N < 2) {
-      throw new Error('É necessário pelo menos 2 times para gerar um chaveamento.')
+    const N = timesInscritos?.length || 0
+    if (!TAMANHOS_VALIDOS_BRACKET.includes(N)) {
+      throw new Error('Para gerar o bracket, o torneio deve possuir um número exato de equipes: 4, 8, 16 ou 32.')
     }
 
-    // Calcula a próxima potência de 2 (ex: 3 times -> 4, 6 times -> 8, 16 -> 16)
-    const potencias = [2, 4, 8, 16, 32, 64]
-    let maxParticipantes = potencias.find(p => p >= N) || 64
+    const maxParticipantes = N
     const rodadasTotais = Math.log2(maxParticipantes)
 
-    // Preenche a lista com null para times faltantes (Byes)
-    const participantes = [...timesInscritos]
-    while (participantes.length < maxParticipantes) {
-      participantes.push(null)
-    }
-
-    // Embaralha os participantes (opcional, mas recomendado para brackets aleatórios)
-    participantes.sort(() => Math.random() - 0.5)
+    // Embaralha os participantes para sorteio equilibrado
+    const participantes = [...timesInscritos].sort(() => Math.random() - 0.5)
 
     const partidasGeradas = []
-    let partidaIdCounter = 1 // IDs temporários para encadeamento
+    let partidaIdCounter = 1 // IDs temporários para encadeamento de chaves
 
     // Estrutura para rastrear as partidas por rodada
     const partidasPorRodada = {}
@@ -34,7 +34,7 @@ export async function gerarBracket(torneioId, timesInscritos) {
       partidasPorRodada[r] = []
     }
 
-    // Gera de trás pra frente (da final para as oitavas/quartas)
+    // Gera de trás pra frente (da final para as fases iniciais)
     for (let rodada = rodadasTotais; rodada >= 1; rodada--) {
       const numPartidasNestaRodada = maxParticipantes / Math.pow(2, rodada)
       
@@ -44,14 +44,14 @@ export async function gerarBracket(torneioId, timesInscritos) {
           torneio_id: torneioId,
           rodada: rodada,
           posicao: i + 1,
-          status: 'Agendada',
+          status: rodada === 1 ? 'Pendente' : 'Agendada',
           time1_id: null,
           time2_id: null,
           proxima_partida_id: null,
           proxima_partida_slot: null
         }
 
-        // Se não for a final (última rodada), vincular com a partida da próxima rodada
+        // Se não for a final (última rodada), vincula com a partida da próxima rodada
         if (rodada < rodadasTotais) {
           const proximaRodadaPartidas = partidasPorRodada[rodada + 1]
           // Cada partida da próxima rodada recebe 2 partidas desta rodada
@@ -67,71 +67,22 @@ export async function gerarBracket(torneioId, timesInscritos) {
       }
     }
 
-    // Distribui os participantes na primeira rodada
+    // Distribui todos os participantes na primeira rodada (100% preenchida sem BYEs)
     const partidasRodada1 = partidasPorRodada[1]
     let participanteIndex = 0
-    for (let p of partidasRodada1) {
+    for (const p of partidasRodada1) {
       p.time1_id = participantes[participanteIndex++]?.id || null
       p.time2_id = participantes[participanteIndex++]?.id || null
-      p.slot1_fantasma = !p.time1_id;
-      p.slot2_fantasma = !p.time2_id;
+      p.status = 'Pendente'
     }
 
-    // Processa os vencedores e avanços de todas as rodadas em ordem para propagar os BYEs corretamente
-    for (let r = 1; r <= rodadasTotais; r++) {
-      for (let p of partidasPorRodada[r]) {
-        
-        if (p.slot1_fantasma && p.slot2_fantasma) {
-          p.status = 'Finalizada';
-          p.id_vencedor = null;
-          p.is_fantasma = true;
-        } else if (!p.slot1_fantasma && p.slot2_fantasma) {
-          // Time 2 não existe, Time 1 passa direto se já chegou
-          if (p.time1_id) {
-            p.status = 'Finalizada';
-            p.id_vencedor = p.time1_id;
-          } else {
-            p.status = 'Pendente';
-          }
-        } else if (p.slot1_fantasma && !p.slot2_fantasma) {
-          // Time 1 não existe, Time 2 passa direto se já chegou
-          if (p.time2_id) {
-            p.status = 'Finalizada';
-            p.id_vencedor = p.time2_id;
-          } else {
-            p.status = 'Pendente';
-          }
-        } else {
-          p.status = 'Pendente'; // Partida real esperando os dois times
-        }
-
-        // Propaga em memória para a próxima partida
-        if (p.temp_proxima) {
-          const proximaRodada = partidasPorRodada[r + 1];
-          if (proximaRodada) {
-            const prox = proximaRodada.find(px => px.temp_id === p.temp_proxima)
-            if (prox) {
-              if (p.proxima_partida_slot === 1) {
-                if (p.is_fantasma) prox.slot1_fantasma = true;
-                if (p.id_vencedor) prox.time1_id = p.id_vencedor;
-              } else {
-                if (p.is_fantasma) prox.slot2_fantasma = true;
-                if (p.id_vencedor) prox.time2_id = p.id_vencedor;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Inserção no banco: temos que inserir do final para o início para obter os IDs reais e associá-los
+    // Inserção no banco: insere do final para o início para obter os IDs reais e encadear
     const partidasReaisIds = {} // mapeia temp_id -> uuid real no supabase
 
     for (let rodada = rodadasTotais; rodada >= 1; rodada--) {
       const partidasDaRodada = partidasPorRodada[rodada]
 
-      for (let p of partidasDaRodada) {
-        // Prepara objeto para inserção
+      for (const p of partidasDaRodada) {
         const insertObj = {
           torneio_id: p.torneio_id,
           rodada: p.rodada,
@@ -142,8 +93,9 @@ export async function gerarBracket(torneioId, timesInscritos) {
           proxima_partida_slot: p.proxima_partida_slot
         }
 
-        if (p.id_vencedor) insertObj.id_vencedor = p.id_vencedor
-        if (p.temp_proxima) insertObj.proxima_partida_id = partidasReaisIds[p.temp_proxima]
+        if (p.temp_proxima) {
+          insertObj.proxima_partida_id = partidasReaisIds[p.temp_proxima]
+        }
 
         const { data, error } = await supabase
           .from('partidas')
@@ -152,7 +104,7 @@ export async function gerarBracket(torneioId, timesInscritos) {
           .single()
 
         if (error) {
-          console.error('Erro ao inserir partida:', error)
+          console.error('Erro ao inserir partida no banco:', error)
           throw error
         }
 

@@ -5,7 +5,7 @@ import '../css/torneios.css'
 import AuroraBackground from './AuroraBackground'
 import { useAlerta } from './AlertaModal'
 import TournamentBracket from './TournamentBracket'
-import { gerarBracket } from '../utils/bracketGenerator'
+import { gerarBracket, TAMANHOS_VALIDOS_BRACKET } from '../utils/bracketGenerator'
 
 const TAMANHO_LINEUP = 5
 
@@ -405,10 +405,11 @@ export default function DetalhesTorneio() {
   }
 
   async function handleGerarChaveamento() {
-    if (timesGrupo.length < 2) {
+    const totalTimes = timesGrupo?.length || 0
+    if (!TAMANHOS_VALIDOS_BRACKET.includes(totalTimes)) {
       mostrarAlerta({
         titulo: 'Ação Bloqueada',
-        mensagem: 'É necessário pelo menos 2 times inscritos para gerar o chaveamento.',
+        mensagem: 'Para gerar o bracket, o torneio deve possuir um número exato de equipes: 4, 8, 16 ou 32.',
         tipo: 'aviso'
       })
       return
@@ -563,8 +564,13 @@ export default function DetalhesTorneio() {
               onClick={handleGerarChaveamento} 
               disabled={gerando || carregandoGrupo}
             >
-              {gerando ? 'Gerando Chaves...' : 'Gerar Chaveamento (Iniciar Torneio)'}
+              {gerando ? 'Gerando Chaves...' : `Gerar Chaveamento (Iniciar Torneio)${timesGrupo.length > 0 ? ` — ${timesGrupo.length} times` : ''}`}
             </button>
+            {timesGrupo.length > 0 && !TAMANHOS_VALIDOS_BRACKET.includes(timesGrupo.length) && (
+              <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '6px' }}>
+                ⚠️ O chaveamento exige exatamente 4, 8, 16 ou 32 equipes inscritas (atual: {timesGrupo.length}).
+              </p>
+            )}
           </div>
         )}
         <TournamentBracket torneioId={id} podeEditar={podeEditar} />
