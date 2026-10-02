@@ -73,18 +73,54 @@ export async function gerarBracket(torneioId, timesInscritos) {
     for (let p of partidasRodada1) {
       p.time1_id = participantes[participanteIndex++]?.id || null
       p.time2_id = participantes[participanteIndex++]?.id || null
+      p.slot1_fantasma = !p.time1_id;
+      p.slot2_fantasma = !p.time2_id;
+    }
 
-      // Se um dos lados for nulo (BYE), o time real já avança de status
-      if (p.time1_id && !p.time2_id) {
-        p.id_vencedor = p.time1_id
-        p.status = 'Finalizada'
-      } else if (!p.time1_id && p.time2_id) {
-        p.id_vencedor = p.time2_id
-        p.status = 'Finalizada'
-      } else if (!p.time1_id && !p.time2_id) {
-        p.status = 'Finalizada' // Partida fantasma
-      } else {
-        p.status = 'Pendente' // Pronta para jogar
+    // Processa os vencedores e avanços de todas as rodadas em ordem para propagar os BYEs corretamente
+    for (let r = 1; r <= rodadasTotais; r++) {
+      for (let p of partidasPorRodada[r]) {
+        
+        if (p.slot1_fantasma && p.slot2_fantasma) {
+          p.status = 'Finalizada';
+          p.id_vencedor = null;
+          p.is_fantasma = true;
+        } else if (!p.slot1_fantasma && p.slot2_fantasma) {
+          // Time 2 não existe, Time 1 passa direto se já chegou
+          if (p.time1_id) {
+            p.status = 'Finalizada';
+            p.id_vencedor = p.time1_id;
+          } else {
+            p.status = 'Pendente';
+          }
+        } else if (p.slot1_fantasma && !p.slot2_fantasma) {
+          // Time 1 não existe, Time 2 passa direto se já chegou
+          if (p.time2_id) {
+            p.status = 'Finalizada';
+            p.id_vencedor = p.time2_id;
+          } else {
+            p.status = 'Pendente';
+          }
+        } else {
+          p.status = 'Pendente'; // Partida real esperando os dois times
+        }
+
+        // Propaga em memória para a próxima partida
+        if (p.temp_proxima) {
+          const proximaRodada = partidasPorRodada[r + 1];
+          if (proximaRodada) {
+            const prox = proximaRodada.find(px => px.temp_id === p.temp_proxima)
+            if (prox) {
+              if (p.proxima_partida_slot === 1) {
+                if (p.is_fantasma) prox.slot1_fantasma = true;
+                if (p.id_vencedor) prox.time1_id = p.id_vencedor;
+              } else {
+                if (p.is_fantasma) prox.slot2_fantasma = true;
+                if (p.id_vencedor) prox.time2_id = p.id_vencedor;
+              }
+            }
+          }
+        }
       }
     }
 

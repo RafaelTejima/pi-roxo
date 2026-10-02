@@ -477,6 +477,7 @@ export default function DetalhesTorneio() {
           <p>{formatDate(tournament.data_inicio)}</p>
         </div>
       </div>
+      
       <div className="details-grid">
         <div><small>ORGANIZADOR</small><strong>{tournament.organizadorNome || 'Não informado'}</strong></div>
         <div><small>TAXA DE INSCRIÇÃO (POR TIME)</small><strong>{formatPrize(tournament.dinheiro)}</strong></div>
@@ -489,6 +490,9 @@ export default function DetalhesTorneio() {
           <p>{timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.nome || `Time #${tournament.id_time_vencedor}`} venceu este torneio e o prêmio já foi dividido entre os integrantes.</p>
         </section>
       )}
+
+    <br/>
+
       <section className="details-rules details-inscricao">
         <button
           type="button"
@@ -507,10 +511,16 @@ export default function DetalhesTorneio() {
         )}
         {inscricoesAbertas && !usuario && <p>Faça login e seja capitão de um time completo para se inscrever.</p>}
       </section>
+      
+      <br/>
+      
       <section className="details-rules">
         <h2>Descrição do torneio</h2>
         <p>{tournament.descricao || 'Nenhuma descrição informada.'}</p>
       </section>
+
+      <br/>
+      
       <section className="details-rules">
         <h2>Fase de Grupos</h2>
         {carregandoGrupo && <p>Carregando times inscritos...</p>}
@@ -542,6 +552,8 @@ export default function DetalhesTorneio() {
         )}
       </section>
 
+    <br/>
+
       <section className="details-rules">
         <h2>Chaveamento (Bracket)</h2>
         {podeEditar && inscricoesAbertas && (
@@ -557,6 +569,8 @@ export default function DetalhesTorneio() {
         )}
         <TournamentBracket torneioId={id} podeEditar={podeEditar} />
       </section>
+
+   <br/>
 
       {/* Painel exclusivo para administradores — apenas para testes */}
       {usuario?.admin && (
