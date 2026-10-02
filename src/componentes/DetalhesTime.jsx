@@ -463,9 +463,7 @@ export default function DetalhesTime() {
     <main id="pagina-detalhes-time">
       <Link to="/equipes" className="detalhes-time-voltar">&larr; Voltar para Equipes</Link>
 
-      <div className="detalhes-time-layout">
-        <div className="detalhes-time-coluna-principal">
-          <section className="detalhes-time-cabecalho">
+      <section className="detalhes-time-cabecalho">
             {time.logo && !logoComErro ? (
               <img
                 src={resolverLogo(time.logo)}
@@ -479,9 +477,16 @@ export default function DetalhesTime() {
               </div>
             )}
             <div className="detalhes-time-info">
-              <span className="detalhes-time-tag">[{time.tag}]</span>
+              <span className="detalhes-time-identidade">EQUIPE DE CS2 <span>•</span> [{time.tag}]</span>
               <h1>{time.nome}</h1>
               <p className="detalhes-time-registro">Criado em {formatarData(time.registro)}</p>
+              <div className="detalhes-time-resumo">
+                <div><strong>{integrantes.length}<span>/5</span></strong><small>Integrantes</small></div>
+                <div><strong>{Math.max(0, 5 - integrantes.length)}</strong><small>Vagas abertas</small></div>
+                <div><strong>{capitao ? capitao.nome : 'Pendente'}</strong><small>Capitão</small></div>
+              </div>
+            </div>
+            <div className="detalhes-time-acoes">
               {podeEditar && !edicaoAtiva && (
                 <button type="button" className="detalhes-time-editar-btn" onClick={abrirEdicao}>
                   Editar time
@@ -499,8 +504,10 @@ export default function DetalhesTime() {
               )}
               {erroSaida && <p className="detalhes-time-mensagem-erro">{erroSaida}</p>}
             </div>
-          </section>
+      </section>
 
+      <div className="detalhes-time-layout">
+        <div className="detalhes-time-coluna-principal">
           {edicaoAtiva && (
             <section className="detalhes-time-secao">
               <h2>Editar time</h2>
@@ -538,6 +545,7 @@ export default function DetalhesTime() {
 
           {time.descricao && (
             <section className="detalhes-time-secao">
+              <span className="detalhes-time-sobretitulo">SOBRE A EQUIPE</span>
               <h2>Descrição</h2>
               <p>{time.descricao}</p>
             </section>
@@ -547,7 +555,10 @@ export default function DetalhesTime() {
         <aside className="detalhes-time-coluna-lateral">
           <section className="detalhes-time-secao">
             <div className="detalhes-time-secao-titulo">
-              <h2>Line-up ({integrantes.length}/5)</h2>
+              <div>
+                <span className="detalhes-time-sobretitulo">ELENCO</span>
+                <h2>Line-up <span className="detalhes-time-contagem">{integrantes.length}/5</span></h2>
+              </div>
               {podeEditar && (
                 <button
                   type="button"
@@ -600,11 +611,18 @@ export default function DetalhesTime() {
               </div>
             )}
 
+            <div className="detalhes-time-progresso" aria-label={`${integrantes.length} de 5 integrantes`}>
+              <span style={{ width: `${Math.min(integrantes.length, 5) * 20}%` }} />
+            </div>
+
             <div className="detalhes-time-jogadores">
               {capitao && (
                 <div className="detalhes-time-jogador-card capitao">
-                  <strong>{capitao.nome}</strong>
-                  <span>CAPITÃO</span>
+                  <span className="detalhes-time-avatar">{capitao.nome.substring(0, 2).toUpperCase()}</span>
+                  <div className="detalhes-time-jogador-info">
+                    <strong>{capitao.nome}</strong>
+                    <span>CAPITÃO</span>
+                  </div>
                   {gerenciandoJogadores && usuario?.admin === true && (
                     <button
                       type="button"
@@ -619,8 +637,11 @@ export default function DetalhesTime() {
               )}
               {jogadores.map((jogador) => (
                 <div className="detalhes-time-jogador-card" key={jogador.id}>
-                  <strong>{jogador.nome}</strong>
-                  <span>JOGADOR</span>
+                  <span className="detalhes-time-avatar">{jogador.nome.substring(0, 2).toUpperCase()}</span>
+                  <div className="detalhes-time-jogador-info">
+                    <strong>{jogador.nome}</strong>
+                    <span>JOGADOR</span>
+                  </div>
                   {gerenciandoJogadores && usuario?.admin === true && (
                     <button
                       type="button"
@@ -641,6 +662,15 @@ export default function DetalhesTime() {
                       {processandoId === jogador.id ? 'Removendo...' : 'Remover'}
                     </button>
                   )}
+                </div>
+              ))}
+              {Array.from({ length: Math.max(0, 5 - integrantes.length) }, (_, indice) => (
+                <div className="detalhes-time-jogador-card detalhes-time-vaga" key={`vaga-${indice}`}>
+                  <span className="detalhes-time-avatar">+</span>
+                  <div className="detalhes-time-jogador-info">
+                    <strong>Vaga disponível</strong>
+                    <span>AGUARDANDO JOGADOR</span>
+                  </div>
                 </div>
               ))}
             </div>

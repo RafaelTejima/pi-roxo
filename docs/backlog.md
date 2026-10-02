@@ -49,6 +49,7 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Componente (listagem):** `src/componentes/Torneios.jsx` (rota `/torneios`)
 - **Componente (detalhes):** `src/componentes/DetalhesTorneio.jsx` (rota `/torneios/:id`) — antes vivia dentro de `Torneios.jsx` como `TournamentDetails` (reaproveitando o `Torneios` via checagem de `useParams`); foi extraido para um arquivo proprio, seguindo o mesmo padrao de `DetalhesTime.jsx` (busca o proprio torneio no Supabase por `id` via `useEffect`, em vez de depender da lista carregada pela pagina pai).
 - **CSS:** `src/css/torneios.css` (compartilhado pelos dois componentes)
+- O titulo dos detalhes permite quebra de nomes extensos sem espacos, mantendo o texto dentro do cabecalho em telas menores.
 - `loadTournaments()` busca os dados diretamente da tabela `public.torneios` usando o client compartilhado `src/supabase.js`; nao combina registros locais ou de demonstracao.
 - Removidos os dados ficticios (`TORNEIOS_FICTICIOS`) usados como fallback; a tela agora reflete somente o banco real, com estados separados de carregamento, erro (`erro`, mensagem amigavel) e lista vazia ("Nenhum torneio disponivel no momento.").
 - Campos exibidos seguem a tabela `torneios`: `nome`, `data_inicio`, `dinheiro` (premio), `formato` e `descricao` (dropdown "Ver descricao"). O status (boolean) mapeia para "INSCRICOES ABERTAS" (`true`) ou "ENCERRADO" (`false`). Coluna `jogo` removida (plataforma e exclusiva para CS2; o card/detalhes mostram `"CS2"` fixo).
@@ -163,3 +164,9 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **Rodape do painel:** botoes Config (engrenagem, /perfil), Admin (escudo, /admin, apenas para admin=true) e Sair (logout).
 - **Molduras roxas:** todos os avatares usam ::before com gradient roxo (inset: -2px) para borda gradiente.
 - **CSS obsoleto removido:** dropdown-usuario, item-dropdown, dropdown-amigo-*, btn-acao-amigo, botao-admin, botao-logout, usuario-nome, botao-perfil-trigger.
+
+## Refinamento visual dos Detalhes do Time
+- **Componente:** `src/componentes/DetalhesTime.jsx`
+- **CSS:** `src/css/detalhes-time.css` (escopado por `#pagina-detalhes-time`)
+- Cabeçalho ampliado para destacar logo, identidade, data de criação, integrantes, vagas disponíveis e capitão; ações existentes permanecem sujeitas às permissões atuais.
+- Layout de descrição e line-up refinado para desktop e celular. A escalação mostra avatares com iniciais, indicador de preenchimento e posições disponíveis, sem criar integrantes fictícios nem alterar os dados do Supabase.

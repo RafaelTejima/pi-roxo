@@ -463,9 +463,11 @@ export default function DetalhesTorneio() {
       <AuroraBackground />
       <Link className="back-link" to="/torneios">&lt;- Voltar para torneios</Link>
       <div className="details-hero">
-        <div className="tournament-card-visual" aria-hidden="true">
-          <span>ROXO</span>
-          <strong>CS2</strong>
+        <div className="tournament-card-visual details-cs2-logo">
+          <img
+            src="https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/logo_cs2_header.svg"
+            alt="Counter-Strike 2"
+          />
         </div>
         <div>
           <span className={info.classe}>{info.label}</span>
