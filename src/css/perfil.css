@@ -708,3 +708,228 @@
     background: #110820;
     color: #fff;
 }
+
+/* ---- Carteira: Saldo, Total Ganho & Operações Espelhadas ---- */
+#perfil-page .perfil-carteira-metricas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+#perfil-page .perfil-carteira-metrica-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+#perfil-page .perfil-carteira-metrica-card:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(140, 82, 255, 0.25);
+}
+
+#perfil-page .perfil-carteira-metrica-ganhos:hover {
+    border-color: rgba(52, 211, 153, 0.35);
+}
+
+#perfil-page .perfil-carteira-saldo-label {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--texto-secundario);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#perfil-page .perfil-carteira-saldo-valor {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--roxo-claro);
+    letter-spacing: -0.5px;
+}
+
+#perfil-page .perfil-carteira-ganhos-valor {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    color: #34d399;
+    text-shadow: 0 0 16px rgba(52, 211, 153, 0.25);
+    letter-spacing: -0.5px;
+}
+
+#perfil-page .perfil-carteira-operacoes {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#perfil-page .perfil-carteira-operacao-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+#perfil-page .perfil-carteira-operacao-item:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(140, 82, 255, 0.25);
+}
+
+#perfil-page .perfil-carteira-operacao-info {
+    min-width: 90px;
+}
+
+#perfil-page .perfil-carteira-operacao-titulo {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+#perfil-page .perfil-carteira-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#perfil-page .perfil-carteira-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 170px;
+}
+
+#perfil-page .perfil-carteira-moeda {
+    position: absolute;
+    left: 14px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#perfil-page .perfil-carteira-input {
+    padding-left: 38px !important;
+    padding-right: 12px !important;
+    height: 42px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    box-sizing: border-box;
+    background: rgba(18, 12, 35, 0.6);
+    border: 1px solid rgba(140, 82, 255, 0.25);
+}
+
+#perfil-page .perfil-carteira-input:focus {
+    outline: none;
+    background: rgba(23, 15, 45, 0.95);
+    border-color: #b565f2;
+    box-shadow: 0 0 12px rgba(181, 101, 242, 0.25);
+}
+
+#perfil-page .perfil-carteira-input::-webkit-outer-spin-button,
+#perfil-page .perfil-carteira-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#perfil-page .perfil-carteira-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+#perfil-page .perfil-carteira-botao {
+    height: 42px;
+    padding: 0 22px;
+    min-width: 120px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+#perfil-page .perfil-carteira-botao-depositar {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--roxo-principal), var(--roxo-vivo));
+    border: none;
+}
+
+#perfil-page .perfil-carteira-botao-depositar:hover:not(:disabled) {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(114, 62, 195, 0.35);
+}
+
+#perfil-page .perfil-carteira-botao-sacar {
+    color: #ffffff;
+    background: rgba(140, 82, 255, 0.1);
+    border: 1px solid rgba(140, 82, 255, 0.4);
+}
+
+#perfil-page .perfil-carteira-botao-sacar:hover:not(:disabled) {
+    background: rgba(140, 82, 255, 0.2);
+    border-color: rgba(181, 101, 242, 0.7);
+    box-shadow: 0 0 12px rgba(140, 82, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+#perfil-page .perfil-carteira-botao:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 650px) {
+    #perfil-page .perfil-carteira-operacao-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    #perfil-page .perfil-carteira-form {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+    }
+
+    #perfil-page .perfil-carteira-input-wrapper {
+        flex: 1;
+        width: auto;
+    }
+
+    #perfil-page .perfil-carteira-botao {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    #perfil-page .perfil-carteira-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #perfil-page .perfil-carteira-botao {
+        width: 100%;
+    }
+}
