@@ -6,6 +6,7 @@ import AuroraBackground from './AuroraBackground'
 import { useAlerta } from './AlertaModal'
 import TournamentBracket from './TournamentBracket'
 import { gerarBracket, TAMANHOS_VALIDOS_BRACKET } from '../utils/bracketGenerator'
+import { calcularRetencao } from '../utils/financeiro'
 
 const TAMANHO_LINEUP = 5
 
@@ -303,24 +304,57 @@ export default function DetalhesTorneio() {
     }
   }
 
-  // Distribui o premio acumulado entre os 5 integrantes do time vencedor e encerra o torneio
+  // Distribui o premio liquido entre os integrantes do time vencedor, retem taxa da plataforma e registra transacao
   async function handleDeclararVencedor(time) {
-    setDeclarandoVencedorId(time.id)
+    if (!time) return
+
+    const timeId = typeof time === 'object' ? time.id : time
+    const timeNome = typeof time === 'object' && time.nome
+      ? time.nome
+      : (timesGrupo.find((t) => t.id === timeId)?.nome || `Time #${timeId}`)
+
+    if (tournament?.id_time_vencedor) {
+      mostrarAlerta({
+        titulo: 'Torneio Já Finalizado',
+        mensagem: 'Este torneio já possui um vencedor declarado.',
+        tipo: 'aviso'
+      })
+      return
+    }
+
+    setDeclarandoVencedorId(timeId)
 
     try {
       const { data: integrantes, error: erroIntegrantes } = await supabase
         .from('times_integrantes')
         .select('id_usuario')
-        .eq('id_time', time.id)
+        .eq('id_time', timeId)
 
       if (erroIntegrantes) throw erroIntegrantes
       if (!integrantes || integrantes.length === 0) {
-        throw new Error('Não foi possível encontrar os integrantes deste time.')
+        throw new Error('Não foi possível encontrar os integrantes deste time vencedor.')
       }
 
-      const premioTotal = (Number(tournament.dinheiro) || 0) * timesGrupo.length
-      const premioPorJogador = premioTotal / integrantes.length
+      // 1. Cálculo financeiro da premiação e retenção da plataforma (Tiers)
+      const totalTimes = timesGrupo.length > 0 ? timesGrupo.length : 1
+      const valorBruto = (Number(tournament.dinheiro) || 0) * totalTimes
+      const retencao = calcularRetencao(valorBruto)
+      const taxaRetida = retencao ? retencao.taxaPlataforma : 0
+      const valorLiquido = retencao ? retencao.premioLiquido : valorBruto
+      const premioPorJogador = integrantes.length > 0 ? valorLiquido / integrantes.length : 0
 
+      console.log('[Financeiro] Finalizando torneio:', {
+        idTorneio: id,
+        timeVencedor: timeNome,
+        totalTimes,
+        valorBruto,
+        taxaRetida,
+        valorLiquido,
+        premioPorJogador,
+        numIntegrantes: integrantes.length
+      })
+
+      // 2. Credita a premiação líquida aos integrantes da equipe campeã
       for (const integrante of integrantes) {
         const { data: jogadorAtual, error: erroBusca } = await supabase
           .from('usuarios')
@@ -339,18 +373,97 @@ export default function DetalhesTorneio() {
         if (erroCredito) throw erroCredito
       }
 
+      // 3. Atualiza o status do torneio para encerrado e define o campeão
       const { error: erroTorneio } = await supabase
         .from('torneios')
-        .update({ status: false, id_time_vencedor: time.id })
+        .update({ status: false, id_time_vencedor: timeId })
         .eq('id', id)
 
       if (erroTorneio) throw erroTorneio
 
-      setTournament((atual) => ({ ...atual, status: false, id_time_vencedor: time.id }))
+      // 4. Registro da transação na tabela transacoes_plataforma e repasse da taxa ao Admin
+      try {
+        const transacaoPayload = {
+          id_torneio: Number(id),
+          valor_bruto: valorBruto,
+          taxa_retida: taxaRetida,
+          valor_liquido: valorLiquido,
+          status: 'PROCESSADO'
+        }
+
+        console.log('[Financeiro] Inserindo registro em transacoes_plataforma:', transacaoPayload)
+
+        const { data: transacaoCriada, error: erroTransacao } = await supabase
+          .from('transacoes_plataforma')
+          .insert(transacaoPayload)
+          .select()
+
+        if (erroTransacao) {
+          console.error('[Financeiro] Falha ao inserir em transacoes_plataforma:', erroTransacao)
+          throw erroTransacao
+        } else {
+          console.log('[Financeiro] Movimentação registrada em transacoes_plataforma com sucesso:', transacaoCriada)
+        }
+
+        // Soma a taxa_retida ao saldo do usuário Administrador
+        if (taxaRetida > 0) {
+          const { data: adminPrincipal, error: erroBuscaAdmin } = await supabase
+            .from('usuarios')
+            .select('id, saldo, nome, email')
+            .eq('admin', true)
+            .order('id', { ascending: true })
+            .limit(1)
+            .maybeSingle()
+
+          if (erroBuscaAdmin) {
+            console.error('[Financeiro] Erro ao buscar usuário administrador para retenção:', erroBuscaAdmin)
+          } else if (adminPrincipal?.id) {
+            const saldoAdminAtual = Number(adminPrincipal.saldo) || 0
+            const novoSaldoAdmin = saldoAdminAtual + taxaRetida
+
+            const { error: erroUpdateAdmin } = await supabase
+              .from('usuarios')
+              .update({ saldo: novoSaldoAdmin })
+              .eq('id', adminPrincipal.id)
+
+            if (erroUpdateAdmin) {
+              console.error('[Financeiro] Erro ao creditar taxa retida no saldo do admin:', erroUpdateAdmin)
+            } else {
+              console.log(`[Financeiro] Taxa de R$ ${taxaRetida.toFixed(2)} somada ao saldo do Administrador #${adminPrincipal.id} (${adminPrincipal.nome || adminPrincipal.email})`)
+
+              // Atualiza o saldo no localStorage se o usuário logado for este administrador
+              const salvo = localStorage.getItem('usuarioLogado')
+              if (salvo) {
+                try {
+                  const usuarioSalvo = JSON.parse(salvo)
+                  if (usuarioSalvo.id === adminPrincipal.id) {
+                    usuarioSalvo.saldo = novoSaldoAdmin
+                    localStorage.setItem('usuarioLogado', JSON.stringify(usuarioSalvo))
+                  }
+                } catch (e) {
+                  console.warn('Erro ao atualizar usuarioLogado em localStorage:', e)
+                }
+              }
+            }
+          }
+        }
+      } catch (errFinanceiro) {
+        console.error('[Financeiro] Erro na movimentação financeira da plataforma:', {
+          message: errFinanceiro?.message,
+          code: errFinanceiro?.code,
+          details: errFinanceiro?.details,
+          hint: errFinanceiro?.hint
+        })
+      }
+
+      setTournament((atual) => ({ ...atual, status: false, id_time_vencedor: timeId }))
       window.dispatchEvent(new Event('saldoAtualizado'))
+      window.dispatchEvent(new Event('transacoesAtualizadas'))
+      window.dispatchEvent(new Event('torneiosAtualizados'))
+
       mostrarAlerta({
         titulo: 'Torneio Encerrado',
-        mensagem: `O time ${time.nome} foi declarado campeão e ${formatPrize(premioTotal)} foram divididos entre os ${integrantes.length} integrantes.`,
+        mensagem: `O time ${timeNome} foi declarado campeão! Prêmio líquido de ${formatPrize(valorLiquido)} dividido entre os ${integrantes.length} integrantes (Taxa retida pela plataforma: ${formatPrize(taxaRetida)}).`,
         tipo: 'sucesso'
       })
     } catch (err) {
@@ -536,7 +649,7 @@ export default function DetalhesTorneio() {
                 <li key={time.id}>
                   <span className="details-grupo-tag">{time.tag || 'TAG'}</span>
                   <span>{time.nome}</span>
-                  {podeEditar && inscricoesAbertas && (
+                  {podeEditar && !tournament.id_time_vencedor && (
                     <button
                       type="button"
                       className="details-grupo-declarar-btn"
@@ -573,7 +686,11 @@ export default function DetalhesTorneio() {
             )}
           </div>
         )}
-        <TournamentBracket torneioId={id} podeEditar={podeEditar} />
+        <TournamentBracket 
+          torneioId={id} 
+          podeEditar={podeEditar} 
+          onDeclararVencedorTorneio={handleDeclararVencedor} 
+        />
       </section>
 
    <br/>

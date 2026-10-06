@@ -34,15 +34,16 @@
 }
 
 .equipes-heading h1 {
-  font-size: clamp(2.2rem, 3.5vw, 44px);
+  font-size: clamp(2.5rem, 5vw, 4.25rem);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.1;
   margin-bottom: 16px;
   letter-spacing: 1px;
   background: linear-gradient(180deg, #ffffff 40%, #d8b4fe 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-wrap: balance;
 }
 
 .equipes-heading h1 span {
@@ -357,5 +358,17 @@
   }
   #pagina-equipes::before {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .equipes-heading h1 {
+    font-size: clamp(2rem, 4.5vw, 2.35rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .equipes-heading h1 {
+    font-size: clamp(1.65rem, 5.5vw, 1.95rem);
   }
 }

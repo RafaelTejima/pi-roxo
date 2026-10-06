@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 import '../css/bracket.css'
 import { useAlerta } from './AlertaModal'
 
-export default function TournamentBracket({ torneioId, podeEditar }) {
+export default function TournamentBracket({ torneioId, podeEditar, onDeclararVencedorTorneio }) {
   const [partidas, setPartidas] = useState([])
   const [loading, setLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -82,11 +82,16 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
     if (!podeEditar || partida.status === 'Finalizada') return
     if (!timeId) return
 
+    const ehFinal = !partida.proxima_partida_id
+    const mensagemConfirmacao = ehFinal
+      ? 'Esta é a Grande Final! Tem certeza que deseja declarar este time como vencedor da partida e campeão do torneio?'
+      : 'Tem certeza que deseja declarar este time como vencedor da partida?'
+
     mostrarAlerta({
       tipo: 'confirmacao',
-      titulo: 'Declarar Vencedor',
-      mensagem: 'Tem certeza que deseja declarar este time como vencedor da partida?',
-      botaoTexto: 'Sim, declarar',
+      titulo: ehFinal ? 'Declarar Campeão do Torneio' : 'Declarar Vencedor',
+      mensagem: mensagemConfirmacao,
+      botaoTexto: ehFinal ? 'Sim, declarar campeão' : 'Sim, declarar',
       botaoCancelarTexto: 'Cancelar',
       onConfirmar: async () => {
         try {
@@ -108,15 +113,23 @@ export default function TournamentBracket({ torneioId, podeEditar }) {
               .eq('id', partida.proxima_partida_id)
 
             if (errProx) console.warn('Erro ao propagar para a proxima partida:', errProx)
+          } else if (onDeclararVencedorTorneio) {
+            // Partida Final da chave: finaliza o torneio e distribui a premiação oficial
+            const timeObj = partida.jogador1?.id === timeId
+              ? partida.jogador1
+              : (partida.jogador2?.id === timeId ? partida.jogador2 : { id: timeId, nome: `Time #${timeId}` })
+            await onDeclararVencedorTorneio(timeObj)
           }
 
           await carregarPartidas()
 
-          mostrarAlerta({
-            tipo: 'sucesso',
-            titulo: 'Sucesso',
-            mensagem: 'Vencedor declarado com sucesso e chave atualizada!'
-          })
+          if (!ehFinal) {
+            mostrarAlerta({
+              tipo: 'sucesso',
+              titulo: 'Sucesso',
+              mensagem: 'Vencedor declarado com sucesso e chave atualizada!'
+            })
+          }
         } catch (err) {
           console.error('Erro ao declarar vencedor', err)
           mostrarAlerta({

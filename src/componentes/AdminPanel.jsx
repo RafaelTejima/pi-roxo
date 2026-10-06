@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/admin.css';
 import { useAlerta } from './AlertaModal';
+import { calcularRetencao } from '../utils/financeiro.js';
 
 // Tabelas conhecidas do projeto, com nome amigável e colunas relevantes
 const TABELAS_CONHECIDAS = [
@@ -516,7 +517,7 @@ function SecaoFinanceiro({ usuarioLogado }) {
         .eq('admin', true)
         .order('id', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!adminErr && adminData) {
         setSaldoAdmin(Number(adminData.saldo) || 0);
@@ -540,7 +541,27 @@ function SecaoFinanceiro({ usuarioLogado }) {
       if (res.error) {
         setErro(res.error.message);
       } else {
-        setTransacoes(res.data || []);
+        let lista = res.data || [];
+
+        // Fallback de integridade: se algum registro não tiver o nome do torneio carregado
+        const semNome = lista.filter((t) => !t.torneio?.nome && t.id_torneio);
+        if (semNome.length > 0) {
+          const idsBusca = [...new Set(semNome.map((t) => t.id_torneio))];
+          const { data: torneiosDados } = await supabase
+            .from('torneios')
+            .select('id, nome')
+            .in('id', idsBusca);
+
+          if (torneiosDados) {
+            const mapaNomes = new Map(torneiosDados.map((tor) => [tor.id, tor]));
+            lista = lista.map((t) => ({
+              ...t,
+              torneio: t.torneio?.nome ? t.torneio : (mapaNomes.get(t.id_torneio) || t.torneio)
+            }));
+          }
+        }
+
+        setTransacoes(lista);
       }
     } catch (err) {
       console.error('Erro ao carregar dados financeiros:', err);
@@ -550,8 +571,70 @@ function SecaoFinanceiro({ usuarioLogado }) {
     }
   };
 
+  const sincronizarTorneiosPendentes = async () => {
+    try {
+      // Identifica torneios finalizados que ainda não têm transação registrada
+      const { data: torneiosFinalizados, error: errTor } = await supabase
+        .from('torneios')
+        .select('id, nome, dinheiro, status, id_time_vencedor')
+        .not('id_time_vencedor', 'is', null);
+
+      if (errTor || !torneiosFinalizados || torneiosFinalizados.length === 0) return;
+
+      const { data: transacoesExistentes } = await supabase
+        .from('transacoes_plataforma')
+        .select('id_torneio');
+
+      const idsComTransacao = new Set((transacoesExistentes || []).map((t) => t.id_torneio));
+      const torneiosSemTransacao = torneiosFinalizados.filter((tor) => !idsComTransacao.has(tor.id));
+
+      if (torneiosSemTransacao.length === 0) return;
+
+      console.log(`[Financeiro] Sincronizando ${torneiosSemTransacao.length} torneios finalizados pendentes...`);
+
+      for (const tor of torneiosSemTransacao) {
+        const { data: inscricoes } = await supabase
+          .from('inscricoes')
+          .select('id')
+          .eq('id_torneio', tor.id);
+
+        const totalTimes = (inscricoes || []).length || 1;
+        const bruto = (Number(tor.dinheiro) || 0) * totalTimes;
+        const ret = calcularRetencao(bruto);
+        const taxa = ret ? ret.taxaPlataforma : 0;
+        const liquido = ret ? ret.premioLiquido : bruto;
+
+        await supabase.from('transacoes_plataforma').insert({
+          id_torneio: tor.id,
+          valor_bruto: bruto,
+          taxa_retida: taxa,
+          valor_liquido: liquido,
+          status: 'PROCESSADO'
+        });
+      }
+
+      await carregarFinanceiro();
+    } catch (e) {
+      console.warn('Erro ao sincronizar torneios pendentes:', e);
+    }
+  };
+
   useEffect(() => {
     carregarFinanceiro();
+
+    const handleAtualizar = () => {
+      carregarFinanceiro();
+    };
+
+    window.addEventListener('saldoAtualizado', handleAtualizar);
+    window.addEventListener('transacoesAtualizadas', handleAtualizar);
+    window.addEventListener('torneiosAtualizados', handleAtualizar);
+
+    return () => {
+      window.removeEventListener('saldoAtualizado', handleAtualizar);
+      window.removeEventListener('transacoesAtualizadas', handleAtualizar);
+      window.removeEventListener('torneiosAtualizados', handleAtualizar);
+    };
   }, []);
 
   // Restrição de segurança: só renderiza se admin for true
@@ -646,8 +729,11 @@ function SecaoFinanceiro({ usuarioLogado }) {
             <button
               type="button"
               className="admin-btn-recarregar"
-              onClick={carregarFinanceiro}
-              title="Recarregar transações"
+              onClick={async () => {
+                await sincronizarTorneiosPendentes();
+                await carregarFinanceiro();
+              }}
+              title="Recarregar e sincronizar transações"
             >
               Atualizar
             </button>
@@ -703,12 +789,12 @@ function SecaoFinanceiro({ usuarioLogado }) {
                         <span className="admin-id-badge">#{t.id}</span>
                       </td>
                       <td>
-                        <strong>{t.torneio?.nome || `Torneio #${t.id_torneio}`}</strong>
-                        {t.torneio?.nome && (
+                        <strong>{t.torneio?.nome || (t.id_torneio ? `Torneio #${t.id_torneio}` : 'Torneio')}</strong>
+                        {t.id_torneio && (
                           <small className="admin-subdado">ID #{t.id_torneio}</small>
                         )}
                       </td>
-                      <td>{formatarDataHora(t.registro)}</td>
+                      <td>{formatarDataHora(t.registro || t.created_at)}</td>
                       <td>
                         <strong>{formatarMoeda(t.valor_bruto)}</strong>
                       </td>
