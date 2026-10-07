@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/perfil.css';
@@ -105,12 +105,43 @@ export default function Perfil() {
     setForm({});
   }, [location.pathname]);
 
-  // ---- Carteira ----
+  // ---- Carteira & Extrato ----
   const [valorSaque, setValorSaque] = useState('');
   const [sacando, setSacando] = useState(false);
   const [valorDeposito, setValorDeposito] = useState('');
   const [depositando, setDepositando] = useState(false);
   const [totalGanhos, setTotalGanhos] = useState(0);
+  const [historicoCarteira, setHistoricoCarteira] = useState([]);
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+
+  const carregarHistoricoCarteira = useCallback(async (idUsuarioAlvo) => {
+    const id = idUsuarioAlvo || usuario?.id || usuarioLogado?.id;
+    if (!id) return;
+
+    setCarregandoHistorico(true);
+    try {
+      const { data, error } = await supabase
+        .from('historico_carteira')
+        .select('id, id_usuario, tipo, valor, descricao, registro')
+        .eq('id_usuario', id)
+        .order('registro', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setHistoricoCarteira(data || []);
+    } catch (err) {
+      console.warn('Erro ao carregar historico de transacoes:', err);
+      setHistoricoCarteira([]);
+    } finally {
+      setCarregandoHistorico(false);
+    }
+  }, [usuario?.id, usuarioLogado?.id]);
+
+  useEffect(() => {
+    if (!isPublico && usuario?.id && usuarioLogado?.id && String(usuarioLogado.id) === String(usuario.id)) {
+      carregarHistoricoCarteira(usuario.id);
+    }
+  }, [isPublico, usuario?.id, usuarioLogado?.id, carregarHistoricoCarteira]);
 
   async function handleSacar() {
     if (!usuario?.id) {
@@ -122,14 +153,6 @@ export default function Perfil() {
       return;
     }
 
-    const valorSacado = usuario.saldo;
-    setUsuario((atual) => ({ ...atual, saldo: 0 }));
-    window.dispatchEvent(new Event('saldoAtualizado'));
-    mostrarAlerta({
-      titulo: 'Saque Confirmado',
-      mensagem: `Seu saque de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorSacado)} foi solicitado com sucesso.`,
-      tipo: 'sucesso'
-    });
     const valorLimpo = typeof valorSaque === 'string' ? valorSaque.replace(',', '.').trim() : valorSaque;
     const valorNum = parseFloat(valorLimpo);
 
@@ -165,6 +188,29 @@ export default function Perfil() {
 
       if (error) throw error;
 
+      // Inserção da transação na tabela historico_carteira
+      try {
+        const { data: novaTransacao, error: errHist } = await supabase
+          .from('historico_carteira')
+          .insert({
+            id_usuario: usuario.id,
+            tipo: 'SAIDA',
+            valor: valorFormatado,
+            descricao: 'Saque Simulado'
+          })
+          .select()
+          .maybeSingle();
+
+        if (!errHist && novaTransacao) {
+          setHistoricoCarteira((prev) => [novaTransacao, ...prev.filter((item) => item.id !== novaTransacao.id)]);
+        } else {
+          carregarHistoricoCarteira(usuario.id);
+        }
+      } catch (errHist) {
+        console.warn('Erro ao salvar no historico_carteira:', errHist);
+        carregarHistoricoCarteira(usuario.id);
+      }
+
       // Atualiza o estado local imediatamente no React sem precisar de F5
       setUsuario((atual) => ({ ...atual, saldo: novoSaldo }));
       setValorSaque('');
@@ -176,6 +222,7 @@ export default function Perfil() {
         if (String(logado.id) === String(usuario.id)) {
           localStorage.setItem('usuarioLogado', JSON.stringify({ ...logado, saldo: novoSaldo }));
           window.dispatchEvent(new Event('perfilAtualizado'));
+          window.dispatchEvent(new Event('saldoAtualizado'));
         }
       }
 
@@ -231,6 +278,29 @@ export default function Perfil() {
 
       if (error) throw error;
 
+      // Inserção da transação na tabela historico_carteira
+      try {
+        const { data: novaTransacao, error: errHist } = await supabase
+          .from('historico_carteira')
+          .insert({
+            id_usuario: usuario.id,
+            tipo: 'ENTRADA',
+            valor: valorFormatado,
+            descricao: 'Depósito Simulado'
+          })
+          .select()
+          .maybeSingle();
+
+        if (!errHist && novaTransacao) {
+          setHistoricoCarteira((prev) => [novaTransacao, ...prev.filter((item) => item.id !== novaTransacao.id)]);
+        } else {
+          carregarHistoricoCarteira(usuario.id);
+        }
+      } catch (errHist) {
+        console.warn('Erro ao processar depósito no historico_carteira:', errHist);
+        carregarHistoricoCarteira(usuario.id);
+      }
+
       // Atualiza o estado local do React imediatamente (sem necessidade de F5)
       setUsuario((atual) => ({ ...atual, saldo: novoSaldo }));
       setValorDeposito('');
@@ -242,6 +312,7 @@ export default function Perfil() {
         if (String(logado.id) === String(usuario.id)) {
           localStorage.setItem('usuarioLogado', JSON.stringify({ ...logado, saldo: novoSaldo }));
           window.dispatchEvent(new Event('perfilAtualizado'));
+          window.dispatchEvent(new Event('saldoAtualizado'));
         }
       }
 
@@ -377,6 +448,14 @@ export default function Perfil() {
   const [pedidosEnviados, setPedidosEnviados] = useState([]);   // enviados
   const [carregandoAmigos, setCarregandoAmigos] = useState(false);
 
+  // Refs sincronizadas para evitar variáveis de lista em dependências de busca
+  const listaAmigosRef = useRef(listaAmigos);
+  listaAmigosRef.current = listaAmigos;
+  const pedidosPendentesRef = useRef(pedidosPendentes);
+  pedidosPendentesRef.current = pedidosPendentes;
+  const pedidosEnviadosRef = useRef(pedidosEnviados);
+  pedidosEnviadosRef.current = pedidosEnviados;
+
   // ---- Status amizade (perfil público) ----
   const [statusAmizade, setStatusAmizade] = useState(null); // null | 'PENDENTE_ENVIADO' | 'PENDENTE_RECEBIDO' | 'ACEITO' | 'BLOQUEADO'
   const [amizadeId, setAmizadeId] = useState(null);
@@ -384,12 +463,48 @@ export default function Perfil() {
   // ---- Aba da seção amigos ----
   const [abaAmigos, setAbaAmigos] = useState('amigos'); // 'amigos' | 'pendentes' | 'enviados'
 
-  // ---- Busca de Jogadores ----
+  // ---- Busca de Jogadores (Estado isolado de termo de busca) ----
   const [buscaAmigo, setBuscaAmigo] = useState('');
   const [resultadosBusca, setResultadosBusca] = useState([]);
   const [dropdownAmigoAberto, setDropdownAmigoAberto] = useState(false);
   const [buscandoAmigos, setBuscandoAmigos] = useState(false);
   const buscarAmigoRef = useRef(null);
+
+  // Filtros locais em tempo real na primeira letra (sem forçar re-fetch no banco)
+  const amigosFiltrados = useMemo(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) return listaAmigos;
+    return listaAmigos.filter((amigo) => {
+      const nome = String(amigo.nome || '').toLowerCase();
+      const nomeUsuario = String(amigo.nome_usuario || '').toLowerCase();
+      const time = String(amigo.time_usuario || '').toLowerCase();
+      return nome.includes(termo) || nomeUsuario.includes(termo) || time.includes(termo);
+    });
+  }, [listaAmigos, buscaAmigo]);
+
+  const pendentesFiltrados = useMemo(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) return pedidosPendentes;
+    return pedidosPendentes.filter((p) => {
+      const r = p.remetente || {};
+      const nome = String(r.nome || '').toLowerCase();
+      const nomeUsuario = String(r.nome_usuario || '').toLowerCase();
+      const time = String(r.time_usuario || '').toLowerCase();
+      return nome.includes(termo) || nomeUsuario.includes(termo) || time.includes(termo);
+    });
+  }, [pedidosPendentes, buscaAmigo]);
+
+  const enviadosFiltrados = useMemo(() => {
+    const termo = buscaAmigo.trim().toLowerCase();
+    if (!termo) return pedidosEnviados;
+    return pedidosEnviados.filter((e) => {
+      const d = e.destinatario || {};
+      const nome = String(d.nome || '').toLowerCase();
+      const nomeUsuario = String(d.nome_usuario || '').toLowerCase();
+      const time = String(d.time_usuario || '').toLowerCase();
+      return nome.includes(termo) || nomeUsuario.includes(termo) || time.includes(termo);
+    });
+  }, [pedidosEnviados, buscaAmigo]);
 
   // ------------------------------------------------------------------
   // ------------------------------------------------------------------
@@ -415,15 +530,7 @@ export default function Perfil() {
         try {
           const { data: uComJoin, error: errJoin } = await supabase
             .from('usuarios')
-            .select(`
-              id, nome, nome_usuario, bio, imagem, registro, admin,
-              conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky,
-              times_integrantes (
-                id,
-                funcao,
-                times ( id, nome, tag, logo )
-              )
-            `)
+            .select('id, nome, nome_usuario, bio, imagem, registro, admin, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky, times_integrantes(id, funcao, times(id, nome, tag, logo))')
             .eq('nome_usuario', nome_usuario)
             .maybeSingle();
 
@@ -495,15 +602,7 @@ export default function Perfil() {
       try {
         const { data: uComJoin } = await supabase
           .from('usuarios')
-          .select(`
-            id, nome, nome_usuario, bio, imagem, registro, admin, saldo,
-            conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky,
-            times_integrantes (
-              id,
-              funcao,
-              times ( id, nome, tag, logo )
-            )
-          `)
+          .select('id, nome, nome_usuario, bio, imagem, registro, admin, saldo, conexao_discord, conexao_steam, conexao_twitter, conexao_youtube, conexao_twitch, conexao_bluesky, times_integrantes(id, funcao, times(id, nome, tag, logo))')
           .eq('id', userLocal.id)
           .maybeSingle();
 
@@ -642,11 +741,7 @@ export default function Perfil() {
         try {
           const { data: membrosTimes } = await supabase
             .from('times_integrantes')
-            .select(`
-              id_usuario,
-              funcao,
-              times ( id, nome, tag )
-            `)
+            .select('id_usuario, funcao, times(id, nome, tag)')
             .in('id_usuario', idsParaValidar);
 
           (membrosTimes || []).forEach((m) => {
@@ -764,11 +859,9 @@ export default function Perfil() {
       };
 
       window.addEventListener('amigosAtualizados', onUpdate);
-      window.addEventListener('storage', onUpdate);
       return () => {
         montado = false;
         window.removeEventListener('amigosAtualizados', onUpdate);
-        window.removeEventListener('storage', onUpdate);
       };
     }
   }, [usuarioLogado?.id, isPublico, carregarAmizades]);
@@ -820,7 +913,6 @@ export default function Perfil() {
       setStatusAmizade('PENDENTE_ENVIADO');
       mostrarAlerta({ titulo: 'Pedido enviado!', mensagem: `Seu pedido foi enviado para ${usuario?.nome_usuario || usuario?.nome}.`, tipo: 'sucesso' });
       window.dispatchEvent(new Event('amigosAtualizados'));
-      window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -829,7 +921,6 @@ export default function Perfil() {
     await supabase.from('amizades').update({ status: 'ACEITO' }).eq('id', amizadeId);
     setStatusAmizade('ACEITO');
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Vocês agora são amigos.', tipo: 'sucesso' });
   }
 
@@ -838,7 +929,6 @@ export default function Perfil() {
     await supabase.from('amizades').delete().eq('id', amizadeId);
     setStatusAmizade(null); setAmizadeId(null);
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade removida', mensagem: 'Amizade removida com sucesso.', tipo: 'aviso' });
   }
 
@@ -851,7 +941,6 @@ export default function Perfil() {
     }
     setStatusAmizade('BLOQUEADO');
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Usuário bloqueado', mensagem: `${usuario?.nome_usuario || usuario?.nome} foi bloqueado.`, tipo: 'aviso' });
   }
 
@@ -860,7 +949,6 @@ export default function Perfil() {
     await supabase.from('amizades').delete().eq('id', amizadeId);
     setStatusAmizade(null); setAmizadeId(null);
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Desbloqueado', mensagem: 'Usuário desbloqueado com sucesso.', tipo: 'sucesso' });
   }
 
@@ -886,7 +974,6 @@ export default function Perfil() {
       mostrarAlerta({ titulo: 'Amizade aceita!', mensagem: 'Pedido de amizade aceito com sucesso.', tipo: 'sucesso' });
       carregarAmizades();
       window.dispatchEvent(new Event('amigosAtualizados'));
-      window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -895,7 +982,6 @@ export default function Perfil() {
     setPedidosPendentes(prev => prev.filter(p => p.id !== amizade_id));
     mostrarAlerta({ titulo: 'Pedido rejeitado', mensagem: 'Pedido de amizade rejeitado.', tipo: 'aviso' });
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
   }
 
   async function cancelarPedidoEnviado(amizade_id) {
@@ -903,7 +989,6 @@ export default function Perfil() {
     setPedidosEnviados(prev => prev.filter(e => e.id !== amizade_id));
     mostrarAlerta({ titulo: 'Pedido cancelado', mensagem: 'Seu pedido de amizade foi cancelado.', tipo: 'aviso' });
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
   }
 
   async function removerAmigo(amizade_id, nome) {
@@ -915,7 +1000,6 @@ export default function Perfil() {
       return nova;
     });
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Amizade Removida', mensagem: `${nome} foi removido da sua lista de amigos.`, tipo: 'aviso' });
   }
 
@@ -930,7 +1014,6 @@ export default function Perfil() {
       return nova;
     });
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
     mostrarAlerta({ titulo: 'Usuário bloqueado', mensagem: `${nome} foi bloqueado.`, tipo: 'aviso' });
   }
 
@@ -949,26 +1032,37 @@ export default function Perfil() {
 
   useEffect(() => {
     const termo = buscaAmigo.trim().toLowerCase();
-    if (!termo) { setResultadosBusca([]); setDropdownAmigoAberto(false); return; }
+    if (!termo) {
+      setResultadosBusca([]);
+      setDropdownAmigoAberto(false);
+      setBuscandoAmigos(false);
+      return;
+    }
 
-    setBuscandoAmigos(true);
     let ativo = true;
+    const timer = setTimeout(async () => {
+      if (!usuarioLogado?.id || !supabase) return;
+      setBuscandoAmigos(true);
 
-    const idsRelacionados = new Set([
-      ...listaAmigos.map(a => String(a.id)),
-      ...pedidosPendentes.map(p => String(p.remetente?.id)),
-      ...pedidosEnviados.map(e => String(e.destinatario?.id)),
-      String(usuarioLogado?.id)
-    ]);
+      try {
+        const idsRelacionados = new Set([
+          ...listaAmigosRef.current.map((a) => String(a.id)),
+          ...pedidosPendentesRef.current.map((p) => String(p.remetente?.id)),
+          ...pedidosEnviadosRef.current.map((e) => String(e.destinatario?.id)),
+          String(usuarioLogado.id)
+        ]);
 
-    // Busca direta no Supabase com usuários reais cadastrados
-    supabase
-      .from('usuarios')
-      .select('id, nome, nome_usuario, imagem, status')
-      .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
-      .limit(8)
-      .then(async ({ data, error }) => {
-        if (!ativo || error) { if (ativo) setBuscandoAmigos(false); return; }
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('id, nome, nome_usuario, imagem, status')
+          .or(`nome.ilike.%${termo}%,nome_usuario.ilike.%${termo}%`)
+          .limit(8);
+
+        if (!ativo || error) {
+          if (ativo) setBuscandoAmigos(false);
+          return;
+        }
+
         const lista = [];
         const idsEncontrados = [];
 
@@ -985,7 +1079,6 @@ export default function Perfil() {
           idsEncontrados.push(jDb.id);
         });
 
-        // Buscar equipes dos usuários encontrados via times_integrantes
         if (idsEncontrados.length > 0) {
           try {
             const { data: timesData } = await supabase
@@ -1015,11 +1108,16 @@ export default function Perfil() {
           setBuscandoAmigos(false);
           setDropdownAmigoAberto(true);
         }
-      })
-      .catch(() => { if (ativo) setBuscandoAmigos(false); });
+      } catch {
+        if (ativo) setBuscandoAmigos(false);
+      }
+    }, 350);
 
-    return () => { ativo = false; };
-  }, [buscaAmigo, listaAmigos, pedidosPendentes, pedidosEnviados, usuarioLogado?.id]);
+    return () => {
+      ativo = false;
+      clearTimeout(timer);
+    };
+  }, [buscaAmigo, usuarioLogado?.id]);
 
   async function handleEnviarPedido(jogador) {
     if (!usuarioLogado?.id || String(jogador.id) === String(usuarioLogado?.id)) return;
@@ -1045,7 +1143,6 @@ export default function Perfil() {
     });
     carregarAmizades();
     window.dispatchEvent(new Event('amigosAtualizados'));
-    window.dispatchEvent(new Event('storage'));
   }
 
   // ------------------------------------------------------------------
@@ -1185,7 +1282,7 @@ export default function Perfil() {
       return (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
           <div style={{ padding: '8px 14px', background: 'rgba(181,101,242,0.12)', border: '1px solid rgba(181,101,242,0.3)', borderRadius: '8px', color: '#c084fc', fontSize: '13px', fontWeight: '700' }}>
-            ⏳ Aguardando resposta
+            Aguardando resposta
           </div>
         </div>
       );
@@ -1194,7 +1291,7 @@ export default function Perfil() {
       return (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
           <button onClick={aceitarPedidoPublico} style={{ padding: '8px 14px', background: 'rgba(80,200,120,0.2)', border: '1px solid rgba(80,200,120,0.4)', borderRadius: '8px', color: '#4ade80', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-            ✓ Aceitar pedido
+            Aceitar pedido
           </button>
           <button onClick={removerAmizadePublica} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(233,85,85,0.3)', borderRadius: '8px', color: '#f87171', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>
             Rejeitar
@@ -1206,7 +1303,7 @@ export default function Perfil() {
       return (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
           <div style={{ padding: '8px 14px', background: 'rgba(233,85,85,0.1)', border: '1px solid rgba(233,85,85,0.25)', borderRadius: '8px', color: '#f87171', fontSize: '13px', fontWeight: '700' }}>
-            🚫 Bloqueado
+            Bloqueado
           </div>
           <button onClick={desbloquearUsuario} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#888', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>
             Desbloquear
@@ -1248,7 +1345,7 @@ export default function Perfil() {
           {/* ---- Sidebar ---- */}
           <aside className="perfil-resumo">
             <div className="perfil-avatar-wrap">
-              <img src={avatarUrl} alt={`Avatar de ${usuario.nome || usuario.nome_usuario}`} />
+              <img src={avatarUrl} alt={`Avatar de ${usuario.nome || usuario.nome_usuario}`} loading="lazy" />
               {(usuario.status === 'online' || usuario.status === 'offline') && (
                 <span
                   className={`perfil-status-dot ${usuario.status === 'offline' ? 'offline' : ''}`}
@@ -1482,6 +1579,85 @@ export default function Perfil() {
                   </section>
                 )}
 
+                {/* ---- EXTRATO / HISTÓRICO DE TRANSAÇÕES (ESTRITAMENTE PRIVADO: Apenas Dono da Conta) ---- */}
+                {!isPublico && isDono && (
+                  <section className="perfil-secao" style={{ marginTop: '24px' }}>
+                    <div className="perfil-secao-titulo">
+                      <div>
+                        <span className="perfil-kicker">Extrato</span>
+                        <h2>Meu Histórico de Transações</h2>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => carregarHistoricoCarteira(usuario.id)}
+                        className="perfil-extrato-btn-atualizar"
+                        disabled={carregandoHistorico}
+                        title="Atualizar histórico de transações"
+                      >
+                        {carregandoHistorico ? 'Atualizando...' : 'Atualizar'}
+                      </button>
+                    </div>
+
+                    {carregandoHistorico && historicoCarteira.length === 0 ? (
+                      <div className="perfil-extrato-vazio">
+                        <span className="perfil-spinner"></span>
+                        <span>Carregando histórico de transações...</span>
+                      </div>
+                    ) : historicoCarteira.length === 0 ? (
+                      <div className="perfil-extrato-vazio">
+                        <span>Nenhuma transação registrada ainda.</span>
+                      </div>
+                    ) : (
+                      <div className="perfil-extrato-tabela-wrap">
+                        <table className="perfil-extrato-tabela">
+                          <thead>
+                            <tr>
+                              <th>Data e Hora</th>
+                              <th>Tipo</th>
+                              <th>Descrição</th>
+                              <th style={{ textAlign: 'right' }}>Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {historicoCarteira.map((item) => {
+                              const isEntrada = String(item.tipo).toUpperCase() === 'ENTRADA';
+                              const valorFormatado = new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(Math.abs(Number(item.valor) || 0));
+
+                              const dataFormatada = item.registro && !Number.isNaN(new Date(item.registro).getTime())
+                                ? new Date(item.registro).toLocaleString('pt-BR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : 'Recentemente';
+
+                              return (
+                                <tr key={item.id || `${item.registro}-${item.valor}`}>
+                                  <td className="perfil-extrato-td-data">{dataFormatada}</td>
+                                  <td>
+                                    <span className={`perfil-extrato-badge ${isEntrada ? 'perfil-extrato-badge--entrada' : 'perfil-extrato-badge--saida'}`}>
+                                      {isEntrada ? 'Entrada' : 'Saída'}
+                                    </span>
+                                  </td>
+                                  <td className="perfil-extrato-td-descricao">{item.descricao || (isEntrada ? 'Depósito Simulado' : 'Saque Simulado')}</td>
+                                  <td className={`perfil-extrato-td-valor ${isEntrada ? 'perfil-extrato-valor--entrada' : 'perfil-extrato-valor--saida'}`}>
+                                    {isEntrada ? `+ ${valorFormatado}` : `- ${valorFormatado}`}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+                )}
+
                 {/* ---- TOTAL GANHO EM CAMPEONATOS (VISITANTE / PERFIL PÚBLICO) ---- */}
                 {isVisitante && (
                   <section className="perfil-secao" style={{ marginTop: '24px' }}>
@@ -1541,7 +1717,7 @@ export default function Perfil() {
                             }}
                           >
                             <span className="perfil-conta-icone" style={{ background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <img src={icon} alt={label} style={{ width: '20px', height: '20px' }} />
+                              <img src={icon} alt={label} loading="lazy" style={{ width: '20px', height: '20px' }} />
                             </span>
                             <div style={{ overflow: 'hidden' }}>
                               <strong>{label}</strong>
@@ -1578,7 +1754,7 @@ export default function Perfil() {
                           }}
                         >
                           <span className="perfil-conta-icone" style={{ background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'grayscale(0.4)' }}>
-                            <img src={icon} alt={label} style={{ width: '20px', height: '20px' }} />
+                            <img src={icon} alt={label} loading="lazy" style={{ width: '20px', height: '20px' }} />
                           </span>
                           <div style={{ overflow: 'hidden' }}>
                             <strong>{label}</strong>
@@ -1639,6 +1815,7 @@ export default function Perfil() {
                                     <img
                                       src={j.imagem || `https://placehold.co/96x96/35176b/ffffff?text=${(j.nome_usuario || j.nome || 'J').substring(0, 2).toUpperCase()}`}
                                       alt={j.nome || j.nome_usuario}
+                                      loading="lazy"
                                       className="perfil-autocomplete-avatar"
                                     />
                                     <div className="perfil-autocomplete-info">
@@ -1688,9 +1865,13 @@ export default function Perfil() {
                         {/* ABA: Amigos aceitos */}
                         {abaAmigos === 'amigos' && (
                           <div className="perfil-amigos">
-                            {listaAmigos.length === 0 ? (
-                              <p className="perfil-vazio">Nenhum amigo na sua lista. Use o campo de busca para encontrar e adicionar jogadores!</p>
-                            ) : listaAmigos.map((amigo) => (
+                            {amigosFiltrados.length === 0 ? (
+                              <p className="perfil-vazio">
+                                {buscaAmigo.trim()
+                                  ? 'Nenhum amigo encontrado para esta pesquisa.'
+                                  : 'Nenhum amigo na sua lista. Use o campo de busca para encontrar e adicionar jogadores!'}
+                              </p>
+                            ) : amigosFiltrados.map((amigo) => (
                               <article className="perfil-amigo" key={amigo.amizade_id}>
                                 <Link
                                   to={`/perfil/${amigo.nome_usuario}`}
@@ -1700,6 +1881,7 @@ export default function Perfil() {
                                   <img
                                     src={amigo.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
                                     alt={amigo.nome || amigo.nome_usuario}
+                                    loading="lazy"
                                     style={{ cursor: 'pointer' }}
                                   />
                                   <div className="perfil-amigo-info">
@@ -1722,9 +1904,13 @@ export default function Perfil() {
                         {/* ABA: Pedidos recebidos */}
                         {abaAmigos === 'pendentes' && (
                           <div className="perfil-amigos">
-                            {pedidosPendentes.length === 0 ? (
-                              <p className="perfil-vazio">Nenhum pedido de amizade pendente.</p>
-                            ) : pedidosPendentes.map((p) => (
+                            {pendentesFiltrados.length === 0 ? (
+                              <p className="perfil-vazio">
+                                {buscaAmigo.trim()
+                                  ? 'Nenhum pedido pendente encontrado para esta pesquisa.'
+                                  : 'Nenhum pedido de amizade pendente.'}
+                              </p>
+                            ) : pendentesFiltrados.map((p) => (
                               <article className="perfil-amigo perfil-amigo-pendente" key={p.id}>
                                 <Link
                                   to={`/perfil/${p.remetente?.nome_usuario}`}
@@ -1734,6 +1920,7 @@ export default function Perfil() {
                                   <img
                                     src={p.remetente?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
                                     alt={p.remetente?.nome || p.remetente?.nome_usuario}
+                                    loading="lazy"
                                     style={{ cursor: 'pointer' }}
                                   />
                                   <div className="perfil-amigo-info">
@@ -1758,9 +1945,13 @@ export default function Perfil() {
                         {/* ABA: Pedidos enviados */}
                         {abaAmigos === 'enviados' && (
                           <div className="perfil-amigos">
-                            {pedidosEnviados.length === 0 ? (
-                              <p className="perfil-vazio">Nenhum pedido de amizade enviado aguardando resposta.</p>
-                            ) : pedidosEnviados.map((e) => (
+                            {enviadosFiltrados.length === 0 ? (
+                              <p className="perfil-vazio">
+                                {buscaAmigo.trim()
+                                  ? 'Nenhum pedido enviado encontrado para esta pesquisa.'
+                                  : 'Nenhum pedido de amizade enviado aguardando resposta.'}
+                              </p>
+                            ) : enviadosFiltrados.map((e) => (
                               <article className="perfil-amigo" key={e.id} style={{ opacity: 0.8 }}>
                                 <Link
                                   to={`/perfil/${e.destinatario?.nome_usuario}`}
@@ -1770,6 +1961,7 @@ export default function Perfil() {
                                   <img
                                     src={e.destinatario?.imagem || `https://placehold.co/96x96/291547/ffffff?text=${(e.destinatario?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
                                     alt={e.destinatario?.nome || e.destinatario?.nome_usuario}
+                                    loading="lazy"
                                     style={{ cursor: 'pointer' }}
                                   />
                                   <div className="perfil-amigo-info">
@@ -1777,7 +1969,7 @@ export default function Perfil() {
                                       {e.destinatario?.nome_usuario ? `@${e.destinatario.nome_usuario}` : e.destinatario?.nome}
                                     </strong>
                                     <span>{e.destinatario?.time_usuario || 'Sem equipe'}</span>
-                                    <em style={{ color: '#a78bfa', fontStyle: 'normal', fontSize: '11px' }}>⏳ Aguardando resposta</em>
+                                    <em style={{ color: '#a78bfa', fontStyle: 'normal', fontSize: '11px' }}>Aguardando resposta</em>
                                   </div>
                                 </Link>
                                 <div className="perfil-amigo-acoes">

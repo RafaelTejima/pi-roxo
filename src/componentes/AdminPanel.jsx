@@ -1,5 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import { supabase } from '../supabase.js';
 import '../css/admin.css';
 import { useAlerta } from './AlertaModal';
@@ -53,8 +62,23 @@ function formatarMoeda(val) {
 // ----- Componente de seção de tabela -----
 function SecaoTabela({ tabela, usuarioLogado }) {
   const { mostrarAlerta } = useAlerta();
-  const [dados, setDados] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `cache_admin_tab_${tabela.nome}_v1`;
+  const [dados, setDados] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(cacheKey);
+      return salvo ? JSON.parse(salvo) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(cacheKey);
+      return !salvo || JSON.parse(salvo).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [erro, setErro] = useState('');
   const [aberta, setAberta] = useState(true);
   const [busca, setBusca] = useState('');
@@ -65,7 +89,7 @@ function SecaoTabela({ tabela, usuarioLogado }) {
 
   useEffect(() => {
     async function buscarDados() {
-      setLoading(true);
+      setLoading((atual) => (dados.length === 0 ? true : atual));
       setErro('');
       try {
         let res;
@@ -75,11 +99,11 @@ function SecaoTabela({ tabela, usuarioLogado }) {
             .from('partidas')
             .select('*, time1:time1_id(id, nome, tag), time2:time2_id(id, nome, tag)')
             .order('id', { ascending: false })
-            .limit(200);
+            .limit(100);
 
           if (res.error) {
             console.warn('Fallback para busca simples de partidas sem join:', res.error);
-            res = await supabase.from('partidas').select('*').order('id', { ascending: false }).limit(200);
+            res = await supabase.from('partidas').select('*').order('id', { ascending: false }).limit(100);
           }
         } else if (tabela.nome === 'inscricoes') {
           // Busca inscrições com dados relacionais de torneio, time e usuário
@@ -87,11 +111,11 @@ function SecaoTabela({ tabela, usuarioLogado }) {
             .from('inscricoes')
             .select('*, torneio:id_torneio(id, nome), time:id_time(id, nome, tag), usuario:id_usuario_inscritor(id, nome, nome_usuario)')
             .order('id', { ascending: false })
-            .limit(200);
+            .limit(100);
 
           if (res.error) {
             console.warn('Fallback para busca simples de inscricoes sem join:', res.error);
-            res = await supabase.from('inscricoes').select('*').order('id', { ascending: false }).limit(200);
+            res = await supabase.from('inscricoes').select('*').order('id', { ascending: false }).limit(100);
           }
         } else if (tabela.nome === 'transacoes_plataforma') {
           // Busca transações da plataforma com dados relacionais do torneio
@@ -99,14 +123,14 @@ function SecaoTabela({ tabela, usuarioLogado }) {
             .from('transacoes_plataforma')
             .select('*, torneio:id_torneio(id, nome)')
             .order('id', { ascending: false })
-            .limit(200);
+            .limit(100);
 
           if (res.error) {
             console.warn('Fallback para busca simples de transacoes_plataforma sem join:', res.error);
-            res = await supabase.from('transacoes_plataforma').select('*').order('id', { ascending: false }).limit(200);
+            res = await supabase.from('transacoes_plataforma').select('*').order('id', { ascending: false }).limit(100);
           }
         } else {
-          res = await supabase.from(tabela.nome).select('*').limit(200);
+          res = await supabase.from(tabela.nome).select('*').limit(100);
         }
 
         const { data, error } = res;
@@ -114,11 +138,14 @@ function SecaoTabela({ tabela, usuarioLogado }) {
           if (error.code === '42P01') {
             setErro('TABELA_INEXISTENTE');
           } else {
-            setErro(error.message);
+            if (dados.length === 0) {
+              setErro(error.message);
+            }
           }
         } else {
+          let dadosProcessados = [];
           if (tabela.nome === 'partidas' && Array.isArray(data)) {
-            const partidasFormatadas = data.map((p) => {
+            dadosProcessados = data.map((p) => {
               const t1 = p.time1
                 ? `[${p.time1.tag || 'TAG'}] ${p.time1.nome || ''}`.trim()
                 : (p.time1_id ? `Time #${p.time1_id}` : '-');
@@ -132,9 +159,8 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                 time_2: t2
               };
             });
-            setDados(partidasFormatadas);
           } else if (tabela.nome === 'inscricoes' && Array.isArray(data)) {
-            const inscricoesFormatadas = data.map((i) => {
+            dadosProcessados = data.map((i) => {
               const tor = i.torneio?.nome || (i.id_torneio ? `Torneio #${i.id_torneio}` : '-');
               const tm = i.time ? `[${i.time.tag || 'TAG'}] ${i.time.nome || ''}`.trim() : (i.id_time ? `Time #${i.id_time}` : '-');
               const usr = i.usuario?.nome_usuario || i.usuario?.nome || (i.id_usuario_inscritor ? `Usuário #${i.id_usuario_inscritor}` : '-');
@@ -146,9 +172,8 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                 usuario_nome: usr
               };
             });
-            setDados(inscricoesFormatadas);
           } else if (tabela.nome === 'transacoes_plataforma' && Array.isArray(data)) {
-            const transacoesFormatadas = data.map((t) => {
+            dadosProcessados = data.map((t) => {
               const tor = t.torneio?.nome || (t.id_torneio ? `Torneio #${t.id_torneio}` : '-');
               const { torneio, ...resto } = t;
               return {
@@ -156,20 +181,26 @@ function SecaoTabela({ tabela, usuarioLogado }) {
                 torneio_nome: tor
               };
             });
-            setDados(transacoesFormatadas);
           } else {
-            setDados(data || []);
+            dadosProcessados = data || [];
           }
+
+          setDados(dadosProcessados);
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(dadosProcessados));
+          } catch {}
         }
       } catch (err) {
         console.error(`Erro ao carregar tabela ${tabela.nome}:`, err);
-        setErro(err.message || 'Erro inesperado ao carregar dados');
+        if (dados.length === 0) {
+          setErro(err.message || 'Erro inesperado ao carregar dados');
+        }
       } finally {
         setLoading(false);
       }
     }
     buscarDados();
-  }, [tabela.nome]);
+  }, [tabela.nome, cacheKey, dados.length]);
 
   // Tabela inexistente: não renderiza nada
   if (!loading && erro === 'TABELA_INEXISTENTE') return null;
@@ -496,17 +527,489 @@ function SecaoTabela({ tabela, usuarioLogado }) {
   );
 }
 
+// ----- Helpers e Componente do Gráfico Analítico de Receitas -----
+function getChaveData(d) {
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+function formatarDataEixo(chaveData) {
+  if (!chaveData) return '';
+  const partes = chaveData.split('-');
+  if (partes.length === 3) {
+    return `${partes[2]}/${partes[1]}`;
+  }
+  return chaveData;
+}
+
+function formatarDataTooltip(chaveData) {
+  if (!chaveData) return '';
+  const partes = chaveData.split('-');
+  if (partes.length === 3) {
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+  return chaveData;
+}
+
+function CustomTooltipGrafico({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload || {};
+    const valor = payload[0].value ?? 0;
+    return (
+      <div className="admin-grafico-tooltip">
+        <div className="admin-grafico-tooltip-header">
+          <span className="admin-grafico-tooltip-dot" />
+          <span className="admin-grafico-tooltip-data">
+            {item.dataCompleta || label}
+          </span>
+        </div>
+        <div className="admin-grafico-tooltip-body">
+          <div className="admin-grafico-tooltip-row">
+            <span className="admin-grafico-tooltip-label">Taxa Retida:</span>
+            <strong className="admin-grafico-tooltip-valor">
+              {formatarMoeda(valor)}
+            </strong>
+          </div>
+          {item.bruto > 0 && (
+            <div className="admin-grafico-tooltip-row admin-grafico-tooltip-row--secundaria">
+              <span className="admin-grafico-tooltip-label-sub">Volume Bruto:</span>
+              <span className="admin-grafico-tooltip-valor-sub">
+                {formatarMoeda(item.bruto)}
+              </span>
+            </div>
+          )}
+          {item.transacoesQtd > 0 && (
+            <div className="admin-grafico-tooltip-qtd">
+              {item.transacoesQtd} {item.transacoesQtd === 1 ? 'transação' : 'transações'} no dia
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+const FILTROS_GRAFICO = [
+  { id: '7d', rotulo: 'Últimos 7 Dias' },
+  { id: '30d', rotulo: 'Últimos 30 Dias' },
+  { id: 'mes', rotulo: 'Este Mês' },
+  { id: 'tudo', rotulo: 'Tudo' },
+];
+
+function GraficoReceitas({ transacoes = [], loading = false }) {
+  const [filtro, setFiltro] = useState('30d');
+
+  const dadosGrafico = useMemo(() => {
+    try {
+      if (!Array.isArray(transacoes)) return [];
+
+      const hoje = new Date();
+      const fimHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
+
+      // Transações válidas com timestamp
+      const transacoesValidas = transacoes
+        .map((t) => {
+          const raw = t?.registro;
+          if (!raw) return null;
+          const d = new Date(raw);
+          if (isNaN(d.getTime())) return null;
+          return {
+            data: d,
+            chaveData: getChaveData(d),
+            taxa: Number(t.taxa_retida) || 0,
+            bruto: Number(t.valor_bruto) || 0,
+          };
+        })
+        .filter(Boolean);
+
+      if (filtro === '7d') {
+        const buckets = [];
+        const mapa = new Map();
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - i);
+          const chave = getChaveData(d);
+          buckets.push(chave);
+          mapa.set(chave, {
+            dataKey: chave,
+            dataExibicao: formatarDataEixo(chave),
+            dataCompleta: formatarDataTooltip(chave),
+            valor: 0,
+            bruto: 0,
+            transacoesQtd: 0,
+          });
+        }
+
+        const inicio7d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 6, 0, 0, 0, 0);
+
+        transacoesValidas.forEach((t) => {
+          if (t.data >= inicio7d && t.data <= fimHoje) {
+            const item = mapa.get(t.chaveData);
+            if (item) {
+              item.valor = Number((item.valor + t.taxa).toFixed(2));
+              item.bruto = Number((item.bruto + t.bruto).toFixed(2));
+              item.transacoesQtd += 1;
+            }
+          }
+        });
+
+        return buckets.map((k) => mapa.get(k));
+      }
+
+      if (filtro === '30d') {
+        const buckets = [];
+        const mapa = new Map();
+
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - i);
+          const chave = getChaveData(d);
+          buckets.push(chave);
+          mapa.set(chave, {
+            dataKey: chave,
+            dataExibicao: formatarDataEixo(chave),
+            dataCompleta: formatarDataTooltip(chave),
+            valor: 0,
+            bruto: 0,
+            transacoesQtd: 0,
+          });
+        }
+
+        const inicio30d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 29, 0, 0, 0, 0);
+
+        transacoesValidas.forEach((t) => {
+          if (t.data >= inicio30d && t.data <= fimHoje) {
+            const item = mapa.get(t.chaveData);
+            if (item) {
+              item.valor = Number((item.valor + t.taxa).toFixed(2));
+              item.bruto = Number((item.bruto + t.bruto).toFixed(2));
+              item.transacoesQtd += 1;
+            }
+          }
+        });
+
+        return buckets.map((k) => mapa.get(k));
+      }
+
+      if (filtro === 'mes') {
+        const buckets = [];
+        const mapa = new Map();
+        const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth();
+        const diasAteHoje = Math.max(hoje.getDate(), 1);
+        const ultimoDiaMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+        const limiteDias = Math.min(Math.max(diasAteHoje, 7), ultimoDiaMes);
+
+        for (let dia = 1; dia <= limiteDias; dia++) {
+          const d = new Date(anoAtual, mesAtual, dia);
+          const chave = getChaveData(d);
+          buckets.push(chave);
+          mapa.set(chave, {
+            dataKey: chave,
+            dataExibicao: formatarDataEixo(chave),
+            dataCompleta: formatarDataTooltip(chave),
+            valor: 0,
+            bruto: 0,
+            transacoesQtd: 0,
+          });
+        }
+
+        const inicioMes = new Date(anoAtual, mesAtual, 1, 0, 0, 0, 0);
+
+        transacoesValidas.forEach((t) => {
+          if (t.data >= inicioMes && t.data <= fimHoje) {
+            const item = mapa.get(t.chaveData);
+            if (item) {
+              item.valor = Number((item.valor + t.taxa).toFixed(2));
+              item.bruto = Number((item.bruto + t.bruto).toFixed(2));
+              item.transacoesQtd += 1;
+            }
+          }
+        });
+
+        return buckets.map((k) => mapa.get(k));
+      }
+
+      if (filtro === 'tudo') {
+        if (transacoesValidas.length === 0) {
+          return [];
+        }
+
+        const mapa = new Map();
+        transacoesValidas.forEach((t) => {
+          if (!mapa.has(t.chaveData)) {
+            mapa.set(t.chaveData, {
+              dataKey: t.chaveData,
+              dataExibicao: formatarDataEixo(t.chaveData),
+              dataCompleta: formatarDataTooltip(t.chaveData),
+              valor: 0,
+              bruto: 0,
+              transacoesQtd: 0,
+              timestamp: new Date(t.chaveData + 'T00:00:00').getTime(),
+            });
+          }
+          const item = mapa.get(t.chaveData);
+          item.valor = Number((item.valor + t.taxa).toFixed(2));
+          item.bruto = Number((item.bruto + t.bruto).toFixed(2));
+          item.transacoesQtd += 1;
+        });
+
+        const ordenados = Array.from(mapa.values()).sort((a, b) => a.timestamp - b.timestamp);
+
+        // Se houver somente 1 dia registrado, inclui um ponto anterior zerado para traçar uma área elegante
+        if (ordenados.length === 1) {
+          const pontoUnico = ordenados[0];
+          const dataAnterior = new Date(pontoUnico.timestamp);
+          dataAnterior.setDate(dataAnterior.getDate() - 1);
+          const chaveAnt = getChaveData(dataAnterior);
+          return [
+            {
+              dataKey: chaveAnt,
+              dataExibicao: formatarDataEixo(chaveAnt),
+              dataCompleta: formatarDataTooltip(chaveAnt),
+              valor: 0,
+              bruto: 0,
+              transacoesQtd: 0,
+            },
+            pontoUnico,
+          ];
+        }
+
+        return ordenados;
+      }
+
+      return [];
+    } catch (err) {
+      console.error('Falha ao processar dados do gráfico financeiro:', err);
+      return [];
+    }
+  }, [transacoes, filtro]);
+
+  // Totais e métricas calculados em tempo real de acordo com o filtro selecionado
+  const totalReceitaPeriodo = useMemo(() => {
+    return dadosGrafico.reduce((acc, item) => acc + (item.valor || 0), 0);
+  }, [dadosGrafico]);
+
+  const totalBrutoPeriodo = useMemo(() => {
+    return dadosGrafico.reduce((acc, item) => acc + (item.bruto || 0), 0);
+  }, [dadosGrafico]);
+
+  const totalTransacoesPeriodo = useMemo(() => {
+    return dadosGrafico.reduce((acc, item) => acc + (item.transacoesQtd || 0), 0);
+  }, [dadosGrafico]);
+
+  const mediaDiaria = useMemo(() => {
+    if (!dadosGrafico || dadosGrafico.length === 0) return 0;
+    return totalReceitaPeriodo / dadosGrafico.length;
+  }, [dadosGrafico, totalReceitaPeriodo]);
+
+  const temDadosReais = totalReceitaPeriodo > 0 || totalTransacoesPeriodo > 0;
+
+  return (
+    <div className="admin-secao admin-secao-grafico">
+      {/* Topo do Gráfico: Título, Métricas Rápidas e Filtros */}
+      <div className="admin-grafico-topo">
+        <div className="admin-grafico-info">
+          <div className="admin-grafico-badge-wrap">
+            <span className="admin-grafico-badge-radar">
+              <span className="admin-grafico-radar-pulse" />
+              FLUXO FINANCEIRO
+            </span>
+            <span className="admin-grafico-badge-sub">MÉTRICA ANALÍTICA</span>
+          </div>
+          <h2 className="admin-grafico-titulo">Desempenho de Receitas da Plataforma</h2>
+          <p className="admin-grafico-descricao">
+            Evolução temporal da taxa retida (<span className="admin-grafico-destaque-campo">taxa_retida</span>) agrupada por data de registro
+          </p>
+        </div>
+
+        {/* Botões de Filtros Dinâmicos */}
+        <div className="admin-grafico-filtros-wrap">
+          <span className="admin-grafico-filtro-label">Período:</span>
+          <div className="admin-grafico-filtros" role="group" aria-label="Filtro de período do gráfico">
+            {FILTROS_GRAFICO.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`admin-grafico-btn-filtro ${filtro === f.id ? 'admin-grafico-btn-filtro--ativo' : ''}`}
+                onClick={() => setFiltro(f.id)}
+              >
+                {f.rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de Resumo Dinâmico do Período */}
+      <div className="admin-grafico-resumo-bar">
+        <div className="admin-grafico-kpi">
+          <span className="admin-grafico-kpi-label">Receita Retida no Período</span>
+          <strong className="admin-grafico-kpi-valor neon-roxo">
+            {formatarMoeda(totalReceitaPeriodo)}
+          </strong>
+        </div>
+        <div className="admin-grafico-kpi-divisor" />
+        <div className="admin-grafico-kpi">
+          <span className="admin-grafico-kpi-label">Média Diária Estimada</span>
+          <strong className="admin-grafico-kpi-valor">
+            {formatarMoeda(mediaDiaria)}
+          </strong>
+        </div>
+        <div className="admin-grafico-kpi-divisor" />
+        <div className="admin-grafico-kpi">
+          <span className="admin-grafico-kpi-label">Volume Bruto Movimentado</span>
+          <strong className="admin-grafico-kpi-valor">
+            {formatarMoeda(totalBrutoPeriodo)}
+          </strong>
+        </div>
+        <div className="admin-grafico-kpi-divisor" />
+        <div className="admin-grafico-kpi">
+          <span className="admin-grafico-kpi-label">Transações Computadas</span>
+          <strong className="admin-grafico-kpi-valor">
+            {totalTransacoesPeriodo}
+          </strong>
+        </div>
+      </div>
+
+      {/* Área do Gráfico */}
+      <div className="admin-grafico-area">
+        {loading ? (
+          <div className="admin-grafico-estado">
+            <div className="admin-spinner" />
+            <span>Processando dados analíticos do gráfico...</span>
+          </div>
+        ) : dadosGrafico.length === 0 ? (
+          <div className="admin-grafico-estado admin-grafico-estado--vazio">
+            <span className="admin-grafico-vazio-aviso">Sem dados disponíveis</span>
+            <p>Nenhuma transação financeira encontrada para o período selecionado.</p>
+          </div>
+        ) : (
+          <div className="admin-grafico-container-canvas">
+            {!temDadosReais && (
+              <div className="admin-grafico-aviso-zero">
+                <span>Nenhuma retenção registrada no intervalo selecionado (curva zerada).</span>
+              </div>
+            )}
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart
+                data={dadosGrafico}
+                margin={{ top: 18, right: 24, left: 16, bottom: 8 }}
+              >
+                <defs>
+                  <linearGradient id="corGradienteReceita" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#b565f2" stopOpacity={0.45} />
+                    <stop offset="50%" stopColor="#b565f2" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#b565f2" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  stroke="rgba(157, 78, 221, 0.12)"
+                  strokeDasharray="4 4"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="dataExibicao"
+                  stroke="rgba(168, 162, 185, 0.35)"
+                  tick={{ fill: '#a8a2b9', fontSize: 11, fontFamily: 'inherit' }}
+                  tickLine={{ stroke: 'rgba(157, 78, 221, 0.25)' }}
+                  axisLine={{ stroke: 'rgba(157, 78, 221, 0.25)' }}
+                  minTickGap={20}
+                  dy={6}
+                />
+                <YAxis
+                  stroke="rgba(168, 162, 185, 0.35)"
+                  tick={{ fill: '#a8a2b9', fontSize: 11, fontFamily: 'inherit' }}
+                  tickLine={{ stroke: 'rgba(157, 78, 221, 0.25)' }}
+                  axisLine={{ stroke: 'rgba(157, 78, 221, 0.25)' }}
+                  tickFormatter={(val) => `R$ ${val.toLocaleString('pt-BR')}`}
+                  width={80}
+                  domain={[0, 'auto']}
+                />
+                <Tooltip
+                  content={<CustomTooltipGrafico />}
+                  cursor={{
+                    stroke: 'rgba(181, 101, 242, 0.55)',
+                    strokeWidth: 1.5,
+                    strokeDasharray: '4 4',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="valor"
+                  name="Taxa Retida"
+                  stroke="#b565f2"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#corGradienteReceita)"
+                  activeDot={{
+                    r: 6,
+                    fill: '#b565f2',
+                    stroke: '#0e081c',
+                    strokeWidth: 2,
+                  }}
+                  dot={
+                    dadosGrafico.length <= 15
+                      ? { r: 3.5, fill: '#b565f2', stroke: '#0e081c', strokeWidth: 1.5 }
+                      : false
+                  }
+                  isAnimationActive={true}
+                  animationDuration={800}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ----- Seção Financeira Restrita (Receitas & Transações) -----
+const CACHE_ADMIN_TRANSACOES = 'cache_admin_transacoes_v1';
+const CACHE_ADMIN_SALDO = 'cache_admin_saldo_v1';
+const CACHE_ADMIN_PRINCIPAL = 'cache_admin_principal_v1';
+
 function SecaoFinanceiro({ usuarioLogado }) {
-  const [transacoes, setTransacoes] = useState([]);
-  const [saldoAdmin, setSaldoAdmin] = useState(0);
-  const [adminPrincipal, setAdminPrincipal] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [transacoes, setTransacoes] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_ADMIN_TRANSACOES);
+      return salvo ? JSON.parse(salvo) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [saldoAdmin, setSaldoAdmin] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_ADMIN_SALDO);
+      return salvo ? Number(salvo) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [adminPrincipal, setAdminPrincipal] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_ADMIN_PRINCIPAL);
+      return salvo ? JSON.parse(salvo) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_ADMIN_TRANSACOES);
+      return !salvo || JSON.parse(salvo).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
 
   const carregarFinanceiro = async () => {
-    setLoading(true);
+    setLoading((atual) => (transacoes.length === 0 ? true : atual));
     setErro('');
 
     try {
@@ -522,24 +1025,32 @@ function SecaoFinanceiro({ usuarioLogado }) {
       if (!adminErr && adminData) {
         setSaldoAdmin(Number(adminData.saldo) || 0);
         setAdminPrincipal(adminData);
+        try {
+          localStorage.setItem(CACHE_ADMIN_SALDO, String(Number(adminData.saldo) || 0));
+          localStorage.setItem(CACHE_ADMIN_PRINCIPAL, JSON.stringify(adminData));
+        } catch {}
       }
 
-      // 2. Histórico de Transações: consumindo a tabela transacoes_plataforma com join relacional no torneio
+      // 2. Histórico de Transações: consulta cirúrgica com join relacional e limite
       let res = await supabase
         .from('transacoes_plataforma')
-        .select('*, torneio:id_torneio(id, nome)')
-        .order('id', { ascending: false });
+        .select('id, id_torneio, valor_bruto, taxa_retida, valor_liquido, status, registro, torneio:id_torneio(id, nome)')
+        .order('id', { ascending: false })
+        .limit(150);
 
       if (res.error) {
         console.warn('Fallback para busca simples em transacoes_plataforma:', res.error);
         res = await supabase
           .from('transacoes_plataforma')
-          .select('*')
-          .order('id', { ascending: false });
+          .select('id, id_torneio, valor_bruto, taxa_retida, valor_liquido, status, registro')
+          .order('id', { ascending: false })
+          .limit(150);
       }
 
       if (res.error) {
-        setErro(res.error.message);
+        if (transacoes.length === 0) {
+          setErro(res.error.message);
+        }
       } else {
         let lista = res.data || [];
 
@@ -562,10 +1073,15 @@ function SecaoFinanceiro({ usuarioLogado }) {
         }
 
         setTransacoes(lista);
+        try {
+          localStorage.setItem(CACHE_ADMIN_TRANSACOES, JSON.stringify(lista));
+        } catch {}
       }
     } catch (err) {
       console.error('Erro ao carregar dados financeiros:', err);
-      setErro('Não foi possível carregar os dados financeiros.');
+      if (transacoes.length === 0) {
+        setErro('Não foi possível carregar os dados financeiros.');
+      }
     } finally {
       setLoading(false);
     }
@@ -713,6 +1229,9 @@ function SecaoFinanceiro({ usuarioLogado }) {
         </div>
       </div>
 
+      {/* Gráfico Analítico de Desempenho de Receitas */}
+      <GraficoReceitas transacoes={transacoes} loading={loading} />
+
       {/* Histórico de Transações */}
       <div className="admin-secao admin-secao-financeiro">
         <div className="admin-secao-header static">
@@ -794,7 +1313,7 @@ function SecaoFinanceiro({ usuarioLogado }) {
                           <small className="admin-subdado">ID #{t.id_torneio}</small>
                         )}
                       </td>
-                      <td>{formatarDataHora(t.registro || t.created_at)}</td>
+                      <td>{formatarDataHora(t.registro)}</td>
                       <td>
                         <strong>{formatarMoeda(t.valor_bruto)}</strong>
                       </td>

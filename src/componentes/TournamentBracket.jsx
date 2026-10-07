@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 import '../css/bracket.css'
 import { useAlerta } from './AlertaModal'
 
-export default function TournamentBracket({ torneioId, podeEditar, onDeclararVencedorTorneio }) {
+export default function TournamentBracket({ torneioId, podeEditar, onDeclararVencedorTorneio, timeCampeao }) {
   const [partidas, setPartidas] = useState([])
   const [loading, setLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -15,11 +15,7 @@ export default function TournamentBracket({ torneioId, podeEditar, onDeclararVen
     try {
       const { data, error } = await supabase
         .from('partidas')
-        .select(`
-          *,
-          jogador1:times!fk_partidas_time1(id, nome, tag),
-          jogador2:times!fk_partidas_time2(id, nome, tag)
-        `)
+        .select('*, jogador1:times!fk_partidas_time1(id, nome, tag), jogador2:times!fk_partidas_time2(id, nome, tag)')
         .eq('torneio_id', torneioId)
         .order('rodada', { ascending: true })
         .order('posicao', { ascending: true })
@@ -144,12 +140,21 @@ export default function TournamentBracket({ torneioId, podeEditar, onDeclararVen
 
   const getNomeFase = (rIndex) => {
     const n = partidas.filter(p => p.rodada === rIndex).length
-    if (n === 1) return 'Final'
+    if (n === 1) return 'Grande Final'
     if (n === 2) return 'Semifinais'
     if (n === 4) return 'Quartas de Final'
     if (n === 8) return 'Oitavas de Final'
     return `Rodada ${rIndex}`
   }
+
+  // Detecta o campeão da chave
+  const partidaFinal = partidas.find(p => !p.proxima_partida_id)
+  const idVencedorFinal = timeCampeao?.id || (partidaFinal?.status === 'Finalizada' ? partidaFinal?.id_vencedor : null)
+  const campeao = timeCampeao || (idVencedorFinal ? (
+    partidaFinal?.jogador1?.id === idVencedorFinal
+      ? partidaFinal.jogador1
+      : (partidaFinal?.jogador2?.id === idVencedorFinal ? partidaFinal.jogador2 : { id: idVencedorFinal, nome: `Time #${idVencedorFinal}` })
+  ) : null)
 
   if (loading) return <div className="bracket-loading">Carregando chaveamento...</div>
   if (partidas.length === 0) return <div className="bracket-empty">A chave do torneio ainda não foi gerada.</div>
@@ -178,6 +183,33 @@ export default function TournamentBracket({ torneioId, podeEditar, onDeclararVen
         <span>{isFullscreen ? 'Minimizar' : 'Expandir'}</span>
       </button>
 
+      {/* Faixa/Card Imersivo de Celebração de Vitória */}
+      {campeao && (
+        <div className="bracket-celebracao-vencedor">
+          <div className="bracket-celebracao-aura" />
+          <div className="bracket-celebracao-header-badge">
+            <span className="bracket-celebracao-ping" />
+            TORNEIO FINALIZADO // CAMPEÃO OFICIAL
+          </div>
+          <div className="bracket-celebracao-corpo">
+            <div className="bracket-celebracao-trofeu-box">
+              <span className="bracket-celebracao-trofeu">🏆</span>
+            </div>
+            <div className="bracket-celebracao-titulos">
+              <h2 className="bracket-celebracao-texto-principal">
+                🏆 VENCEDOR: <span className="bracket-celebracao-nome-time">{campeao.nome}</span>!
+              </h2>
+              {campeao.tag && (
+                <span className="bracket-celebracao-tag">[{campeao.tag}]</span>
+              )}
+              <p className="bracket-celebracao-sub">
+                Equipe soberana no campeonato! Vitória conquistada na Grande Final e registrada na história.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="tournament-bracket">
         {rodadas.map((rIndex) => {
           const partidasRodada = partidas.filter(p => p.rodada === rIndex)
@@ -186,27 +218,95 @@ export default function TournamentBracket({ torneioId, podeEditar, onDeclararVen
             <div key={rIndex} className="bracket-rodada">
               <h3 className="bracket-rodada-titulo">{nomeFase}</h3>
               <div className="bracket-partidas-coluna">
-                {partidasRodada.map((p) => (
-                  <div key={p.id} className="bracket-partida-container">
-                    <div className="bracket-partida">
-                      <div
-                        className={`bracket-time ${p.id_vencedor === p.time1_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time1_id && !p.id_vencedor ? 'clicavel' : ''}`}
-                        onClick={() => handleDeclararVencedor(p, p.time1_id)}
-                      >
-                        <span className="time-tag">{p.jogador1?.tag || (p.time1_id ? 'TAG' : 'TBD')}</span>
-                        <span className="time-nome">{p.jogador1?.nome || (p.time1_id ? 'Time ' + String(p.time1_id).slice(0, 4) : 'A definir')}</span>
-                      </div>
-                      <div className="bracket-divisor"></div>
-                      <div
-                        className={`bracket-time ${p.id_vencedor === p.time2_id && p.id_vencedor ? 'vencedor' : ''} ${podeEditar && p.time2_id && !p.id_vencedor ? 'clicavel' : ''}`}
-                        onClick={() => handleDeclararVencedor(p, p.time2_id)}
-                      >
-                        <span className="time-tag">{p.jogador2?.tag || (p.time2_id ? 'TAG' : 'TBD')}</span>
-                        <span className="time-nome">{p.jogador2?.nome || (p.time2_id ? 'Time ' + String(p.time2_id).slice(0, 4) : 'A definir')}</span>
+                {partidasRodada.map((p) => {
+                  const time1Vencedor = Boolean(p.id_vencedor && p.id_vencedor === p.time1_id)
+                  const time1Derrotado = Boolean(p.id_vencedor && p.time1_id && p.id_vencedor !== p.time1_id)
+                  const time2Vencedor = Boolean(p.id_vencedor && p.id_vencedor === p.time2_id)
+                  const time2Derrotado = Boolean(p.id_vencedor && p.time2_id && p.id_vencedor !== p.time2_id)
+                  const ehFinal = !p.proxima_partida_id
+                  const matchFinalizada = p.status === 'Finalizada'
+
+                  return (
+                    <div key={p.id} className="bracket-partida-container">
+                      <div className={`bracket-partida ${ehFinal ? 'bracket-partida--final' : ''} ${matchFinalizada ? 'bracket-partida--concluida' : ''}`}>
+                        <div className="bracket-partida-meta">
+                          <span className="bracket-partida-id">#{p.posicao || p.id}</span>
+                          <span className={`bracket-partida-badge ${matchFinalizada ? 'status-finalizada' : (p.time1_id && p.time2_id ? 'status-pronto' : 'status-aguardando')}`}>
+                            {ehFinal ? (matchFinalizada ? 'GRANDE FINAL ENCERRADA' : 'GRANDE FINAL') : (matchFinalizada ? 'CONCLUÍDA' : (p.time1_id && p.time2_id ? 'EM DISPUTA' : 'A DEFINIR'))}
+                          </span>
+                        </div>
+
+                        {/* Slot Time 1 */}
+                        <div
+                          className={`bracket-time ${time1Vencedor ? 'vencedor' : ''} ${time1Derrotado ? 'derrotado' : ''} ${podeEditar && p.time1_id && !p.id_vencedor ? 'clicavel' : ''}`}
+                          onClick={() => handleDeclararVencedor(p, p.time1_id)}
+                          title={podeEditar && p.time1_id && !p.id_vencedor ? 'Clique para declarar vitória deste time' : (p.jogador1?.nome || '')}
+                        >
+                          <div className="bracket-time-info">
+                            <span className={`time-tag ${p.time1_id ? 'time-tag--ativo' : 'time-tag--tbd'} ${time1Vencedor ? 'time-tag--vencedor' : ''}`}>
+                              {p.jogador1?.tag || (p.time1_id ? 'TAG' : 'TBD')}
+                            </span>
+                            <span className="time-nome">
+                              {p.jogador1?.nome || (p.time1_id ? 'Time ' + String(p.time1_id).slice(0, 4) : 'A definir')}
+                            </span>
+                          </div>
+
+                          <div className="bracket-time-status">
+                            {time1Vencedor && (
+                              <span className="time-badge-win" title="Vencedor da partida">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <span>WIN</span>
+                              </span>
+                            )}
+                            {time1Derrotado && (
+                              <span className="time-badge-out">OUT</span>
+                            )}
+                            {podeEditar && p.time1_id && !p.id_vencedor && (
+                              <span className="time-badge-acao">Avançar</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="bracket-divisor" />
+
+                        {/* Slot Time 2 */}
+                        <div
+                          className={`bracket-time ${time2Vencedor ? 'vencedor' : ''} ${time2Derrotado ? 'derrotado' : ''} ${podeEditar && p.time2_id && !p.id_vencedor ? 'clicavel' : ''}`}
+                          onClick={() => handleDeclararVencedor(p, p.time2_id)}
+                          title={podeEditar && p.time2_id && !p.id_vencedor ? 'Clique para declarar vitória deste time' : (p.jogador2?.nome || '')}
+                        >
+                          <div className="bracket-time-info">
+                            <span className={`time-tag ${p.time2_id ? 'time-tag--ativo' : 'time-tag--tbd'} ${time2Vencedor ? 'time-tag--vencedor' : ''}`}>
+                              {p.jogador2?.tag || (p.time2_id ? 'TAG' : 'TBD')}
+                            </span>
+                            <span className="time-nome">
+                              {p.jogador2?.nome || (p.time2_id ? 'Time ' + String(p.time2_id).slice(0, 4) : 'A definir')}
+                            </span>
+                          </div>
+
+                          <div className="bracket-time-status">
+                            {time2Vencedor && (
+                              <span className="time-badge-win" title="Vencedor da partida">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <span>WIN</span>
+                              </span>
+                            )}
+                            {time2Derrotado && (
+                              <span className="time-badge-out">OUT</span>
+                            )}
+                            {podeEditar && p.time2_id && !p.id_vencedor && (
+                              <span className="time-badge-acao">Avançar</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )

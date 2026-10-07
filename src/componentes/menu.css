@@ -981,6 +981,26 @@
   font-style: italic;
 }
 
+/* Seções de busca rápida */
+.social-busca-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.social-busca-secao-titulo {
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #b565f2;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 6px;
+  background: rgba(181, 101, 242, 0.08);
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+
 /* Item de amigo no painel */
 .social-amigo-item {
   display: flex;

@@ -1009,3 +1009,148 @@
     margin: 0;
     line-height: 1.1;
 }
+
+/* ---- Extrato / Histórico de Transações da Carteira ---- */
+#perfil-page .perfil-extrato-btn-atualizar {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(181, 101, 242, 0.3);
+    border-radius: 6px;
+    color: var(--roxo-claro);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#perfil-page .perfil-extrato-btn-atualizar:hover:not(:disabled) {
+    background: rgba(181, 101, 242, 0.15);
+    border-color: rgba(181, 101, 242, 0.6);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(181, 101, 242, 0.2);
+}
+
+#perfil-page .perfil-extrato-btn-atualizar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#perfil-page .perfil-extrato-vazio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 36px 20px;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    text-align: center;
+}
+
+#perfil-page .perfil-extrato-tabela-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.015);
+    -webkit-overflow-scrolling: touch;
+}
+
+#perfil-page .perfil-extrato-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+#perfil-page .perfil-extrato-tabela th {
+    padding: 14px 18px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 10, 28, 0.5);
+}
+
+#perfil-page .perfil-extrato-tabela td {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+    vertical-align: middle;
+}
+
+#perfil-page .perfil-extrato-tabela tbody tr:last-child td {
+    border-bottom: none;
+}
+
+#perfil-page .perfil-extrato-tabela tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+#perfil-page .perfil-extrato-tabela tbody tr:hover {
+    background: rgba(140, 82, 255, 0.04);
+}
+
+#perfil-page .perfil-extrato-td-data {
+    color: var(--texto-secundario);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+#perfil-page .perfil-extrato-td-descricao {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+#perfil-page .perfil-extrato-td-valor {
+    text-align: right;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
+}
+
+#perfil-page .perfil-extrato-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#perfil-page .perfil-extrato-badge--entrada {
+    background: rgba(74, 222, 128, 0.12);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+#perfil-page .perfil-extrato-badge--saida {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+#perfil-page .perfil-extrato-valor--entrada {
+    color: #4ade80;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+}
+
+#perfil-page .perfil-extrato-valor--saida {
+    color: #f87171;
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.2);
+}
+
+@media (max-width: 600px) {
+    #perfil-page .perfil-extrato-tabela th,
+    #perfil-page .perfil-extrato-tabela td {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+}

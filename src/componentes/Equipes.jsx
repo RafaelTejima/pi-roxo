@@ -12,22 +12,39 @@ function resolverLogo(logo) {
   return `/${caminho.replace(/^(\.\/)+/, '').replace(/^\/+/, '')}`;
 }
 
+const CACHE_KEY_EQUIPES = 'cache_equipes_v1';
+
 export default function Equipes() {
-  const [equipes, setEquipes] = useState([]);
-  const [carregando, setCarregando] = useState(true);
+  const [equipes, setEquipes] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_KEY_EQUIPES);
+      return salvo ? JSON.parse(salvo) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [carregando, setCarregando] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_KEY_EQUIPES);
+      return !salvo || JSON.parse(salvo).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
   const montadoRef = useRef(true);
 
   const carregarEquipes = useCallback(async () => {
-    setCarregando(true);
+    // Apenas marca carregando se não tiver nada em cache
+    setCarregando((atual) => (equipes.length === 0 ? true : atual));
     setErro('');
 
     let equipesSupabase = [];
     let carregouDoBanco = false;
     let falhaConsulta = false;
 
-    // 1. Sempre buscar a lista mais atualizada diretamente do Supabase via JOIN com times_integrantes
+    // 1. Sempre buscar a lista mais atualizada diretamente do Supabase via JOIN com times_integrantes (busca cirúrgica sem overfetching)
     try {
       if (supabase) {
         let timesData = null;
@@ -36,18 +53,13 @@ export default function Equipes() {
         try {
           const { data: timesComJoin, error: erroJoin } = await supabase
             .from('times')
-            .select(`
-              *,
-              times_integrantes (
-                id,
-                id_usuario,
-                funcao,
-                usuarios ( id, nome, nome_usuario )
-              )
-            `)
-            .order('registro', { ascending: false });
+            .select('id, nome, tag, logo, descricao, id_capitao, registro, times_integrantes(id, id_usuario, funcao, usuarios(id, nome, nome_usuario))')
+            .order('registro', { ascending: false })
+            .limit(60);
 
-          if (!erroJoin && timesComJoin) {
+          if (erroJoin) {
+            console.error('ERRO SUPABASE [Times - Join]:', erroJoin.message, erroJoin.details, erroJoin.hint, erroJoin.code);
+          } else if (Array.isArray(timesComJoin)) {
             timesData = timesComJoin;
             buscaJoinSucesso = true;
           }
@@ -58,10 +70,12 @@ export default function Equipes() {
         if (buscaJoinSucesso && timesData) {
           carregouDoBanco = true;
           equipesSupabase = timesData.map((time) => {
-            const integrantesArray = time.times_integrantes || [];
+            const integrantesArray = Array.isArray(time.times_integrantes) ? time.times_integrantes : [];
             const capitaoObj = integrantesArray.find((ti) => ti.funcao === 'capitao');
             const capUser = Array.isArray(capitaoObj?.usuarios) ? capitaoObj.usuarios[0] : capitaoObj?.usuarios;
-            const capitaoNome = capUser?.nome_usuario || capUser?.nome || time.capitao || 'Não informado';
+            const capPorId = !capUser && time.id_capitao ? integrantesArray.find((ti) => String(ti.id_usuario) === String(time.id_capitao)) : null;
+            const capPorIdUser = Array.isArray(capPorId?.usuarios) ? capPorId.usuarios[0] : capPorId?.usuarios;
+            const capitaoNome = capUser?.nome_usuario || capUser?.nome || capPorIdUser?.nome_usuario || capPorIdUser?.nome || 'Não informado';
 
             return {
               ...time,
@@ -78,18 +92,21 @@ export default function Equipes() {
             };
           });
         } else {
-          // Fallback estruturado com times_integrantes
+          // Fallback estruturado com times_integrantes e limite cirúrgico
           const { data: times, error } = await supabase
             .from('times')
-            .select('*')
-            .order('registro', { ascending: false });
+            .select('id, nome, tag, logo, descricao, id_capitao, registro')
+            .order('registro', { ascending: false })
+            .limit(60);
 
-          if (!error && times !== null) {
+          if (error) {
+            console.error('ERRO SUPABASE [Times - Fallback]:', error.message, error.details, error.hint, error.code);
+          } else if (Array.isArray(times)) {
             carregouDoBanco = true;
             if (times.length > 0) {
-              const idsTimes = times.map((t) => t.id);
+              const idsTimes = times.map((t) => t.id).filter(Boolean);
 
-              const { data: integrantes } = await supabase
+              const { data: integrantes, error: erroIntegrantes } = await supabase
                 .from('times_integrantes')
                 .select(`
                   id,
@@ -100,38 +117,72 @@ export default function Equipes() {
                 `)
                 .in('id_time', idsTimes);
 
+              if (erroIntegrantes) {
+                console.warn('ERRO SUPABASE [Times - Integrantes Fallback]:', erroIntegrantes.message, erroIntegrantes.details, erroIntegrantes.hint);
+              }
+
+              const listaIntegrantes = Array.isArray(integrantes) ? integrantes : [];
+
               equipesSupabase = times.map((time) => {
-                const membrosDesteTime = (integrantes || []).filter(
+                const membrosDesteTime = listaIntegrantes.filter(
                   (i) => String(i.id_time) === String(time.id)
                 );
                 const cap = membrosDesteTime.find((m) => m.funcao === 'capitao');
                 const u = Array.isArray(cap?.usuarios) ? cap.usuarios[0] : cap?.usuarios;
-                const capitaoNome = u?.nome_usuario || u?.nome || time.capitao || 'Não informado';
+                const capPorId = !u && time.id_capitao ? membrosDesteTime.find((m) => String(m.id_usuario) === String(time.id_capitao)) : null;
+                const uPorId = Array.isArray(capPorId?.usuarios) ? capPorId.usuarios[0] : capPorId?.usuarios;
+                const capitaoNome = u?.nome_usuario || u?.nome || uPorId?.nome_usuario || uPorId?.nome || 'Não informado';
 
                 return {
                   ...time,
                   capitaoNome,
-                  totalIntegrantes: membrosDesteTime.length || 1
+                  totalIntegrantes: membrosDesteTime.length || 1,
+                  jogadores: membrosDesteTime.map((ti) => {
+                    const usr = Array.isArray(ti.usuarios) ? ti.usuarios[0] : ti.usuarios;
+                    return {
+                      id: ti.id_usuario,
+                      nome: usr?.nome_usuario || usr?.nome || 'Jogador',
+                      funcao: ti.funcao
+                    };
+                  })
                 };
               });
+            } else {
+              equipesSupabase = [];
             }
           }
         }
       }
     } catch (err) {
-      console.error('Falha ao carregar equipes do Supabase:', err);
+      console.error('ERRO SUPABASE [Times - Excecao]:', err.message || err);
       falhaConsulta = true;
-      setErro('Não foi possível carregar as equipes. Tente novamente mais tarde.');
+      if (equipes.length === 0) {
+        setErro('Não foi possível carregar as equipes. Tente novamente mais tarde.');
+      }
     }
 
     if (!montadoRef.current) return;
 
-    if (!carregouDoBanco && !falhaConsulta) {
+    if (equipesSupabase.length > 0) {
+      setEquipes(equipesSupabase);
+      try {
+        localStorage.setItem(CACHE_KEY_EQUIPES, JSON.stringify(equipesSupabase));
+      } catch (e) {
+        console.warn('Falha ao gravar cache de equipes:', e);
+      }
+      setErro('');
+    } else if (carregouDoBanco && equipesSupabase.length === 0) {
+      setEquipes([]);
+      try {
+        localStorage.setItem(CACHE_KEY_EQUIPES, JSON.stringify([]));
+      } catch {}
+      setErro('');
+    } else if (!carregouDoBanco && !falhaConsulta && equipes.length === 0) {
       setErro('Não foi possível carregar as equipes. Tente novamente mais tarde.');
     }
-    setEquipes(equipesSupabase);
+
     setCarregando(false);
-  }, []);
+  }, [equipes.length]);
 
   useEffect(() => {
     montadoRef.current = true;
@@ -163,11 +214,15 @@ export default function Equipes() {
 
   const termoBusca = busca.trim().toLowerCase();
   const equipesFiltradas = termoBusca
-    ? equipes.filter((equipe) =>
-        [equipe.nome, equipe.tag, equipe.capitaoNome, equipe.capitao]
+    ? equipes.filter((equipe) => {
+        const matchTime = [equipe.nome, equipe.tag, equipe.capitaoNome, equipe.capitao]
           .filter(Boolean)
-          .some((campo) => campo.toLowerCase().includes(termoBusca))
-      )
+          .some((campo) => String(campo).toLowerCase().includes(termoBusca));
+        const matchJogadores = Array.isArray(equipe.jogadores) && equipe.jogadores.some((j) =>
+          String(j.nome || '').toLowerCase().includes(termoBusca)
+        );
+        return matchTime || matchJogadores;
+      })
     : equipes;
 
   return (
@@ -188,7 +243,7 @@ export default function Equipes() {
             className="equipes-busca-input"
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
-            placeholder="Pesquisar por nome, tag ou capitão..."
+            placeholder="Pesquisar por nome, tag, capitão ou jogador..."
           />
         </div>
 
@@ -213,6 +268,7 @@ export default function Equipes() {
                       <img
                         src={resolverLogo(equipe.logo)}
                         alt={`Logo da equipe ${equipe.nome}`}
+                        loading="lazy"
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(event) => { event.currentTarget.style.display = 'none'; }}
                       />
@@ -260,6 +316,7 @@ export default function Equipes() {
         <img 
           src={evaPersonagemImg} 
           alt="Agente EVA" 
+          loading="lazy"
           className="equipes-personagem-img" 
         />
       </div>

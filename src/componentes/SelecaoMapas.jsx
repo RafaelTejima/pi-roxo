@@ -272,7 +272,7 @@ export default function SelecaoMapas() {
                   aria-checked={selecionado}
                   onClick={() => selecionarMapa(mapa)}
                 >
-                  <img src={mapa.imagem} alt={`Imagem ilustrativa do mapa ${mapa.nome}`} />
+                  <img src={mapa.imagem} alt={`Imagem ilustrativa do mapa ${mapa.nome}`} loading="lazy" />
                   <span className="mapa-card-overlay" />
                   <span className="mapa-card-topo">
                     <span>{mapa.categoria}</span>
@@ -298,7 +298,7 @@ export default function SelecaoMapas() {
         {mapaSelecionado && (
           <section className="mapa-detalhes" aria-labelledby="titulo-detalhes-mapa">
             <div className="mapa-detalhes-imagem">
-              <img src={mapaSelecionado.imagem} alt={`Destaque do mapa ${mapaSelecionado.nome}`} />
+              <img src={mapaSelecionado.imagem} alt={`Destaque do mapa ${mapaSelecionado.nome}`} loading="lazy" />
               <span>MAPA SELECIONADO</span>
             </div>
             <div className="mapa-detalhes-conteudo">

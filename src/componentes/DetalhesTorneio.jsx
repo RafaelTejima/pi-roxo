@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../css/torneios.css'
+import '../css/bracket.css'
 import AuroraBackground from './AuroraBackground'
 import { useAlerta } from './AlertaModal'
 import TournamentBracket from './TournamentBracket'
@@ -22,9 +23,17 @@ function formatPrize(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0)
 }
 
-function tournamentStatus(status) {
-  if (status === true) return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status' }
-  if (status === false) return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
+function tournamentStatus(status, idTimeVencedor) {
+  if (idTimeVencedor) {
+    return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
+  }
+  const isStatusFechado = status === false || status === 'false' || status === 0 || status === '0'
+  if (isStatusFechado) {
+    return { label: 'EM ANDAMENTO', classe: 'tournament-status tournament-status--live' }
+  }
+  if (status === true || status === 'true' || status === 1 || status === '1') {
+    return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status tournament-status--open' }
+  }
   return { label: 'STATUS NÃO INFORMADO', classe: 'tournament-status' }
 }
 
@@ -478,10 +487,10 @@ export default function DetalhesTorneio() {
     }
   }
 
-  // Busca times para o painel admin (com debounce simples)
+  // Busca times para o painel admin (reativo imediatamente na primeira letra)
   async function handleBuscaAdmin(termo) {
     setBuscaTimeAdmin(termo)
-    if (termo.trim().length < 2) { setResultadosAdmin([]); return }
+    if (!termo.trim()) { setResultadosAdmin([]); return }
     setBuscandoAdmin(true)
     try {
       const { data } = await supabase
@@ -563,7 +572,7 @@ export default function DetalhesTorneio() {
   if (erro) return <main className="tournament-page-state error"><p>{erro}</p><Link to="/torneios">Voltar para torneios</Link></main>
   if (!tournament) return <main className="tournament-page-state"><h1>Torneio não encontrado</h1><Link to="/torneios">Voltar para torneios</Link></main>
 
-  const info = tournamentStatus(tournament.status)
+  const info = tournamentStatus(tournament.status, tournament.id_time_vencedor)
   const inscricoesAbertas = tournament.status === true
 
   let textoBotao = 'Inscrever-se'
@@ -583,6 +592,7 @@ export default function DetalhesTorneio() {
           <img
             src="https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/logo_cs2_header.svg"
             alt="Counter-Strike 2"
+            loading="lazy"
           />
         </div>
         <div>
@@ -599,9 +609,28 @@ export default function DetalhesTorneio() {
         <div><small>FORMATO</small><strong>{tournament.formato || 'Não informado'}</strong></div>
       </div>
       {tournament.id_time_vencedor && (
-        <section className="details-rules details-campeao">
-          <h2>Campeão</h2>
-          <p>{timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.nome || `Time #${tournament.id_time_vencedor}`} venceu este torneio e o prêmio já foi dividido entre os integrantes.</p>
+        <section className="bracket-celebracao-vencedor details-campeao-hero">
+          <div className="bracket-celebracao-aura" />
+          <div className="bracket-celebracao-header-badge">
+            <span className="bracket-celebracao-ping" />
+            CAMPEONATO CONCLUÍDO // VENCEDOR OFICIAL
+          </div>
+          <div className="bracket-celebracao-corpo">
+            <div className="bracket-celebracao-trofeu-box">
+              <span className="bracket-celebracao-trofeu">🏆</span>
+            </div>
+            <div className="bracket-celebracao-titulos">
+              <h2 className="bracket-celebracao-texto-principal">
+                🏆 VENCEDOR: <span className="bracket-celebracao-nome-time">{timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.nome || `Time #${tournament.id_time_vencedor}`}</span>!
+              </h2>
+              {timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.tag && (
+                <span className="bracket-celebracao-tag">[{timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.tag}]</span>
+              )}
+              <p className="bracket-celebracao-descricao">
+                {timesGrupo.find((time) => time.id === tournament.id_time_vencedor)?.nome || `Time #${tournament.id_time_vencedor}`} conquistou a glória máxima! O prêmio de {formatPrize(premioAcumulado)} foi creditado aos integrantes da line-up.
+              </p>
+            </div>
+          </div>
         </section>
       )}
 
@@ -690,6 +719,7 @@ export default function DetalhesTorneio() {
           torneioId={id} 
           podeEditar={podeEditar} 
           onDeclararVencedorTorneio={handleDeclararVencedor} 
+          timeCampeao={timesGrupo.find((time) => time.id === tournament.id_time_vencedor) || (tournament.id_time_vencedor ? { id: tournament.id_time_vencedor, nome: `Time #${tournament.id_time_vencedor}` } : null)}
         />
       </section>
 

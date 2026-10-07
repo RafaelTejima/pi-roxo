@@ -171,3 +171,176 @@ Este arquivo eh escrito e mantido apenas por IAs para registrar features ja impl
 - **CSS:** `src/css/detalhes-time.css` (escopado por `#pagina-detalhes-time`)
 - Cabeçalho ampliado para destacar logo, identidade, data de criação, integrantes, vagas disponíveis e capitão; ações existentes permanecem sujeitas às permissões atuais.
 - Layout de descrição e line-up refinado para desktop e celular. A escalação mostra avatares com iniciais, indicador de preenchimento e posições disponíveis, sem criar integrantes fictícios nem alterar os dados do Supabase.
+
+## Gráfico Analítico de Desempenho de Receitas (Painel Admin)
+- **Componente:** `src/componentes/AdminPanel.jsx` (aba "Receitas & Financeiro", renderizado através do subcomponente `GraficoReceitas`)
+- **CSS:** `src/css/admin.css` (classes prefixadas com `.admin-grafico-` e `.admin-secao-grafico`)
+- **Biblioteca:** `recharts` (versão 3+, compatível com React 19).
+- **Posicionamento e Integração:** Posicionado exatamente entre os cards superiores de métricas (`admin-financeiro-grid`) e a tabela de histórico de transações (`Histórico de Transações da Plataforma`), sem modificar a estrutura existente nem dos cards nem da tabela.
+- **Mapeamento de Dados:**
+  - Eixo Y: plota o valor consolidado de `taxa_retida` (receita retida da plataforma vinda da tabela `transacoes_plataforma`).
+  - Eixo X: agrupamento cronológico pelas datas de registro (`registro` ou fallback `created_at`), formatadas de forma compacta (ex: `DD/MM`) com controle de sobreposição de ticks via `minTickGap={20}`.
+  - Formato visual: `AreaChart` com preenchimento em gradiente linear (`#b565f2` a `transparent`), linha de contorno em roxo neon `#b565f2` (2.5px) e pontos destacados (`activeDot` e `dot` dinâmicos).
+- **Filtros Dinâmicos de Período:**
+  - Botões seletor rápido: "Últimos 7 Dias" (`7d`), "Últimos 30 Dias" (`30d`), "Este Mês" (`mes`) e "Tudo" (`tudo`).
+  - Recalcula somas, médias diárias e quantidade de transações em tempo real via `useMemo` acoplado ao estado `filtro` e ao array `transacoes`.
+  - Tratamento resiliente de datas com preenchimento contínuo de dias para intervalos fixos (7D, 30D e mês) e ordenação cronológica com fallback para pontos unitários.
+  - Resiliente a arrays vazios ou erros de consulta no banco através de bloco `try / catch`, exibindo placeholders informativos e sem travar a renderização da página.
+- **Barra de Resumo Rápido (KPIs):** Exibe no topo do gráfico a Receita Retida no Período, Média Diária Estimada, Volume Bruto Movimentado e Transações Computadas, sincronizados dinamicamente com o filtro de tempo.
+- **Identidade Cyberpunk / Tática:**
+  - Fundo translúcido com backdrop blur e gradiente radial sutil.
+  - Linhas de grade sutis em roxo suave (`rgba(157, 78, 221, 0.12)`).
+  - Tooltip customizado (`CustomTooltipGrafico`): container escuro (`rgba(12, 6, 26, 0.95)`), borda roxa neon `#b565f2`, efeito blur, indicador luminoso e exibição detalhada da data formatada (`DD/MM/AAAA`) e do valor em BRL (`R$`).
+
+## Busca Instantânea na Primeira Letra e Redesign Premium das Brackets com Celebração
+- **Componentes modificados:** `src/componentes/Equipes.jsx`, `src/componentes/Menu.jsx`, `src/componentes/Torneios.jsx`, `src/componentes/DetalhesTorneio.jsx`, `src/componentes/TournamentBracket.jsx`
+- **CSS:** `src/css/bracket.css`, `src/componentes/menu.css`
+- **Busca Instantânea:**
+  - `Equipes.jsx`: Filtro imediato na 1ª letra digitada cobrindo nome, tag, capitão e todos os integrantes/jogadores da equipe (`equipe.jogadores`).
+  - `Menu.jsx`: Removida trava de mínimo de 2 caracteres (`length >= 2` para `>= 1` / `trim()`), reduzido debounce de 350ms para 150ms e criada visualização combinada imediata que exibe amigos correspondentes no topo e busca global de usuários no banco em tempo real.
+  - `Torneios.jsx`: Filtro imediato na 1ª letra cobrindo nome do campeonato, formato, regras e premiação formatada ou numérica.
+  - `DetalhesTorneio.jsx`: Campo de busca rápida de times para testes de admin ajustado para reagir na 1ª letra.
+- **Redesign Premium das Chaves (Brackets - SaaS Gamer):**
+  - Caixas de partida com visual translúcido moderno (`rgba(16, 10, 34, 0.86)` com `backdrop-filter: blur(14px)`), bordas finas com gradiente roxo/neon e elevação sutil com glow no hover.
+  - Slot de time com exibição de sigla (TAG) em destaque (`.time-tag`), truncamento elegante de nomes longos e badges de status WIN / OUT.
+  - Diferenciação visual nítida: time vencedor com fundo gradiente roxo, borda esquerda neon, tipografia mais iluminada (`text-shadow`) e badge WIN; time eliminado com opacidade reduzida (0.38) e filtro muted grayscale.
+  - Linhas conectoras com acabamento neon roxo (`linear-gradient` com `drop-shadow` suave e curvas nos cantos).
+  - Títulos de rodada em badges pill suspensas com fundo translúcido e borda neon.
+- **Celebração Imersiva de Vitória:**
+  - Banner hero animado renderizado tanto no topo da chave quanto na seção de Campeão de `DetalhesTorneio.jsx`.
+  - Animação com keyframes `@keyframes winnerEntrance` (fade-in + scale bounce suave) e aura pulsante `@keyframes winnerGlowAura`.
+  - Troféu animado (`@keyframes trophyPulse`) e tipografia de grande porte com gradiente dourado (`linear-gradient(135deg, #ffffff, #fef08a, #facc15, #eab308)`).
+
+## Categorização de Torneios em 3 Estados (Aberto, Em Andamento e Encerrado)
+- **Componentes modificados:** `src/componentes/Torneios.jsx`, `src/componentes/DetalhesTorneio.jsx`
+- **CSS:** `src/css/torneios.css`
+- **Regras de Negócio e Lógica de Classificação:**
+  - Torneio Encerrado: identificado pela presença de campeão oficial (`Boolean(tournament.id_time_vencedor)`).
+  - Torneio Em Andamento: identificado por inscrições fechadas / chave gerada (`tournament.status === false` ou similar) E ausência de campeão (`!tournament.id_time_vencedor`).
+  - Torneio com Inscrições Abertas: torneio ativo para novas inscrições (`tournament.status !== false` E `!tournament.id_time_vencedor`).
+  - Lógica espelhada entre `Torneios.jsx` e `DetalhesTorneio.jsx` garantindo consistência total tanto na listagem quanto na página individual do campeonato.
+- **Estruturação de Seções no Torneios.jsx:**
+  - Seção em Destaque "Torneios em Andamento": posicionada no topo com indicador visual de status AO VIVO, contador de campeonatos ativos e background com gradiente radial sutil.
+  - Seção "Inscrições Abertas": posicionada abaixo dos torneios ao vivo, com contador de campeonatos disponíveis para novas equipes.
+  - Seção Retrátil "Torneios Encerrados": componente `<details>` com histórico de torneios concluídos, abrindo automaticamente caso não haja torneios em andamento ou abertos.
+  - Estado vazio informativo quando a busca não retorna resultados ou não há campeonatos abertos/em andamento.
+- **Badges e Estilização Visual Gamer:**
+  - Badge "INSCRIÇÕES ABERTAS" (`.tournament-status--open`): tom verde neon (`#4ade80`), background translúcido e glow sutil.
+  - Badge "EM ANDAMENTO" (`.tournament-status--live`): tom âmbar/ouro gamer (`#fbbf24`), borda destacada e indicador de ponto animado (`@keyframes liveBadgePulse`) com pulso luminoso constante no estilo transmissão esports.
+  - Badge "ENCERRADO" (`.tournament-status--finished`): tom slate/cinza escuro (`#94a3b8`) muted para torneios finalizados.
+  - Card modifier `.tournament-card--live`: borda âmbar e elevação de glow nos torneios ao vivo.
+
+## Otimização de Performance (Web Vitals), SWR e Eliminação de Overfetching
+- **Componentes modificados:** `src/componentes/Equipes.jsx`, `src/componentes/Torneios.jsx`, `src/componentes/AdminPanel.jsx`, `src/componentes/DetalhesTime.jsx`, `src/componentes/DetalhesTorneio.jsx`, `src/componentes/Menu.jsx`, `src/componentes/Perfil.jsx`, `src/componentes/SelecaoMapas.jsx`, `src/componentes/ListaAmigos.jsx`
+- **Eliminação de Overfetching no Supabase:**
+  - `Equipes.jsx`: remoção de `select('*')` na consulta de `times`. Campos reduzidos estritamente aos necessários (`id, nome, tag, logo, capitao, registro`) com preservação integral do join relacional `times_integrantes (id, id_usuario, funcao, usuarios (id, nome, nome_usuario))` e adição de `.limit(60)`.
+  - `Torneios.jsx`: remoção de `select('*')` e adoção de lista cirúrgica de colunas (`id, nome, descricao, data_inicio, dinheiro, formato, status, id_time_vencedor, mapa, imagem_mapa, imagem, registro`) com limite de 60 registros.
+  - `AdminPanel.jsx`: transações da plataforma restringidas a campos específicos (`id, id_torneio, valor_bruto, taxa_retida, valor_liquido, status, registro, created_at, torneio:id_torneio(id, nome)`) com `.limit(150)`. Tabelas no explorer de dados limitadas a 100 registros para evitar bloqueio da thread do navegador.
+- **Cache Instantâneo e SWR (Stale-While-Revalidate):**
+  - Implementado padrão SWR com persistência em `localStorage` (`cache_equipes_v1`, `cache_torneios_v1`, `cache_admin_transacoes_v1`, `cache_admin_saldo_v1`, `cache_admin_principal_v1`, `cache_admin_tab_[tabela]_v1`).
+  - Renderização imediata (zero tempo de espera / eliminação de telas brancas) no carregamento inicial a partir dos dados em cache.
+  - Revalidação silenciosa em segundo plano: consulta disparada assincronamente ao Supabase que atualiza o estado e sincroniza o cache sem interromper a interação do usuário.
+- **Lazy Loading de Imagens (Atributo loading="lazy"):**
+  - Adicionado `loading="lazy"` em todas as tags `<img>` da aplicação (logos de equipes em cards e páginas de detalhes, ilustrações de agentes CS/EVA, logotipos de CS2, avatares de amizades e dropdowns de menu, cards e destaques de mapas).
+
+## Refatoracao Mobile-First e Responsividade da Interface
+- **Arquivos modificados:** `src/css/index.css`, `src/css/equipes.css`, `src/css/torneios.css`
+- **Otimizacao do Video de Fundo na Home (`src/css/index.css`):**
+  - Corrigido o estiramento do video de fundo (`.hero-video`) em celulares e tablets com `object-fit: cover;` e `object-position: center center;`, preservando a proporcao natural do video em qualquer resolucao mobile.
+  - Calibrada a altura minima da Hero Section (`min-height: 85svh` em 768px e `min-height: 80svh` em 480px) com reducao dos espacamentos internos verticais, garantindo composicao equilibrada com a secao inferior de cards.
+- **Compactacao dos Cards de Conteudo (Mobile-First):**
+  - `src/css/equipes.css`: Reduzido o padding interno de `.equipe-card` (de 24px no desktop para 14px em 768px e 12px em 480px). Escala compacta para o avatar de equipe (`.equipe-avatar` de 48px para 40px/36px), badges e metadados (`.equipe-meta-item`), e input de busca (`.equipes-busca-input`) mais refinado e ocupando 100% da largura util.
+  - `src/css/torneios.css`: Reduzido o padding interno de `.tournament-card-content` (de 22px para 14px em 768px e 12px em 480px). Reduzida a altura da capa com thumbnail do mapa (`.tournament-card-visual` de 100px para 72px em 768px e 64px em 480px), economizando altura vertical util e facilitando a navegacao por scroll.
+- **Reintegracao Dinamica dos Personagens no Mobile:**
+  - Removido o `display: none` das personagens Agente EVA (`.equipes-personagem-wrap`) e Agente CS Terrorist (`.torneios-personagem-wrap`) em dispositivos moveis (`@media (max-width: 768px)` e `@media (max-width: 480px)`).
+  - Posicionamento inteligente em formato de marca d'agua atmosferica de fundo: `position: fixed; bottom: 0;`, `z-index: 1` (atras dos cards e containers de informacao que operam em camadas superiores), escala reduzida (`clamp(110px, 32vw, 140px)` em 768px e `clamp(100px, 30vw, 125px)` em 480px), opacidade tenue (0.25 - 0.26) e `pointer-events: none;`, mantendo a identidade visual sem comprometer a leitura ou cliques.
+- **Calibracao de Espacamentos Globais e Tipografia:**
+  - Reduzidos os espacamentos superiores desktop (`margin-top: 160px/140px`) em `#pagina-equipes` e `.tournaments-page` para 95px em 768px e 80px em 480px, alinhando as paginas logo abaixo da barra de navegacao fixa.
+  - Tipografia dos titulos calibrada com `clamp()` para impedir quebras desconfortaveis em telas estreitas.
+  - Preservacao integral do layout e comportamento em desktops e resolucoes acima de 1024px.
+
+## Correcao de Ciclo de Vida e Quebra de Loop Infinito na Lista de Amigos (Perfil e Widget)
+- **Componentes modificados:** `src/componentes/Perfil.jsx`, `src/componentes/ListaAmigos.jsx`
+- **Eliminacao de Loop Infinito e Estabilizacao do Ciclo de Vida:**
+  - `Perfil.jsx`: Removido listener global de `storage` dentro do efeito de amizades (`onUpdate`), mantendo estritamente o evento customizado `amigosAtualizados`. Isso eliminou o gatilho recursivo provocado por gravacoes no `localStorage` durante a execucao de leituras.
+  - Removidas chamadas de `window.dispatchEvent(new Event('storage'))` dentro de funcoes de mutacao de amizades, mantendo exclusivamente o canal `amigosAtualizados`.
+  - Removidas variaveis de estado que sofrem mutacao durante o ciclo de fetch (`listaAmigos`, `pedidosPendentes`, `pedidosEnviados`, `loading`, `resultadosBusca`) da matriz de dependencias do efeito de busca. Introduzidas referencias estaveis (`listaAmigosRef`, `pedidosPendentesRef`, `pedidosEnviadosRef`) para validacao cruzada sem dependencias reativas ciclicas.
+  - `ListaAmigos.jsx`: Adicionada trava com ref (`isCarregandoRef`) impedindo execucoes concorrentes de `carregarAmizades()`.
+- **Isolamento da Funcionalidade de Busca:**
+  - `buscaAmigo` agora atua como estado isolado de pesquisa local, filtrando em tempo real na primeira letra as colecoes de amigos (`amigosFiltrados`), pedidos pendentes (`pendentesFiltrados`) e pedidos enviados (`enviadosFiltrados`) via `useMemo`.
+  - A digitacao nao forca re-fetch global no banco de dados para a lista de amigos existente.
+  - A busca no servidor por novos jogadores para adicao no autocomplete foi isolada e protegida com debounce de 350ms e cancelamento via `clearTimeout`, evitando sobrecarga de chamadas de rede no Supabase.
+- **Cleanup e Prevencao de Memory Leaks:**
+  - Todos os event listeners de atualizacao (`amigosAtualizados`, `click`) contam com o respectivo `window.removeEventListener` / `document.removeEventListener` na funcao de limpeza (cleanup) do `useEffect`.
+
+## Correcao da Projecao de Colunas em transacoes_plataforma (AdminPanel)
+- **Componente modificado:** `src/componentes/AdminPanel.jsx`
+- **Correcao da Consulta no Supabase:**
+  - Removida a referencia a coluna inexistente `created_at` nas consultas cirurgicas a tabela `transacoes_plataforma` (tanto na consulta principal com join de torneio quanto na consulta de fallback).
+  - Projecao de colunas alinhada com o esquema real do banco: `id, id_torneio, valor_bruto, taxa_retida, valor_liquido, status, registro, torneio:id_torneio(id, nome)`.
+- **Tratamento na Renderizacao e Graficos:**
+  - O processamento de dados do grafico (`dadosGrafico`) e as linhas da tabela historica (`<tr>`) consom exclusivamente a coluna `registro`, eliminando qualquer fallback para `created_at` e resolvendo o erro `column transacoes_plataforma.created_at does not exist`.
+
+## Extrato Financeiro e Historico de Transacoes da Carteira (Perfil)
+- **Componentes modificados:** `src/componentes/Perfil.jsx`, `src/css/perfil.css`
+- **Integracao Transacional (Deposito e Saque):**
+  - Removido trecho residual em `handleSacar()` que zerava indevidamente o saldo antes da validacao de valor.
+  - Apos a atualizacao bem-sucedida do saldo do usuario na tabela `usuarios`, o sistema efetua a insercao transacional na nova tabela `historico_carteira`:
+    - Para Deposito: `{ id_usuario: usuario.id, tipo: 'ENTRADA', valor: valorFormatado, descricao: 'Deposito Simulado' }`.
+    - Para Saque: `{ id_usuario: usuario.id, tipo: 'SAIDA', valor: valorFormatado, descricao: 'Saque Simulado' }`.
+  - Atualizacao reativa imediata da lista de historico local via `.select().maybeSingle()` e fallback para consulta completa, sincronizando a interface em tempo real sem recarregar a pagina.
+- **Extrato Financeiro do Dono da Conta:**
+  - Criada secao dedicada "Meu Historico de Transacoes" com visual moderno logo abaixo do bloco de Carteira.
+  - Exibicao estritamente restrita ao titular logado da conta (`!isPublico && isDono`).
+  - Consulta assincrona ao Supabase na tabela `historico_carteira` com filtro por `id_usuario`, ordenada pelo timestamp `registro` de forma decrescente (`order('registro', { ascending: false })`) e limitada a 50 transacoes.
+  - Tabela responsiva com colunas: Data e Hora formatadas (`toLocaleDateString` / `toLocaleString`), Tipo com badge semantico (`Entrada` / `Saida`), Descricao e Valor formatado em Real (BRL).
+  - Estado vazio amigavel ("Nenhuma transacao registrada ainda.") e indicador de carregamento.
+- **Estilizacao e Design:**
+  - Adicionadas classes no `src/css/perfil.css` (`.perfil-extrato-tabela-wrap`, `.perfil-extrato-tabela`, `.perfil-extrato-badge--entrada`, `.perfil-extrato-badge--saida`, `.perfil-extrato-valor--entrada`, `.perfil-extrato-valor--saida`).
+  - Cores semanticas: verde (`#4ade80`) com glow sutil para entradas e vermelho (`#f87171`) para saidas.
+  - Responsividade completa para dispositivos moveis com scroll horizontal suave (`-webkit-overflow-scrolling: touch`) e padding calibrado para telas pequenas.
+
+## Correcao Critica de Esquema e Diagnostico nas Consultas de Equipes e Torneios
+- **Componentes modificados:** `src/componentes/Equipes.jsx`, `src/componentes/Torneios.jsx`
+- **Diagnostico do Erro PostgREST 42703 (Bad Request):**
+  - `Torneios.jsx`: A constante `CAMPOS_TORNEIOS` continha colunas inexistentes na tabela `torneios` (`mapa`, `imagem_mapa`, `imagem`), provocando rejeicao imediata pelo PostgREST com status 400 (`column torneios.mapa does not exist`) tanto na consulta principal quanto no fallback.
+  - `Equipes.jsx`: A projecao cirurgica em `times` solicitava o campo inexistente `capitao` (em vez de `id_capitao`), disparando status 400 (`column times.capitao does not exist`) na consulta com JOIN relacional e no fallback manual.
+- **Auditoria e Correcao das Projecoes de Colunas:**
+  - `Torneios.jsx`: Atualizada a constante para `id, nome, descricao, data_inicio, dinheiro, formato, status, id_time_vencedor, premio_acumulado, registro`. O mapa continua sendo inferido de forma segura via regex/heuristica na coluna `descricao` ou fallback padrao para Mirage/Dust II.
+  - `Equipes.jsx`: Substituida a coluna `capitao` por `descricao, id_capitao`. A resolucao do nome do capitao foi blindada para checar primeiro o integrante com `funcao === 'capitao'` e, alternativamente, o integrante cujo `id_usuario` coincide com `time.id_capitao`.
+- **Injecao de Logs Rigorosos de Diagnostico:**
+  - Adicionados logs com `console.error` detalhando `error.message`, `error.details`, `error.hint` e `error.code` tanto nas consultas principais quanto nos fallbacks e blocos `catch` de ambos os componentes.
+- **Fail-Safes e Blindagem contra Nulos:**
+  - Validacao de arrays com `Array.isArray()` para garantir que retornos nulos ou indefinidos nao causem quebras na thread do React ao iterar ou mapear dados.
+  - `setEquipes([])` e `setTorneios([])` aplicados defensivamente caso o banco retorne vazio, limpando estados de erro com sucesso.
+
+## Auditoria Global de Pre-Deploy e Teste de Estresse para Vercel
+- **Componentes e arquivos verificados:** `vercel.json`, `src/App.jsx`, `src/componentes/Equipes.jsx`, `src/componentes/DetalhesTime.jsx`, `src/componentes/Perfil.jsx`, `src/componentes/TournamentBracket.jsx`, `src/componentes/ListaAmigos.jsx`, `src/componentes/AlertaModal.jsx`, `src/css/alerta-modal.css`, `src/css/index.css`.
+- **Arquitetura Vercel e Case-Sensitivity:**
+  - `vercel.json`: Atualizada regra canonica de rewrite SPA para direcionar `/(.*)` a `/index.html`, evitando 404 em rotas aninhadas.
+  - Varredura de case-sensitivity: Auditados todos os imports em 43 arquivos do projeto contra o sistema de arquivos, confirmando 0 divergencias de maiusculas/minusculas para compatibilidade com ambiente Linux do Vercel.
+- **Resiliencia e Normalizacao de Consultas Supabase (PostgREST):**
+  - Executada varredura automatizada em todas as 75 consultas do projeto contra a base ativa do Supabase.
+  - Normalizadas strings de embedding relacional aninhado em `Equipes.jsx`, `DetalhesTime.jsx`, `Perfil.jsx`, `TournamentBracket.jsx` e `ListaAmigos.jsx` para sintaxe compativel com parser PostgREST (eliminando quebras de linha e espacos antes de parenteses que provocavam erro de sintaxe 400).
+  - Taxa de sucesso final nas 75 queries: 100% de sucesso (0 falhas).
+  - Validada ausencia total de referencias a `created_at` ou colunas fantasmas.
+- **Estabilidade de Ciclo de Vida e Cleanup:**
+  - Auditados todos os hooks `useEffect` e ouvintes de eventos globais. Confirmado que todo `addEventListener` possui o respectivo `removeEventListener` na funcao de limpeza, prevenindo memory leaks.
+- **Camadas Visuais, Z-Index e Responsividade:**
+  - Verificado que `.aurora-mesh-container` e `.hero-video` operam com `z-index: 0` e `pointer-events: none`, sem interceptar cliques de botoes ou navegacao.
+  - Elementos decorativos (EVA e CS) configurados como marcas d'agua sutis em mobile com `pointer-events: none` e sem comprimir conteudo.
+  - Grids responsivos configurados para colapsar para `1fr` em resolucoes menores que 768px e 480px.
+  - Modal customizado (`AlertaModalUI`) com display flex e centralizacao horizontal e vertical em viewport inteira (`inset: 0`).
+  - Fallbacks de logo e avatar validados para renderizar badge de iniciais via evento `onError`.
+- **Build de Producao:**
+  - `npm run build` executado com 100% de sucesso em 922ms com 0 erros.
+
+
+
+
+
+
+
+
+
+

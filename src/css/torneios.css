@@ -238,6 +238,101 @@
   box-shadow: 0 0 16px rgba(181, 101, 242, 0.3);
 }
 
+/* ============================================================
+   SEÇÕES DE TORNEIOS (EM ANDAMENTO / ABERTOS / ENCERRADOS)
+   ============================================================ */
+
+.tournaments-secao {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 48px;
+}
+
+.tournaments-secao--andamento {
+  background: radial-gradient(ellipse 70% 35% at 50% 0%, rgba(245, 158, 11, 0.05), transparent 70%);
+  padding: 16px 16px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 191, 36, 0.18);
+}
+
+.tournaments-secao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(157, 78, 221, 0.22);
+}
+
+.tournaments-secao--andamento .tournaments-secao-header {
+  border-bottom-color: rgba(251, 191, 36, 0.28);
+}
+
+.tournaments-secao-titulo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tournaments-secao-titulo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tournaments-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+}
+
+.tournaments-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  animation: liveBadgePulse 1.4s infinite ease-in-out;
+}
+
+.tournaments-aberto-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #4ade80;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.tournaments-secao-contador {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
 /* --- Grade de Torneios (Grid Layout) --- */
 .tournaments-grid {
   display: grid;
@@ -307,6 +402,16 @@
   transform: translateY(-5px);
   border-color: rgba(181, 101, 242, 0.75);
   box-shadow: 0 16px 36px rgba(114, 62, 195, 0.35), 0 0 20px rgba(181, 101, 242, 0.25);
+}
+
+.tournament-card--live {
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(245, 158, 11, 0.12);
+}
+
+.tournament-card--live:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 158, 11, 0.35);
 }
 
 .tournament-card-link {
@@ -380,7 +485,7 @@
 .tournament-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 1.2px;
@@ -397,11 +502,20 @@
 .tournament-status::before {
   content: '';
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: currentColor;
   box-shadow: 0 0 6px currentColor;
+  flex-shrink: 0;
+}
+
+/* Status: Inscrições Abertas */
+.tournament-status--open {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(74, 222, 128, 0.45);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.2);
 }
 
 /* Status: Em Breve */
@@ -412,12 +526,37 @@
   box-shadow: 0 0 12px rgba(240, 165, 0, 0.18);
 }
 
-/* Status: Em Andamento */
+/* Status: Em Andamento (Live) */
 .tournament-status--live {
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(248, 113, 113, 0.4);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+  font-weight: 800;
+}
+
+.tournament-status--live::before {
+  background-color: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  animation: liveBadgePulse 1.4s infinite ease-in-out;
+}
+
+@keyframes liveBadgePulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+    box-shadow: 0 0 4px #fbbf24;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    box-shadow: 0 0 12px #fbbf24, 0 0 18px rgba(245, 158, 11, 0.6);
+  }
+  100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+    box-shadow: 0 0 4px #fbbf24;
+  }
 }
 
 /* Status: Encerrado */
@@ -431,6 +570,7 @@
 .tournament-status--finished::before {
   box-shadow: none;
   opacity: 0.6;
+  background-color: #64748b;
 }
 
 .tournament-card-content h2 {
@@ -966,7 +1106,7 @@
   .tournaments-page,
   .tournament-details,
   .tournament-page-state {
-    margin-top: 100px;
+    margin-top: 95px;
     padding: 0 14px;
   }
 
@@ -998,8 +1138,24 @@
     padding: 18px 16px;
   }
 
+  .tournaments-heading {
+    margin-bottom: 28px;
+  }
+
   .tournaments-heading h1 {
-    font-size: clamp(2rem, 4.5vw, 2.35rem);
+    font-size: clamp(1.85rem, 5vw, 2.35rem);
+    margin-bottom: 10px;
+  }
+
+  .tournaments-heading p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .tournaments-criar-btn {
+    margin-top: 16px;
+    padding: 10px 22px;
+    font-size: 13px;
   }
 
   .tournaments-busca-container {
@@ -1007,22 +1163,143 @@
     margin-bottom: 24px;
   }
 
+  .tournaments-busca-box {
+    padding: 2px 14px;
+    border-radius: 50px;
+  }
+
   .tournaments-busca-input {
     font-size: 13px;
-    padding: 11px 0;
+    padding: 9px 0;
+  }
+
+  .tournaments-secao {
+    margin-bottom: 32px;
+  }
+
+  .tournaments-secao--andamento {
+    padding: 12px 10px 18px;
+    border-radius: 16px;
+  }
+
+  .tournaments-secao-header {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+
+  .tournaments-secao-titulo {
+    font-size: 1.05rem;
+  }
+
+  .tournaments-live-indicator {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .tournaments-aberto-indicator {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .tournaments-secao-contador {
+    font-size: 0.75rem;
+    padding: 3px 9px;
+  }
+
+  .tournaments-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .tournament-card {
+    border-radius: 14px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .tournament-card-visual {
+    height: 72px;
+    padding: 0 14px;
+  }
+
+  .tournament-card-visual span {
+    font-size: 0.98rem;
+    letter-spacing: 1.5px;
+  }
+
+  .tournament-card-visual strong {
+    font-size: 0.68rem;
+    padding: 3px 9px;
+  }
+
+  .tournament-card-content {
+    padding: 14px 14px 12px;
+    gap: 8px;
+  }
+
+  .tournament-status {
+    font-size: 0.66rem;
+    padding: 4px 10px;
+  }
+
+  .tournament-card-content h2 {
+    font-size: 1.1rem;
+    margin: 2px 0 0 0;
+  }
+
+  .tournament-date {
+    font-size: 0.8rem;
   }
 
   .tournament-meta {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
+    padding-top: 10px;
   }
 
   .tournament-meta span {
     min-width: calc(50% - 6px);
+    font-size: 0.88rem;
+  }
+
+  .tournament-meta small {
+    font-size: 0.62rem;
+    margin-bottom: 2px;
+  }
+
+  .tournament-meta-premio .tournament-premio-valor {
+    font-size: 1.02rem;
+  }
+
+  .tournament-rules {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+  }
+
+  .tournament-rules summary {
+    padding: 6px 10px;
+    font-size: 0.8rem;
   }
 
   .back-link {
     font-size: 0.85rem;
+  }
+
+  .torneios-personagem-wrap {
+    display: flex;
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: -12px;
+    right: auto;
+    width: clamp(110px, 32vw, 140px);
+    opacity: 0.26;
+    z-index: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.7));
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0.15) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0.15) 100%);
   }
 }
 
@@ -1044,10 +1321,6 @@
     padding: 16px;
   }
 
-  .tournament-meta {
-    flex-direction: column;
-  }
-
   .details-grupo-lista li {
     flex-wrap: wrap;
     gap: 8px;
@@ -1057,14 +1330,85 @@
     width: 100%;
   }
 
+  .tournaments-heading {
+    margin-bottom: 20px;
+  }
+
   .tournaments-heading h1 {
-    font-size: clamp(1.65rem, 5.5vw, 1.95rem);
+    font-size: clamp(1.55rem, 6vw, 1.95rem);
   }
 
   .tournaments-criar-btn {
     width: 100%;
     text-align: center;
+    padding: 10px 18px;
+  }
+
+  .tournaments-busca-container {
+    margin-bottom: 18px;
+  }
+
+  .tournaments-busca-input {
+    font-size: 12px;
+    padding: 8px 0;
+  }
+
+  .tournaments-secao {
+    margin-bottom: 24px;
+  }
+
+  .tournaments-grid {
+    gap: 12px;
+  }
+
+  .tournament-card {
+    border-radius: 12px;
+  }
+
+  .tournament-card-visual {
+    height: 64px;
+    padding: 0 12px;
+  }
+
+  .tournament-card-visual span {
+    font-size: 0.9rem;
+  }
+
+  .tournament-card-content {
+    padding: 12px 12px 10px;
+    gap: 6px;
+  }
+
+  .tournament-card-content h2 {
+    font-size: 1.02rem;
+  }
+
+  .tournament-meta {
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .tournament-meta span {
+    min-width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .tournament-meta-premio .tournament-premio-valor {
+    font-size: 0.95rem;
+  }
+
+  .tournament-rules {
+    padding: 8px 12px;
+  }
+
+  .torneios-personagem-wrap {
+    width: clamp(100px, 30vw, 125px);
+    left: -8px;
+    bottom: 0;
+    opacity: 0.25;
   }
 }
+
 
 

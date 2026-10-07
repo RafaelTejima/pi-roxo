@@ -1,12 +1,20 @@
+/* ========================================================
+   Tournament Bracket — Design SaaS Gamer & Cyberpunk
+   ======================================================== */
+
 .tournament-bracket-wrapper {
   width: 100%;
   overflow-x: auto;
-  padding: 55px 30px 35px;
-  background-color: #0f0f13;
-  border-radius: 12px;
-  margin-top: 1rem;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-  font-family: 'Inter', sans-serif;
+  padding: 60px 32px 40px;
+  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(114, 62, 195, 0.16), transparent 75%),
+              rgba(11, 7, 22, 0.92);
+  border: 1px solid rgba(157, 78, 221, 0.25);
+  border-radius: 14px;
+  margin-top: 1.2rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: inherit;
   position: relative;
 }
 
@@ -18,8 +26,9 @@
   z-index: 9000;
   border-radius: 0;
   margin: 0;
-  padding: 60px 40px 40px;
-  background-color: #0b0b0e;
+  padding: 70px 40px 40px;
+  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(114, 62, 195, 0.2), transparent 75%),
+              #07040e;
   overflow: auto;
   box-shadow: none;
 }
@@ -28,37 +37,37 @@ body.bracket-fullscreen-active {
   overflow: hidden !important;
 }
 
-/* Botão inline (fora do fullscreen) — fica no canto superior direito do wrapper */
+/* ================= Botão Fullscreen ================= */
 .bracket-fullscreen-btn {
   position: absolute;
-  top: 14px;
-  right: 16px;
-  background: rgba(25, 16, 42, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(160, 132, 232, 0.4);
-  color: #fff;
+  top: 16px;
+  right: 18px;
+  background: rgba(22, 14, 44, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(181, 101, 242, 0.45);
+  color: #f1f5f9;
   border-radius: 8px;
-  padding: 7px 13px;
+  padding: 8px 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
   z-index: 100;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 10px rgba(114, 62, 195, 0.2);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 10px rgba(181, 101, 242, 0.25);
+  transition: all 0.25s ease;
   user-select: none;
 }
 
 .bracket-fullscreen-btn:hover {
-  background: rgba(114, 62, 195, 0.6);
-  border-color: #c084fc;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(114, 62, 195, 0.45);
+  background: rgba(181, 101, 242, 0.35);
+  border-color: #b565f2;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(181, 101, 242, 0.45);
 }
 
 .bracket-fullscreen-btn svg {
@@ -67,33 +76,202 @@ body.bracket-fullscreen-active {
   flex-shrink: 0;
 }
 
-/* Botão fixo na viewport quando em fullscreen (sempre visível ao scrollar) */
 .bracket-fullscreen-btn--fixed {
   position: fixed;
-  top: 16px;
+  top: 18px;
   right: 24px;
   z-index: 9010;
-  background: rgba(25, 16, 42, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid #a084e8;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 0.82rem;
-  box-shadow: 0 4px 20px rgba(114,62,195,0.4);
 }
 
-.bracket-fullscreen-btn--fixed:hover {
-  background: rgba(114, 62, 195, 0.7);
-  border-color: #c084fc;
+/* ================= Animações e Celebração de Vitória ================= */
+@keyframes winnerEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(-14px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
+@keyframes winnerGlowAura {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.35), 0 0 50px rgba(181, 101, 242, 0.3), inset 0 0 20px rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.65);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(250, 204, 21, 0.65), 0 0 85px rgba(181, 101, 242, 0.5), inset 0 0 30px rgba(250, 204, 21, 0.2);
+    border-color: rgba(250, 204, 21, 1);
+  }
+}
+
+@keyframes trophyBounce {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.15) rotate(-6deg);
+  }
+  40% {
+    transform: scale(1.15) rotate(6deg);
+  }
+  60% {
+    transform: scale(1.08) rotate(0deg);
+  }
+}
+
+@keyframes pingPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+.bracket-celebracao-vencedor {
+  margin-bottom: 40px;
+  padding: 24px 28px;
+  background: radial-gradient(circle at 50% 15%, rgba(42, 20, 78, 0.95), rgba(13, 7, 28, 0.98));
+  border: 2px solid rgba(250, 204, 21, 0.75);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: winnerEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards, winnerGlowAura 3.5s infinite ease-in-out;
+}
+
+.bracket-celebracao-vencedor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #facc15, #b565f2, transparent);
+}
+
+.bracket-celebracao-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fde047;
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  padding: 3px 12px;
+  border-radius: 50px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.bracket-celebracao-ping {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 8px #facc15;
+  animation: pingPulse 1.8s infinite ease-in-out;
+}
+
+.bracket-celebracao-corpo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.bracket-celebracao-trofeu-box {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.25), rgba(181, 101, 242, 0.15));
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.35);
+}
+
+.bracket-celebracao-trofeu {
+  font-size: 2.5rem;
+  line-height: 1;
+  display: inline-block;
+  animation: trophyBounce 3s infinite ease-in-out;
+  filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.7));
+}
+
+.bracket-celebracao-titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.bracket-celebracao-texto-principal {
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff 0%, #fef08a 25%, #facc15 50%, #eab308 75%, #fef08a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 25px rgba(250, 204, 21, 0.45);
+}
+
+.bracket-celebracao-nome-time {
+  text-decoration: underline;
+  text-decoration-color: rgba(250, 204, 21, 0.5);
+  text-underline-offset: 4px;
+}
+
+.bracket-celebracao-tag {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fef08a;
+  background: rgba(250, 204, 21, 0.2);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  padding: 2px 10px;
+  border-radius: 6px;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.bracket-celebracao-sub,
+.bracket-celebracao-descricao {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+/* ================= Estrutura da Chave de Torneio ================= */
 .tournament-bracket {
   display: flex;
   gap: 60px;
   min-width: max-content;
   align-items: stretch;
+  padding-top: 15px;
 }
 
 .bracket-rodada {
@@ -102,19 +280,28 @@ body.bracket-fullscreen-active {
   justify-content: space-around;
   flex: 1;
   position: relative;
+  min-width: 250px;
 }
 
 .bracket-rodada-titulo {
   text-align: center;
-  color: #a084e8;
-  font-size: 0.9rem;
-  font-weight: 700;
+  color: #f1f5f9;
+  font-size: 0.78rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 30px;
+  letter-spacing: 1.5px;
+  margin-bottom: 24px;
   position: absolute;
-  top: -40px;
-  width: 100%;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  background: rgba(114, 62, 195, 0.22);
+  border: 1px solid rgba(181, 101, 242, 0.4);
+  padding: 4px 16px;
+  border-radius: 20px;
+  box-shadow: 0 0 12px rgba(114, 62, 195, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .bracket-partidas-coluna {
@@ -122,7 +309,7 @@ body.bracket-fullscreen-active {
   flex-direction: column;
   justify-content: space-around;
   flex: 1;
-  gap: 30px;
+  gap: 32px;
 }
 
 .bracket-partida-container {
@@ -133,34 +320,241 @@ body.bracket-fullscreen-active {
   flex: 1;
 }
 
+/* ================= Card da Partida (SaaS Gamer) ================= */
 .bracket-partida {
-  background: linear-gradient(145deg, #1e1e28, #16161e);
-  border: 1px solid #2a2a35;
-  border-radius: 8px;
-  width: 240px;
+  background: rgba(16, 10, 34, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(157, 78, 221, 0.26);
+  border-radius: 10px;
+  width: 250px;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 2;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+  overflow: hidden;
 }
 
 .bracket-partida:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(114, 62, 195, 0.3);
-  border-color: #5a3c91;
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 18px rgba(181, 101, 242, 0.3);
+  border-color: rgba(181, 101, 242, 0.65);
 }
 
-/* Conectores visuais (linhas) */
+.bracket-partida--final {
+  border-color: rgba(250, 204, 21, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(250, 204, 21, 0.18);
+}
+
+.bracket-partida--final:hover {
+  border-color: rgba(250, 204, 21, 0.8);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 24px rgba(250, 204, 21, 0.35);
+}
+
+/* Cabeçalho da Partida */
+.bracket-partida-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(157, 78, 221, 0.16);
+}
+
+.bracket-partida-id {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #8b819f;
+  font-family: monospace;
+}
+
+.bracket-partida-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.bracket-partida-badge.status-finalizada {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.bracket-partida-badge.status-pronto {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.bracket-partida-badge.status-aguardando {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* ================= Slot do Time ================= */
+.bracket-time {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bracket-time-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* TAG do Time */
+.time-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+  background: rgba(181, 101, 242, 0.14);
+  border: 1px solid rgba(181, 101, 242, 0.4);
+  color: #c084fc;
+  box-shadow: 0 0 6px rgba(181, 101, 242, 0.15);
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.time-tag--tbd {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  color: #64748b;
+  box-shadow: none;
+}
+
+.time-tag--vencedor {
+  background: rgba(181, 101, 242, 0.3);
+  border-color: #b565f2;
+  color: #ffffff;
+}
+
+/* Nome do Time */
+.time-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d1d5db;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Status e Ações do Slot */
+.bracket-time-status {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.time-badge-win {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+}
+
+.time-badge-out {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.time-badge-acao {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #b565f2;
+  background: rgba(181, 101, 242, 0.12);
+  border: 1px solid rgba(181, 101, 242, 0.35);
+  padding: 2px 7px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.bracket-time.clicavel {
+  cursor: pointer;
+}
+
+.bracket-time.clicavel:hover {
+  background-color: rgba(181, 101, 242, 0.15);
+}
+
+.bracket-time.clicavel:hover .time-badge-acao {
+  background-color: #b565f2;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(181, 101, 242, 0.4);
+}
+
+/* Diferenciação Visual: Vencedor */
+.bracket-time.vencedor {
+  background: linear-gradient(90deg, rgba(181, 101, 242, 0.28) 0%, rgba(114, 62, 195, 0.08) 100%);
+  border-left: 3px solid #b565f2;
+}
+
+.bracket-time.vencedor .time-nome {
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(181, 101, 242, 0.65);
+}
+
+/* Diferenciação Visual: Derrotado / Eliminado */
+.bracket-time.derrotado {
+  opacity: 0.38;
+  filter: grayscale(0.7);
+}
+
+.bracket-time.derrotado .time-nome {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Divisor de confrontos */
+.bracket-divisor {
+  height: 1px;
+  background-color: rgba(157, 78, 221, 0.18);
+  width: 100%;
+}
+
+/* ================= Conectores Visuais Neon ================= */
 .bracket-partida-container::after {
   content: '';
   position: absolute;
-  right: -25px;
+  right: -30px;
   top: 50%;
-  width: 25px;
+  width: 30px;
   height: 2px;
-  background-color: #3e3e52;
+  background: linear-gradient(90deg, rgba(181, 101, 242, 0.7), rgba(157, 78, 221, 0.45));
+  box-shadow: 0 0 6px rgba(181, 101, 242, 0.35);
   z-index: 1;
 }
 
@@ -171,11 +565,11 @@ body.bracket-fullscreen-active {
 .bracket-rodada:not(:first-child) .bracket-partida-container::before {
   content: '';
   position: absolute;
-  left: -25px;
+  left: -30px;
   top: 50%;
-  width: 25px;
+  width: 30px;
   height: 2px;
-  background-color: #3e3e52;
+  background: rgba(157, 78, 221, 0.45);
   z-index: 1;
 }
 
@@ -183,117 +577,42 @@ body.bracket-fullscreen-active {
 .bracket-rodada:not(:last-child) .bracket-partida-container:nth-child(odd)::after {
   content: '';
   position: absolute;
-  right: -25px;
+  right: -30px;
   top: 50%;
-  width: 25px;
-  height: calc(50% + 15px);
-  border-top: 2px solid #3e3e52;
-  border-right: 2px solid #3e3e52;
-  border-top-right-radius: 4px;
+  width: 30px;
+  height: calc(50% + 16px);
+  border-top: 2px solid rgba(181, 101, 242, 0.6);
+  border-right: 2px solid rgba(181, 101, 242, 0.6);
+  border-top-right-radius: 6px;
   background: transparent;
+  box-shadow: 2px -2px 6px rgba(181, 101, 242, 0.25);
   transform-origin: top left;
 }
 
 .bracket-rodada:not(:last-child) .bracket-partida-container:nth-child(even)::after {
   content: '';
   position: absolute;
-  right: -25px;
+  right: -30px;
   bottom: 50%;
   top: auto;
-  width: 25px;
-  height: calc(50% + 15px);
-  border-bottom: 2px solid #3e3e52;
-  border-right: 2px solid #3e3e52;
-  border-bottom-right-radius: 4px;
+  width: 30px;
+  height: calc(50% + 16px);
+  border-bottom: 2px solid rgba(181, 101, 242, 0.6);
+  border-right: 2px solid rgba(181, 101, 242, 0.6);
+  border-bottom-right-radius: 6px;
   background: transparent;
+  box-shadow: 2px 2px 6px rgba(181, 101, 242, 0.25);
 }
 
-.bracket-time {
-  padding: 12px 15px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: transparent;
-  transition: background-color 0.2s ease;
-  position: relative;
-}
-
-.bracket-time:first-child {
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-.bracket-time:last-child {
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.bracket-time.clicavel {
-  cursor: pointer;
-}
-
-.bracket-time.clicavel:hover {
-  background-color: rgba(114, 62, 195, 0.1);
-}
-
-.bracket-time.clicavel::before {
-  content: '🏆';
-  position: absolute;
-  right: 15px;
-  opacity: 0;
-  font-size: 0.9rem;
-  transition: opacity 0.2s, transform 0.2s;
-  transform: scale(0.8);
-}
-
-.bracket-time.clicavel:hover::before {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.bracket-time.vencedor {
-  background: linear-gradient(90deg, rgba(114, 62, 195, 0.25), transparent);
-  border-left: 4px solid #9d72ff;
-}
-
-.bracket-time.vencedor .time-nome {
-  font-weight: 700;
-  color: #fff;
-}
-
-.time-tag {
-  font-size: 0.75rem;
-  background: #2a2a35;
-  padding: 3px 6px;
-  border-radius: 4px;
-  color: #a084e8;
-  font-weight: 600;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
-}
-
-.time-nome {
-  font-size: 0.9rem;
-  color: #d1d1e0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.bracket-divisor {
-  height: 1px;
-  background-color: #2a2a35;
-  width: 100%;
-}
-
+/* Estados vazios e carregando */
 .bracket-loading, .bracket-empty {
-  padding: 60px;
+  padding: 60px 24px;
   text-align: center;
-  color: #888;
+  color: #9f93aa;
   font-style: italic;
-  background: rgba(0,0,0,0.2);
+  background: rgba(14, 8, 28, 0.6);
+  border: 1px dashed rgba(157, 78, 221, 0.25);
   border-radius: 12px;
   margin-top: 1rem;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
-

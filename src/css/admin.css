@@ -1025,6 +1025,363 @@ input:disabled + .admin-slider {
     margin-top: 2px;
 }
 
+/* ================= Gráfico Analítico de Receitas ================= */
+.admin-secao-grafico {
+    padding: 24px;
+    background: radial-gradient(circle at top right, rgba(114, 62, 195, 0.1), transparent 60%),
+                rgba(14, 8, 28, 0.85);
+    border: 1px solid rgba(157, 78, 221, 0.25);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-secao-grafico::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(181, 101, 242, 0.6), transparent);
+}
+
+/* Topo do Gráfico */
+.admin-grafico-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.admin-grafico-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 650px;
+}
+
+.admin-grafico-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-grafico-badge-radar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #b565f2;
+    background: rgba(181, 101, 242, 0.12);
+    border: 1px solid rgba(181, 101, 242, 0.35);
+    padding: 2px 8px;
+    border-radius: 50px;
+    letter-spacing: 0.6px;
+}
+
+.admin-grafico-radar-pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b565f2;
+    box-shadow: 0 0 8px #b565f2;
+    display: inline-block;
+    animation: radarPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes radarPulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 1;
+        box-shadow: 0 0 12px #b565f2;
+    }
+    100% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+}
+
+.admin-grafico-badge-sub {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #8b819f;
+    letter-spacing: 0.5px;
+}
+
+.admin-grafico-titulo {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0;
+    letter-spacing: -0.4px;
+}
+
+.admin-grafico-descricao {
+    font-size: 12.5px;
+    color: var(--texto-secundario, #a8a8a8);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.admin-grafico-destaque-campo {
+    color: #e9d5ff;
+    font-family: monospace;
+    font-size: 12px;
+    background: rgba(157, 78, 221, 0.15);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(157, 78, 221, 0.25);
+}
+
+/* Filtros Dinâmicos */
+.admin-grafico-filtros-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-grafico-filtro-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8b819f;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-grafico-filtros {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(157, 78, 221, 0.2);
+}
+
+.admin-grafico-btn-filtro {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #a8a2b9;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.admin-grafico-btn-filtro:hover {
+    color: #ffffff;
+    background: rgba(181, 101, 242, 0.15);
+    border-color: rgba(181, 101, 242, 0.3);
+}
+
+.admin-grafico-btn-filtro--ativo {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(181, 101, 242, 0.35), rgba(114, 62, 195, 0.45));
+    border-color: #b565f2;
+    box-shadow: 0 0 12px rgba(181, 101, 242, 0.35);
+    font-weight: 700;
+}
+
+/* Barra de Resumo Dinâmico (KPIs) */
+.admin-grafico-resumo-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    border: 1px solid rgba(157, 78, 221, 0.15);
+}
+
+.admin-grafico-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 140px;
+}
+
+.admin-grafico-kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b819f;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-grafico-kpi-valor {
+    font-size: 17px;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.2;
+}
+
+.admin-grafico-kpi-valor.neon-roxo {
+    color: #b565f2;
+    text-shadow: 0 0 12px rgba(181, 101, 242, 0.45);
+}
+
+.admin-grafico-kpi-divisor {
+    width: 1px;
+    height: 32px;
+    background: rgba(157, 78, 221, 0.18);
+}
+
+/* Área do Gráfico */
+.admin-grafico-area {
+    width: 100%;
+    position: relative;
+    min-height: 320px;
+}
+
+.admin-grafico-container-canvas {
+    width: 100%;
+    position: relative;
+}
+
+.admin-grafico-aviso-zero {
+    position: absolute;
+    top: 10px;
+    right: 24px;
+    z-index: 2;
+    font-size: 11.5px;
+    color: #a8a2b9;
+    background: rgba(18, 10, 36, 0.7);
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(157, 78, 221, 0.2);
+}
+
+.admin-grafico-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: #c9a8f0;
+    font-size: 13.5px;
+}
+
+.admin-grafico-estado--vazio {
+    color: #8b819f;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 1px dashed rgba(157, 78, 221, 0.25);
+    padding: 40px 20px;
+}
+
+.admin-grafico-vazio-aviso {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e9d5ff;
+}
+
+/* Tooltip Customizado Cyberpunk */
+.admin-grafico-tooltip {
+    background: rgba(12, 6, 26, 0.95);
+    border: 1px solid #b565f2;
+    border-radius: 9px;
+    padding: 10px 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(181, 101, 242, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    min-width: 170px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-grafico-tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(181, 101, 242, 0.25);
+}
+
+.admin-grafico-tooltip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b565f2;
+    box-shadow: 0 0 8px #b565f2;
+}
+
+.admin-grafico-tooltip-data {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #e9d5ff;
+    letter-spacing: 0.3px;
+}
+
+.admin-grafico-tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-grafico-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.admin-grafico-tooltip-label {
+    font-size: 11.5px;
+    color: #a8a2b9;
+}
+
+.admin-grafico-tooltip-valor {
+    font-size: 15px;
+    font-weight: 800;
+    color: #f8fafc;
+    text-shadow: 0 0 10px rgba(181, 101, 242, 0.5);
+}
+
+.admin-grafico-tooltip-row--secundaria {
+    border-top: 1px dashed rgba(157, 78, 221, 0.15);
+    padding-top: 4px;
+    margin-top: 2px;
+}
+
+.admin-grafico-tooltip-label-sub {
+    font-size: 10.5px;
+    color: #8b819f;
+}
+
+.admin-grafico-tooltip-valor-sub {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.admin-grafico-tooltip-qtd {
+    font-size: 10px;
+    font-weight: 600;
+    color: #a855f7;
+    margin-top: 2px;
+}
+
 @media (max-width: 768px) {
     .admin-abas-container {
         padding: 0 16px;
@@ -1044,5 +1401,40 @@ input:disabled + .admin-slider {
 
     .admin-financeiro-grid {
         grid-template-columns: 1fr;
+    }
+
+    .admin-grafico-topo {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-grafico-filtros-wrap {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .admin-grafico-filtros {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .admin-grafico-btn-filtro {
+        flex: 1;
+        text-align: center;
+        padding: 6px 8px;
+        font-size: 11.5px;
+    }
+
+    .admin-grafico-resumo-bar {
+        gap: 12px;
+    }
+
+    .admin-grafico-kpi {
+        min-width: 120px;
+    }
+
+    .admin-grafico-kpi-divisor {
+        display: none;
     }
 }

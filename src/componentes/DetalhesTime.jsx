@@ -70,15 +70,7 @@ export default function DetalhesTime() {
           try {
             const { data: comJoin, error: erroJoin } = await supabase
               .from('times')
-              .select(`
-                *,
-                times_integrantes (
-                  id,
-                  id_usuario,
-                  funcao,
-                  usuarios ( id, nome, nome_usuario, imagem )
-                )
-              `)
+              .select('*, times_integrantes(id, id_usuario, funcao, usuarios(id, nome, nome_usuario, imagem))')
               .eq('id', id)
               .maybeSingle()
 
@@ -116,12 +108,7 @@ export default function DetalhesTime() {
             if (!erroTime && timeSimples) {
               const { data: linhas } = await supabase
                 .from('times_integrantes')
-                .select(`
-                  id,
-                  id_usuario,
-                  funcao,
-                  usuarios ( id, nome, nome_usuario )
-                `)
+                .select('id, id_usuario, funcao, usuarios(id, nome, nome_usuario)')
                 .eq('id_time', id)
 
               const integrantesCompletos = (linhas || []).map((linha) => {
@@ -468,6 +455,7 @@ export default function DetalhesTime() {
               <img
                 src={resolverLogo(time.logo)}
                 alt={`Logo do time ${time.nome}`}
+                loading="lazy"
                 className="detalhes-time-logo"
                 onError={() => setLogoComErro(true)}
               />

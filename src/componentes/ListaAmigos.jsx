@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import '../css/lista-amigos.css';
@@ -37,9 +37,12 @@ function ListaAmigos() {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
+  const isCarregandoRef = useRef(false);
+
   // Busca lista de amigos e pendências no Supabase
   const carregarAmizades = useCallback(async () => {
-    if (!usuarioLogado?.id || !supabase) return;
+    if (!usuarioLogado?.id || !supabase || isCarregandoRef.current) return;
+    isCarregandoRef.current = true;
     setCarregando(true);
 
     try {
@@ -101,10 +104,7 @@ function ListaAmigos() {
       // 2. Pedidos pendentes recebidos
       const { data: recebidos, error: errRecebidos } = await supabase
         .from('amizades')
-        .select(`
-          id, status, registro,
-          remetente:id_usuario1 ( id, nome, nome_usuario, imagem )
-        `)
+        .select('id, status, registro, remetente:id_usuario1(id, nome, nome_usuario, imagem)')
         .eq('id_usuario2', usuarioLogado.id)
         .eq('status', 'PENDENTE');
 
@@ -147,6 +147,7 @@ function ListaAmigos() {
     } catch (err) {
       console.error('Erro ao carregar amizades em ListaAmigos:', err);
     } finally {
+      isCarregandoRef.current = false;
       setCarregando(false);
     }
   }, [usuarioLogado?.id]);
@@ -155,7 +156,18 @@ function ListaAmigos() {
     if (isOpen && usuarioLogado?.id) {
       carregarAmizades();
     }
-  }, [isOpen, carregarAmizades, usuarioLogado?.id]);
+  }, [isOpen, usuarioLogado?.id, carregarAmizades]);
+
+  useEffect(() => {
+    if (!usuarioLogado?.id) return;
+    const onAmigosAtualizados = () => {
+      carregarAmizades();
+    };
+    window.addEventListener('amigosAtualizados', onAmigosAtualizados);
+    return () => {
+      window.removeEventListener('amigosAtualizados', onAmigosAtualizados);
+    };
+  }, [usuarioLogado?.id, carregarAmizades]);
 
   async function aceitarPedido(amizade_id) {
     if (!supabase) return;
@@ -167,6 +179,7 @@ function ListaAmigos() {
 
       if (error) throw error;
       carregarAmizades();
+      window.dispatchEvent(new Event('amigosAtualizados'));
     } catch (err) {
       console.error('Erro ao aceitar pedido:', err);
     }
@@ -182,6 +195,7 @@ function ListaAmigos() {
 
       if (error) throw error;
       setPendentes((prev) => prev.filter((p) => p.id !== amizade_id));
+      window.dispatchEvent(new Event('amigosAtualizados'));
     } catch (err) {
       console.error('Erro ao rejeitar pedido:', err);
     }
@@ -197,6 +211,7 @@ function ListaAmigos() {
 
       if (error) throw error;
       setAmigos((prev) => prev.filter((a) => a.amizade_id !== amizade_id));
+      window.dispatchEvent(new Event('amigosAtualizados'));
     } catch (err) {
       console.error('Erro ao remover amigo:', err);
     }
@@ -279,6 +294,7 @@ function ListaAmigos() {
                         <img
                           src={amigo.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(amigo.nome_usuario || amigo.nome || 'J').substring(0, 2).toUpperCase()}`}
                           alt={amigo.nome || amigo.nome_usuario}
+                          loading="lazy"
                         />
                       </div>
                       <div className="amigo-info">
@@ -321,6 +337,7 @@ function ListaAmigos() {
                       <img
                         src={p.remetente?.imagem || `https://placehold.co/40x40/291547/ffffff?text=${(p.remetente?.nome_usuario || 'J').substring(0, 2).toUpperCase()}`}
                         alt={p.remetente?.nome || p.remetente?.nome_usuario}
+                        loading="lazy"
                       />
                     </div>
                     <div className="amigo-info">

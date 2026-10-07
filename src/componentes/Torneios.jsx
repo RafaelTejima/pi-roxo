@@ -6,35 +6,57 @@ import '../css/torneios.css'
 import personagemImg from '../../imagens/personagem-torneios.png'
 import AuroraBackground from './AuroraBackground'
 
+const CAMPOS_TORNEIOS = 'id, nome, descricao, data_inicio, dinheiro, formato, status, id_time_vencedor, premio_acumulado, registro'
+
 async function loadTournaments() {
   let { data, error } = await supabase
     .from('torneios')
-    .select('*')
+    .select(CAMPOS_TORNEIOS)
     .order('registro', { ascending: false })
+    .limit(60)
 
   if (error) {
-    const fallback = await supabase.from('torneios').select('*').order('id', { ascending: false })
+    console.error('ERRO SUPABASE [Torneios - Consulta Principal]:', error.message, error.details, error.hint, error.code)
+    const fallback = await supabase
+      .from('torneios')
+      .select(CAMPOS_TORNEIOS)
+      .order('id', { ascending: false })
+      .limit(60)
     data = fallback.data
     error = fallback.error
+    if (error) {
+      console.error('ERRO SUPABASE [Torneios - Consulta Fallback]:', error.message, error.details, error.hint, error.code)
+    }
   }
 
   if (error) throw error
 
-  const tournaments = data || []
-  if (tournaments.length === 0) return tournaments
+  const tournaments = Array.isArray(data) ? data : []
+  if (tournaments.length === 0) return []
 
-  // Conta quantos times estao inscritos em cada torneio para calcular o premio acumulado (taxa * inscritos)
-  const { data: inscricoes } = await supabase
-    .from('inscricoes')
-    .select('id_torneio')
-    .in('id_torneio', tournaments.map((t) => t.id))
+  try {
+    // Conta quantos times estao inscritos em cada torneio para calcular o premio acumulado (taxa * inscritos)
+    const { data: inscricoes, error: errInsc } = await supabase
+      .from('inscricoes')
+      .select('id_torneio')
+      .in('id_torneio', tournaments.map((t) => t.id).filter(Boolean))
 
-  const contagemPorTorneio = {}
-  for (const linha of inscricoes || []) {
-    contagemPorTorneio[linha.id_torneio] = (contagemPorTorneio[linha.id_torneio] || 0) + 1
+    if (errInsc) {
+      console.warn('ERRO SUPABASE [Torneios - Inscricoes]:', errInsc.message, errInsc.details, errInsc.hint)
+    }
+
+    const contagemPorTorneio = {}
+    for (const linha of Array.isArray(inscricoes) ? inscricoes : []) {
+      if (linha?.id_torneio) {
+        contagemPorTorneio[linha.id_torneio] = (contagemPorTorneio[linha.id_torneio] || 0) + 1
+      }
+    }
+
+    return tournaments.map((t) => ({ ...t, totalInscritos: contagemPorTorneio[t.id] || 0 }))
+  } catch (errInscricoes) {
+    console.warn('Falha ao computar contagem de inscricoes:', errInscricoes)
+    return tournaments.map((t) => ({ ...t, totalInscritos: 0 }))
   }
-
-  return tournaments.map((t) => ({ ...t, totalInscritos: contagemPorTorneio[t.id] || 0 }))
 }
 
 function formatDate(value) {
@@ -102,21 +124,30 @@ function extrairDadosMapa(tournament) {
 // COMPONENTE: CARD DE TORNEIO
 // ============================================================
 
-function tournamentStatus(status) {
-  const isEncerrado = status === false || status === 'false' || status === 0 || status === '0'
+function tournamentStatus(tournament) {
+  // 1. Torneio com campeão declarado -> Encerrado
+  if (tournament?.id_time_vencedor) {
+    return { tipo: 'encerrado', label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
+  }
 
-  if (isEncerrado) return { label: 'ENCERRADO', classe: 'tournament-status tournament-status--finished' }
-  return { label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status' }
+  // 2. Inscrições fechadas mas sem vencedor -> Em Andamento (Bracket em disputa)
+  const isStatusFechado = tournament?.status === false || tournament?.status === 'false' || tournament?.status === 0 || tournament?.status === '0'
+  if (isStatusFechado) {
+    return { tipo: 'em_andamento', label: 'EM ANDAMENTO', classe: 'tournament-status tournament-status--live' }
+  }
+
+  // 3. Torneio aberto para novas inscrições
+  return { tipo: 'aberto', label: 'INSCRIÇÕES ABERTAS', classe: 'tournament-status tournament-status--open' }
 }
 
 function TournamentCard({ tournament, index }) {
   const cardId = tournament.id ?? index
-  const info = tournamentStatus(tournament.status)
+  const info = tournamentStatus(tournament)
   const premioAcumulado = (Number(tournament.dinheiro) || 0) * (tournament.totalInscritos || 0)
   const mapaInfo = extrairDadosMapa(tournament)
 
   return (
-    <article className="tournament-card">
+    <article className={`tournament-card${info.tipo === 'em_andamento' ? ' tournament-card--live' : ''}`}>
       <Link className="tournament-card-link" to={`/torneios/${cardId}`} aria-label={`Ver detalhes de ${tournament.nome}`}>
         <div className="tournament-card-visual" aria-hidden="true">
           {mapaInfo.imagem && (
@@ -169,9 +200,25 @@ function TournamentCard({ tournament, index }) {
 // COMPONENTE PRINCIPAL: PAGINA DE TORNEIOS
 // ============================================================
 
+const CACHE_KEY_TORNEIOS = 'cache_torneios_v1'
+
 export default function Torneios() {
-  const [tournaments, setTournaments] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [tournaments, setTournaments] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_KEY_TORNEIOS)
+      return salvo ? JSON.parse(salvo) : []
+    } catch {
+      return []
+    }
+  })
+  const [loading, setLoading] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CACHE_KEY_TORNEIOS)
+      return !salvo || JSON.parse(salvo).length === 0
+    } catch {
+      return true
+    }
+  })
   const [erro, setErro] = useState('')
   const [busca, setBusca] = useState('')
 
@@ -182,12 +229,21 @@ export default function Torneios() {
       loadTournaments()
         .then((data) => {
           if (ativo) {
-            setTournaments(data)
+            const listaSegura = Array.isArray(data) ? data : []
+            setTournaments(listaSegura)
+            try {
+              localStorage.setItem(CACHE_KEY_TORNEIOS, JSON.stringify(listaSegura))
+            } catch (e) {
+              console.warn('Falha ao gravar cache de torneios:', e)
+            }
             setErro('')
           }
         })
-        .catch(() => {
-          if (ativo) setErro('Não foi possível carregar os torneios. Tente novamente mais tarde.')
+        .catch((err) => {
+          console.error('ERRO SUPABASE [Torneios - Falha no Carregamento]:', err?.message || err)
+          if (ativo && tournaments.length === 0) {
+            setErro('Não foi possível carregar os torneios. Tente novamente mais tarde.')
+          }
         })
         .finally(() => {
           if (ativo) setLoading(false)
@@ -225,8 +281,23 @@ export default function Torneios() {
     })
   }, [tournaments, busca])
 
-  const torneiosAtivos = torneiosFiltrados.filter((tournament) => tournament.status !== false)
-  const torneiosEncerrados = torneiosFiltrados.filter((tournament) => tournament.status === false)
+  const torneiosEmAndamento = useMemo(() => {
+    return torneiosFiltrados.filter((tournament) => {
+      const isStatusFechado = tournament.status === false || tournament.status === 'false' || tournament.status === 0 || tournament.status === '0'
+      return isStatusFechado && !tournament.id_time_vencedor
+    })
+  }, [torneiosFiltrados])
+
+  const torneiosAbertos = useMemo(() => {
+    return torneiosFiltrados.filter((tournament) => {
+      const isStatusFechado = tournament.status === false || tournament.status === 'false' || tournament.status === 0 || tournament.status === '0'
+      return !isStatusFechado && !tournament.id_time_vencedor
+    })
+  }, [torneiosFiltrados])
+
+  const torneiosEncerrados = useMemo(() => {
+    return torneiosFiltrados.filter((tournament) => Boolean(tournament.id_time_vencedor))
+  }, [torneiosFiltrados])
 
   return (
     <main className="tournaments-page fundo-aurora-motion">
@@ -303,16 +374,61 @@ export default function Torneios() {
         </div>
       )}
 
-      {!loading && !erro && torneiosAtivos.length > 0 && (
-        <div className="tournaments-grid">
-          {torneiosAtivos.map((tournament, index) => (
-            <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
-          ))}
+      {/* Secao: Torneios em Andamento */}
+      {!loading && !erro && torneiosEmAndamento.length > 0 && (
+        <section className="tournaments-secao tournaments-secao--andamento">
+          <div className="tournaments-secao-header">
+            <div className="tournaments-secao-titulo-wrap">
+              <span className="tournaments-live-indicator" aria-label="Ao vivo">
+                <span className="tournaments-live-dot" />
+                AO VIVO
+              </span>
+              <h2 className="tournaments-secao-titulo">Torneios em Andamento</h2>
+            </div>
+            <span className="tournaments-secao-contador">
+              {torneiosEmAndamento.length} {torneiosEmAndamento.length === 1 ? 'campeonato' : 'campeonatos'}
+            </span>
+          </div>
+          <div className="tournaments-grid">
+            {torneiosEmAndamento.map((tournament, index) => (
+              <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Secao: Torneios com Inscrições Abertas */}
+      {!loading && !erro && torneiosAbertos.length > 0 && (
+        <section className="tournaments-secao tournaments-secao--abertos">
+          <div className="tournaments-secao-header">
+            <div className="tournaments-secao-titulo-wrap">
+              <span className="tournaments-aberto-indicator">
+                INSCRIÇÕES
+              </span>
+              <h2 className="tournaments-secao-titulo">Inscrições Abertas</h2>
+            </div>
+            <span className="tournaments-secao-contador">
+              {torneiosAbertos.length} {torneiosAbertos.length === 1 ? 'campeonato' : 'campeonatos'}
+            </span>
+          </div>
+          <div className="tournaments-grid">
+            {torneiosAbertos.map((tournament, index) => (
+              <TournamentCard key={tournament.id ?? index} tournament={tournament} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Mensagem quando não há torneios em andamento nem com inscrições abertas */}
+      {!loading && !erro && !busca && tournaments.length > 0 && torneiosAbertos.length === 0 && torneiosEmAndamento.length === 0 && (
+        <div className="tournament-page-state">
+          <p>No momento não há campeonatos em andamento ou com inscrições abertas. Confira o histórico de encerrados abaixo.</p>
         </div>
       )}
 
+      {/* Secao: Torneios Encerrados */}
       {!loading && !erro && torneiosEncerrados.length > 0 && (
-        <details className="tournaments-encerrados">
+        <details className="tournaments-encerrados" defaultOpen={torneiosAbertos.length === 0 && torneiosEmAndamento.length === 0}>
           <summary>
             <span>Torneios encerrados ({torneiosEncerrados.length})</span>
             <span className="tournaments-encerrados-icone" aria-hidden="true">+</span>
@@ -329,6 +445,7 @@ export default function Torneios() {
         <img 
           src={personagemImg} 
           alt="Agente CS" 
+          loading="lazy"
           className="torneios-personagem-img" 
         />
       </div>
